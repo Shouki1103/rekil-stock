@@ -858,7 +858,13 @@ $("#lockForm").addEventListener("submit", async e=>{
   pass = $("#passIn").value.trim(); if(!pass) return;
   $("#lockGo").disabled = true; $("#lockGo").textContent = "確認中…";
   try{ await api("list"); try{ localStorage.setItem("rekil-pass", pass); }catch(_){} $("#lock").hidden = true; $("#passIn").value=""; toast("接続しました"); }
-  catch(err){ if(err.code==="network") $("#lockMsg").textContent="通信できませんでした。電波を確認してもう一度お試しください。"; }
+  catch(err){
+    const c = err && err.code || "";
+    if(c==="passcode" || c==="passcode_not_set") {}
+    else if(c==="network") $("#lockMsg").textContent="データ側（Apps Script）に接続できませんでした。電波を確認し、それでもだめならデプロイの「アクセスできるユーザー」が「全員」になっているか確認してください。（エラー：network）";
+    else if(c==="bad_response") $("#lockMsg").textContent="データ側から正しい応答が返ってきませんでした。デプロイの設定を確認してください。（エラー：bad_response）";
+    else $("#lockMsg").textContent=`データ側でエラーが起きました。（エラー：${c}）`;
+  }
   $("#lockGo").disabled = false; $("#lockGo").textContent = "開く";
 });
 
