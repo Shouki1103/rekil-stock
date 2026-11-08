@@ -164,7 +164,16 @@ input,select{font:inherit;width:100%;padding:11px 12px;border:1px solid var(--li
     <div style="display:flex;flex-direction:column;gap:16px">
       <div>
         <h2>商品をラックに収納</h2>
-        <p class="lead" id="storeLead">① ラックのQRを撮影するか一覧から選び、② 商品を1点ずつ、またはまとめて入れます。</p>
+        <p class="lead" id="storeLead">入れ方（1点ずつ／まとめて）を選んでから、ラックのQRを撮影するか一覧から選んでください。</p>
+      </div>
+
+      <div class="panel howto" id="pickHow">
+        <span class="label">入れ方を選ぶ</span>
+        <div class="seg" role="tablist" aria-label="入れ方">
+          <button type="button" role="tab" id="topModeOne" aria-selected="true">1点ずつ収納</button>
+          <button type="button" role="tab" id="topModeBulk" aria-selected="false">まとめて収納</button>
+        </div>
+        <p class="note" id="howNote" style="margin:0">ラックを選んだあと、管理番号を1点ずつ入れて収納します。</p>
       </div>
 
       <div class="panel" id="pickRack">
@@ -464,8 +473,9 @@ function renderRackSelect(){
 }
 function renderStore(){
   const area = $("#storeArea");
-  if(!curRack || !racks.has(curRack)){ area.hidden = true; $("#pickRack").hidden = false; return; }
-  area.hidden = false; $("#pickRack").hidden = true;
+  if(!curRack || !racks.has(curRack)){ area.hidden = true; $("#pickRack").hidden = false; $("#pickHow").hidden = false; return; }
+  area.hidden = false; $("#pickRack").hidden = true; $("#pickHow").hidden = true;
+  $("#storeForm").hidden = storeBulk; $("#bulkBox").hidden = !storeBulk;
   const r = racks.get(curRack); const list = itemsIn(curRack);
   $("#curCode").textContent = r.code; $("#curName").textContent = r.name || "";
   const nSold = list.filter(([,v])=>v.soldAt).length;
@@ -751,12 +761,19 @@ function backToPick(){ curRack=""; renderRackSelect(); renderStore(); scrollTo({
 $("#backToPick").onclick = backToPick;
 // 収納タブを表示中にもう一度押すと、ラック選びに戻る
 document.querySelector('[data-tab="store"]').addEventListener("click", ()=>{ if(location.hash==="#store" || !location.hash) { if(curRack) backToPick(); } });
+let storeBulk=false;
 function setStoreMode(bulk){
+  storeBulk = bulk;
+  for(const [one,blk] of [["#modeOne","#modeBulk"],["#topModeOne","#topModeBulk"]]){ $(one).setAttribute("aria-selected", String(!bulk)); $(blk).setAttribute("aria-selected", String(bulk)); }
+  $("#howNote").textContent = bulk ? "ラックを選んだあと、管理番号と商品名を箇条書きで貼り付けて、一度にまとめて収納します。" : "ラックを選んだあと、管理番号を1点ずつ入れて収納します。";
+  if(!curRack) return;
   $("#modeOne").setAttribute("aria-selected", String(!bulk)); $("#modeBulk").setAttribute("aria-selected", String(bulk));
   $("#storeForm").hidden = bulk; $("#bulkBox").hidden = !bulk;
   setTimeout(()=> (bulk? $("#bulkText") : $("#itemNo")).focus(), 60);
 }
 $("#modeOne").onclick = ()=>setStoreMode(false);
+$("#topModeOne").onclick = ()=>setStoreMode(false);
+$("#topModeBulk").onclick = ()=>setStoreMode(true);
 $("#modeBulk").onclick = ()=>setStoreMode(true);
 
 async function storeMany(list, rack){
@@ -1116,7 +1133,7 @@ document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState=
 /* ---------- 新しい版の自動反映 ----------
    GitHub Pagesやスマホが古い画面を覚えていても、開いたとき・画面に戻ったときに
    最新版があるか確認し、あれば自動で読み直す */
-const APP_VERSION = "2026-11-08-3";
+const APP_VERSION = "2026-11-08-4";
 async function checkUpdate(){
   try{
     const r = await fetch(location.pathname + "?v=" + Date.now(), {cache:"no-store"});
