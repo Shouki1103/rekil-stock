@@ -1,0 +1,16 @@
+{
+  "name": "ReKiL Stock",
+  "short_name": "ReKiL Stock",
+  "description": "ラックのQRで商品の収納場所を記録・検索する在庫ロケーション管理",
+  "lang": "ja",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#14181d",
+  "theme_color": "#0d1014",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

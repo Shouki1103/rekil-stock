@@ -1,0 +1,884 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="ReKiL Stock"><meta name="theme-color" content="#0d1014"><link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="icon-180.png"><link rel="icon" href="icon-192.png"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>ReKiL Stock</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=IBM+Plex+Mono:wght@500;700&display=swap">
+<script src="lib/jsQR.js"></script>
+<script src="lib/qrcode.js"></script>
+<style>
+/* Layout: one-column phone app, sticky header + bottom tab bar; rack codes set like stencil-printed warehouse signage */
+:root{
+  /* 端末のライト/ダーク設定に関係なく、PCと同じ濃色の見た目で固定 */
+  --bg:#14181d; --surface:#1d232a; --line:#2f3740; --fg:#e8ebee; --muted:#9aa4af;
+  --accent:#f5c026; --accent-ink:#14181d; --steel:#0d1014; --ok:#4cc27e; --danger:#ff7a6b;
+  --font-body:"Zen Kaku Gothic New","Hiragino Sans","Yu Gothic",system-ui,sans-serif;
+  --font-code:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+  color-scheme:dark;
+}
+html,body{background:var(--bg);color:var(--fg)}
+body{font-family:var(--font-body);font-size:15px;line-height:1.6}
+*{box-sizing:border-box}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--steel)}
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--steel);color:#fff;
+  padding-block:12px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  display:flex;align-items:center;justify-content:space-between;gap:12px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:900;font-size:17px;letter-spacing:.04em}
+.brand i{display:inline-block;width:12px;height:22px;background:repeating-linear-gradient(-45deg,var(--accent) 0 5px,#1d2228 5px 10px);border-radius:2px}
+.sync{font-size:12px;color:#c9d1d9}
+main{max-width:640px;margin:0 auto;padding-block:16px 180px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:16px}
+nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--surface);border-top:1px solid var(--line);
+  display:grid;grid-template-columns:repeat(4,1fr);padding-bottom:env(safe-area-inset-bottom,0px);
+  padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
+nav.tabs a{display:flex;flex-direction:column;align-items:center;gap:2px;padding:9px 4px 10px;color:var(--muted);text-decoration:none;font-size:12px;font-weight:700}
+nav.tabs a svg{width:22px;height:22px}
+nav.tabs a[aria-current="page"]{color:var(--fg)}
+nav.tabs a[aria-current="page"] svg{color:var(--fg)}
+nav.tabs a[aria-current="page"]::after{content:"";width:22px;height:3px;background:var(--accent);border-radius:2px}
+h2{font-size:20px;font-weight:900;margin:0;text-wrap:balance}
+.lead{color:var(--muted);margin:0;font-size:14px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:12px}
+.label{font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.06em}
+button,.btn{font:inherit;font-weight:700;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--fg);padding:11px 14px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:46px}
+button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+button.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+button.dark{background:var(--steel);color:#fff;border-color:var(--steel)}
+button.ghost{background:transparent}
+button.small{min-height:34px;padding:5px 10px;font-size:13px}
+button.danger{color:var(--danger)}
+button:disabled{opacity:.45;cursor:default}
+textarea{font:inherit;width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--fg);resize:vertical;line-height:1.6}
+.bp{display:block;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bp b{font-family:var(--font-code)}
+.pick2 select:disabled{opacity:.5}
+input,select{font:inherit;width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--fg);min-height:46px}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+.row>*{flex:1 1 140px;min-width:0}
+.scanbtn{width:100%;min-height:72px;font-size:17px}
+.scanbtn svg{width:28px;height:28px}
+.or{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:12px}
+.or::before,.or::after{content:"";flex:1;height:1px;background:var(--line)}
+/* rack plate: the stencil sign on the shelf */
+.plate{display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--accent);color:var(--accent-ink);border-radius:10px;padding:14px 16px}
+.plate .code{font-family:var(--font-code);font-weight:700;font-size:clamp(30px,9vw,40px);line-height:1;letter-spacing:.02em;white-space:nowrap}
+.plate>div:first-child{flex:none}
+.plate .meta{min-width:0}
+.plate .meta{font-size:13px;font-weight:700;text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:2px}
+.plate .chg{display:flex;gap:6px;align-items:center;margin-top:6px;flex-wrap:wrap;justify-content:flex-end}
+.plate .chg-l{font-size:12px;opacity:.8}
+.plate .chg select{width:auto;max-width:130px;min-height:38px;padding:6px 30px 6px 10px;font-weight:700;font-size:14px;color:var(--accent-ink);background-color:transparent;border:1px solid currentColor;border-radius:8px;cursor:pointer;
+  appearance:none;-webkit-appearance:none;background-image:linear-gradient(45deg,transparent 50%,currentColor 50%),linear-gradient(135deg,currentColor 50%,transparent 50%);background-position:calc(100% - 15px) 52%,calc(100% - 10px) 52%;background-size:5px 5px;background-repeat:no-repeat}
+.plate .chg select option{color:#1d2228;background:#fff}
+.plate .chg button{color:inherit;border-color:currentColor;min-height:38px;padding:4px 8px}
+.code-chip{font-family:var(--font-code);font-weight:700;background:var(--accent);color:var(--accent-ink);border-radius:6px;padding:4px 10px;font-size:20px;line-height:1.2;white-space:nowrap}
+.list{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:10px;background:var(--surface);overflow:hidden}
+.item{display:flex;align-items:center;gap:12px;padding:12px 14px;border-top:1px solid var(--line)}
+.item:first-child{border-top:0}
+.item .body{flex:1;min-width:0}
+.item .no{font-family:var(--font-code);font-weight:700;font-size:15px;word-break:break-all}
+.item .nm{color:var(--muted);font-size:13px;overflow-wrap:anywhere}
+.item .when{color:var(--muted);font-size:11px;font-variant-numeric:tabular-nums}
+.empty{padding:22px 16px;text-align:center;color:var(--muted);font-size:14px}
+.big-result{display:flex;flex-direction:column;gap:6px;align-items:center;padding:18px;background:var(--surface);border:2px solid var(--accent);border-radius:10px;text-align:center}
+.big-result .code{font-family:var(--font-code);font-weight:700;font-size:54px;line-height:1.05}
+.rackgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px}
+.rack{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px;text-align:left;display:flex;flex-direction:column;align-items:flex-start;gap:2px;min-height:0}
+.rack .c{font-family:var(--font-code);font-weight:700;font-size:22px}
+.rack .n{font-size:12px;color:var(--muted);font-weight:500}
+.rack .cnt{font-variant-numeric:tabular-nums;font-size:13px}
+.rack[aria-pressed="true"]{border:2px solid var(--accent)}
+.labels{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.qrlabel{background:#fff;color:#111;border:1px dashed #9aa4af;border-radius:6px;padding:10px;display:flex;flex-direction:column;align-items:center;gap:4px}
+.qrlabel img{width:100%;max-width:150px;image-rendering:pixelated}
+.qrlabel .c{font-family:var(--font-code);font-weight:700;font-size:26px;line-height:1}
+.qrlabel .s{font-size:10px;letter-spacing:.08em;color:#444}
+.check{display:flex;align-items:center;gap:8px;font-size:14px}
+.check input{width:20px;height:20px;min-height:0}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(150px + env(safe-area-inset-bottom,0px));background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:8px;font-weight:700;font-size:14px;z-index:20;max-width:calc(100% - 32px);box-shadow:0 6px 20px rgba(0,0,0,.25)}
+.note{font-size:13px;color:var(--muted)}
+.sold{display:flex;flex-direction:column;align-items:center;gap:0;font-size:10px;font-weight:700;color:var(--muted);cursor:pointer;flex:none;width:44px}
+.sold input{width:26px;height:26px;min-height:0;accent-color:var(--ok);cursor:pointer}
+.item.is-sold{background:color-mix(in srgb,var(--ok) 10%,var(--surface))}
+.item.is-sold .no{text-decoration:line-through;text-decoration-color:var(--ok)}
+.item .acts{display:flex;flex-direction:column;gap:4px;flex:none}
+.editbox{display:flex;flex-direction:column;gap:8px;flex:1;min-width:0}
+.soldbar{position:fixed;left:0;right:0;bottom:calc(64px + env(safe-area-inset-bottom,0px));z-index:7;background:var(--steel);color:#fff;
+  padding-block:10px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap;box-shadow:0 -4px 16px rgba(0,0,0,.18)}
+.soldbar .msg{flex:1 1 140px;font-weight:700;font-size:14px}
+.soldbar button{min-height:40px;padding:6px 12px}
+.soldbar .ghost{color:#fff;border-color:#ffffff66}
+.grp{display:flex;flex-direction:column;gap:8px}
+.grp-h{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-weight:900;font-size:14px;margin-top:4px}
+.grp-h::before{content:"";width:4px;height:16px;border-radius:2px;background:var(--accent)}
+.grp-h .grp-n{color:var(--muted);font-weight:700;font-size:13px;font-variant-numeric:tabular-nums}
+.grp-h button{margin-left:auto}
+.sold-h{margin-top:14px;color:var(--muted)}
+.sold-h::before{background:var(--ok)}
+.cl{display:block;line-height:1.45;white-space:nowrap}
+.cl b{font-variant-numeric:tabular-nums;font-size:1.1em}
+.sold-cl{opacity:.75}
+.rack .cnt{display:block;margin-top:2px}
+.lock{position:fixed;inset:0;z-index:30;background:var(--bg);display:flex;align-items:center;justify-content:center;
+  padding:max(24px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) 24px max(16px,env(safe-area-inset-left,0px))}
+.lockbox{width:100%;max-width:360px;display:flex;flex-direction:column;gap:14px}
+.warn{font-size:13px;color:var(--danger);font-weight:700}
+.confirm{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:13px}
+@media (prefers-reduced-motion:no-preference){.toast{animation:pop .18s ease-out}@keyframes pop{from{opacity:0;transform:translate(-50%,8px)}}}
+</style>
+
+<header>
+  <div class="brand"><i></i>ReKiL Stock</div>
+  <div class="sync" id="sync">接続中…</div>
+</header>
+
+<main>
+  <!-- 収納 -->
+  <section id="v-store" data-view="store">
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <div>
+        <h2>商品をラックに収納</h2>
+        <p class="lead">ラックのQRを読み取るか一覧から選んで、管理番号を入力します。収納先は「変更」からすぐ切り替えられます。</p>
+      </div>
+
+      <div class="panel" id="pickRack">
+        <span class="label">① ラックを選ぶ</span>
+        <button class="primary scanbtn" id="scanRackBtn" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7V4h3M21 7V4h-3M3 17v3h3M21 17v3h-3"/><rect x="7" y="7" width="4" height="4"/><rect x="13" y="13" width="4" height="4"/><path d="M13 7h4v4M7 13v4h4"/></svg>
+          ラックのQRを撮影
+        </button>
+        <div class="or">または一覧から選ぶ</div>
+        <div class="row pick2">
+          <div><span class="label">記号</span><select id="pfxSelect" aria-label="ラックの記号を選択"></select></div>
+          <div><span class="label">番号</span><select id="rackSelect" aria-label="ラック番号を選択"><option value="">番号を選択</option></select></div>
+        </div>
+      </div>
+
+      <div id="storeArea" hidden style="display:flex;flex-direction:column;gap:16px">
+        <div class="plate">
+          <div><div class="label" style="color:inherit;opacity:.75">収納先ラック</div><div class="code" id="curCode">—</div></div>
+          <div class="meta"><div id="curName"></div><div id="curCount"></div>
+            <div class="chg">
+              <span class="chg-l">変更</span>
+              <select id="platePfx" aria-label="ラックの記号"></select>
+              <select id="plateNo" aria-label="ラックの番号"></select>
+              <button class="small ghost" id="changeRackQr" type="button" aria-label="QRで変更" title="QRで変更"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7V4h3M21 7V4h-3M3 17v3h3M21 17v3h-3"/><rect x="8" y="8" width="8" height="8"/></svg></button>
+            </div></div>
+        </div>
+        <form class="panel" id="storeForm" autocomplete="off">
+          <span class="label">② 商品を入れる</span>
+          <input id="itemNo" placeholder="管理番号（例：26-1108-001）" enterkeyhint="done" required>
+          <input id="itemName" placeholder="商品名・メモ（任意）">
+          <button class="primary" type="submit">このラックに収納</button>
+          <p class="note" style="margin:0">別のラックに入っている商品は、こちらへ移動として記録されます。</p>
+        </form>
+        <details class="panel" id="bulkBox">
+          <summary style="font-weight:700;cursor:pointer">まとめて登録（箇条書きで一括入力）</summary>
+          <p class="note" style="margin:0">1行に1商品、「管理番号　商品名」の順で入力します。間はスペース・タブ・カンマのどれでもOK。先頭の「・」や「-」は自動で外します。Excelから2列コピーして貼り付けもできます。</p>
+          <textarea id="bulkText" rows="7" placeholder="・26-1108-001 ルイヴィトン モノグラム スピーディ30&#10;・26-1108-002 グッチ GGマーモント ショルダー&#10;・26-1108-003 プラダ ナイロン リュック"></textarea>
+          <div class="note" id="bulkPreview" aria-live="polite">1行に1商品ずつ入力してください。</div>
+          <button class="primary" id="bulkGo" type="button" disabled>このラックにまとめて収納</button>
+        </details>
+        <div>
+          <div class="label" style="margin-bottom:6px">このラックの商品（あいう順）</div>
+          <div class="grp" id="rackItems"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 探す -->
+  <section id="v-search" data-view="search" hidden>
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <div>
+        <h2>商品はどこ？</h2>
+        <p class="lead">管理番号か商品名の一部で探せます。売れた商品は「売れた」にチェックすると売却済みに移り、「削除」でラックから消せます。</p>
+      </div>
+      <input id="q" type="search" placeholder="管理番号・商品名で検索" aria-label="検索">
+      <div id="bestHit"></div>
+      <div class="grp" id="results"></div>
+    </div>
+  </section>
+
+  <!-- ラック -->
+  <section id="v-racks" data-view="racks" hidden>
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <div>
+        <h2>ラック一覧</h2>
+        <p class="lead">タップすると中身を表示します。QRを撮影して中身を確認することもできます。</p>
+      </div>
+      <button class="dark" id="scanViewBtn" type="button">QRを撮影して中身を見る</button>
+      <div class="panel">
+        <span class="label">在庫データの出力</span>
+        <p class="note" style="margin:0">全ラックの在庫を1つのCSVファイルにまとめて保存します。Excelやスプレッドシートでそのまま開けます。</p>
+        <button type="button" class="dark" id="exportAll">全ラックの在庫をCSVで出力</button>
+        <p class="note" id="exportNote" style="margin:0" aria-live="polite"></p>
+      </div>
+      <div class="rackgrid" id="rackGrid"></div>
+      <div id="rackDetail"></div>
+      <details class="panel" id="addRackBox">
+        <summary style="font-weight:700;cursor:pointer">ラックを追加する</summary>
+        <div class="row">
+          <div><span class="label">記号</span><input id="pfx" value="A" maxlength="4"></div>
+          <div><span class="label">開始番号</span><input id="from" type="number" min="1" value="1"></div>
+          <div><span class="label">終了番号</span><input id="to" type="number" min="1" value="6"></div>
+        </div>
+        <input id="rackNameIn" placeholder="場所の名前（任意・例：1F 北側スチールラック）">
+        <p class="note" style="margin:0" id="addPreview"></p>
+        <button class="primary" id="addRacks" type="button">ラックを追加</button>
+      </details>
+    </div>
+  </section>
+
+  <!-- QR発行 -->
+  <section id="v-labels" data-view="labels" hidden>
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <div>
+        <h2>QRラベル発行</h2>
+        <p class="lead">番号入りのQRラベルをA4画像（1枚18枚分）で保存して印刷し、各ラックに貼ってください。スマホの標準カメラで読み取ると、このアプリがそのラックを選んだ状態で開きます。</p>
+      </div>
+      <div class="row">
+        <button type="button" id="selAll">すべて選択</button>
+        <button type="button" id="selNone">選択を外す</button>
+      </div>
+      <div class="labels" id="labelGrid"></div>
+      <button class="primary" id="saveSheet" type="button">選択したラベルをA4画像で保存</button>
+      <p class="note" id="saveNote" style="margin:0"></p>
+    </div>
+  </section>
+</main>
+
+<nav class="tabs" aria-label="メニュー">
+  <a href="#store" data-tab="store"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7V4h3M21 7V4h-3M3 17v3h3M21 17v3h-3"/><path d="M8 12h8M12 8v8"/></svg>収納</a>
+  <a href="#search" data-tab="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/></svg>探す</a>
+  <a href="#racks" data-tab="racks"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 3v18M20 3v18M4 8h16M4 14h16M4 20h16"/></svg>ラック</a>
+  <a href="#labels" data-tab="labels"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="6" height="6"/><rect x="14" y="4" width="6" height="6"/><rect x="4" y="14" width="6" height="6"/><path d="M14 14h2v2h-2zM18 18h2v2h-2zM14 18h2M18 14h2"/></svg>QR発行</a>
+</nav>
+
+<div class="soldbar" id="soldBar" hidden role="region" aria-label="売れた商品の操作">
+  <span class="msg" id="soldMsg"></span>
+  <button type="button" class="primary" id="soldGo"></button>
+  <button type="button" class="ghost" id="soldClear">選択を外す</button>
+</div>
+
+<div class="lock" id="lock" hidden role="dialog" aria-modal="true" aria-labelledby="lockT">
+  <form class="lockbox" id="lockForm" autocomplete="off">
+    <div class="brand" style="color:var(--fg)"><i></i>ReKiL Stock</div>
+    <h2 id="lockT">暗証番号</h2>
+    <p class="note" id="lockMsg" style="margin:0"></p>
+    <input id="passIn" type="password" inputmode="numeric" autocomplete="current-password" placeholder="暗証番号" aria-label="暗証番号">
+    <button class="primary" id="lockGo" type="submit">開く</button>
+  </form>
+</div>
+
+<input type="file" id="cam" accept="image/*" capture="environment" hidden>
+
+<script>
+const QR_PREFIX = "REKIL-RACK:";            // 旧ラベル（読み取りのみ対応）
+/* ▼ Apps Script をデプロイしたときの「ウェブアプリのURL」 */
+const API_URL = "https://script.google.com/macros/s/AKfycbzwTUZUpd0aYiLI5TuDZIOhoCMeDIqYnCm-82wXHCvs23T10T_d3noiPD1T9Bl_63X64w/exec";
+const APP_URL = location.origin + location.pathname;
+const HASH_PREFIX = "rack-";
+const qrText = code => `${APP_URL}#${HASH_PREFIX}${code}`;   // iPhoneの標準カメラでも開けるURL形式
+let pendingRack = "";
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const natural = (a,b) => a.localeCompare(b, "ja", {numeric:true});
+
+let online = false, pass = "";
+try{ pass = localStorage.getItem("rekil-pass") || ""; }catch(_){}
+class ApiError extends Error{ constructor(code){ super(code); this.code = code; } }
+async function api(action, params={}){
+  if(!API_URL) throw new ApiError("no_api");
+  let res;
+  try{
+    res = action==="list"
+      ? await fetch(`${API_URL}?action=list&pass=${encodeURIComponent(pass)}&t=${Date.now()}`)
+      : await fetch(API_URL, {method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"}, body: JSON.stringify({action, pass, ...params})});
+  }catch(_){ throw new ApiError("network"); }
+  let j; try{ j = await res.json(); }catch(_){ throw new ApiError("bad_response"); }
+  if(!j.ok){ if(j.error==="passcode"||j.error==="passcode_not_set") showLock(j.error); throw new ApiError(j.error||"error"); }
+  if(j.racks) applyData(j);
+  return j.result;
+}
+function applyData(j){
+  racks = new Map(j.racks.map(r=>[r.code, r]));
+  items = new Map(j.items.map(({id,...v})=>[id, v]));
+  online = true; lastSync = Date.now();
+  $("#sync").textContent = `商品 ${items.size}点 / ラック ${racks.size}台`;
+  renderAll(); updatePreview(); applyPendingRack();
+}
+let lastSync = 0, busy = 0;
+function setBusy(d){ busy += d; $("#sync").textContent = busy>0 ? "保存中…" : (online? `商品 ${items.size}点 / ラック ${racks.size}台` : "未接続"); }
+async function write(action, params){ setBusy(1); try{ return await api(action, params); } finally{ setBusy(-1); } }
+let racks = new Map();   // code -> data
+let items = new Map();   // docId -> data
+let curRack = "", pickPfx = "", platePfx = "", plateSynced = "";
+let scanPurpose = "store";
+let selectedLabels = new Set();
+let detailRack = "";
+let sold = new Set();       // checked item ids
+let editingId = null, editDraft = {no:"",name:""};
+let lastRemoved = null, undoTimer = null;
+
+/* ---------- helpers ---------- */
+function toast(msg){
+  document.querySelectorAll(".toast").forEach(t=>t.remove());
+  const t = document.createElement("div"); t.className="toast"; t.textContent=msg;
+  document.body.appendChild(t); setTimeout(()=>t.remove(), 2600);
+}
+function fmtTime(ms){
+  if(!ms) return "";
+  const d = new Date(ms);
+  return `${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`;
+}
+function itemsIn(code){ return [...items.entries()].filter(([,v])=>v.rack===code).sort((a,b)=>(b[1].updatedAt||0)-(a[1].updatedAt||0)); }
+function findByNo(no){ const k=no.trim().toUpperCase(); for(const [id,v] of items){ if(String(v.no).toUpperCase()===k) return [id,v]; } return null; }
+function sortedRacks(){ return [...racks.values()].sort((a,b)=>natural(a.code,b.code)); }
+function rackCodeOk(c){ return /^[A-Za-z0-9_\-.]+$/.test(c); }
+
+/* ---------- views ---------- */
+const VIEWS = ["store","search","racks","labels"];
+function showView(){
+  const hh = location.hash.slice(1);
+  if(hh.toLowerCase().startsWith(HASH_PREFIX)){
+    pendingRack = hh.slice(HASH_PREFIX.length).toUpperCase();
+    applyPendingRack();
+    try{ history.replaceState(null,"","#store"); }catch(_){ }
+  }
+  const v = VIEWS.includes(location.hash.slice(1)) ? location.hash.slice(1) : "store";
+  document.querySelectorAll("[data-view]").forEach(s => s.hidden = s.dataset.view !== v);
+  document.querySelectorAll("[data-tab]").forEach(a => { if(a.dataset.tab===v) a.setAttribute("aria-current","page"); else a.removeAttribute("aria-current"); });
+  if(v==="search") setTimeout(()=>$("#q").focus(),50);
+}
+addEventListener("hashchange", showView);
+function applyPendingRack(){
+  if(!pendingRack || !racks.size) return;
+  const c = pendingRack; pendingRack = "";
+  if(!racks.has(c)){ toast(`「${c}」は登録されていないラックです`); return; }
+  curRack = c; renderRackSelect(); renderStore();
+  document.querySelectorAll("[data-view]").forEach(s => s.hidden = s.dataset.view !== "store");
+  document.querySelectorAll("[data-tab]").forEach(a => { if(a.dataset.tab==="store") a.setAttribute("aria-current","page"); else a.removeAttribute("aria-current"); });
+  toast(`ラック ${c} を開きました`);
+  setTimeout(()=>$("#itemNo").focus(),120);
+}
+
+/* ---------- render ---------- */
+function renderAll(){
+  for(const f of [renderRackSelect, renderStore, renderSearch, renderRackGrid, renderDetail, renderLabels, renderSoldBar]){ try{ f(); }catch(err){ console.error(err); } }
+}
+function rackPfx(code){ const i=code.lastIndexOf("-"); return i>0? code.slice(0,i) : code.replace(/\d+$/,"") || code; }
+function rackGroups(){
+  const g=new Map(); for(const r of sortedRacks()){ const p=rackPfx(r.code); if(!g.has(p)) g.set(p,[]); g.get(p).push(r); } return g;
+}
+function rackNum(code){ const p=rackPfx(code); let n=code.startsWith(p)? code.slice(p.length).replace(/^-/,"") : code; return /^\d+$/.test(n)? String(parseInt(n,10)) : n; }
+function rackOpt(r){ return `<option value="${esc(r.code)}">${esc(rackNum(r.code))}${r.name? "　"+esc(r.name):""}</option>`; }
+function renderRackSelect(){
+  const v = curRack; const groups = rackGroups();
+  // ① 記号 → 番号 の2段プルダウン
+  const ps0 = $("#pfxSelect");
+  if(racks.has(v)) pickPfx = rackPfx(v);
+  if(racks.has(v) && plateSynced!==v){ platePfx = rackPfx(v); plateSynced = v; }
+  if(!pickPfx || !groups.has(pickPfx)) pickPfx = racks.has(v) ? rackPfx(v) : (groups.size===1 ? [...groups.keys()][0] : "");
+  ps0.innerHTML = `<option value="">${racks.size? "記号を選択":"ラックがまだありません"}</option>` +
+    [...groups.entries()].map(([p,l])=>`<option value="${esc(p)}">${esc(p)}（${l.length}台）</option>`).join("");
+  ps0.value = pickPfx;
+  const sel = $("#rackSelect");
+  const list = pickPfx ? (groups.get(pickPfx)||[]) : [];
+  sel.disabled = !list.length;
+  sel.innerHTML = `<option value="">${pickPfx? "番号を選択":"先に記号を選択"}</option>` + list.map(rackOpt).join("");
+  sel.value = racks.has(v) && rackPfx(v)===pickPfx ? v : "";
+  // 収納先プレートの「変更」：記号ごとのグループ表示
+  if(!platePfx || !groups.has(platePfx)) platePfx = racks.has(v) ? rackPfx(v) : "";
+  const pp = $("#platePfx");
+  pp.innerHTML = [...groups.keys()].map(p=>`<option value="${esc(p)}">${esc(p)}</option>`).join("");
+  pp.value = platePfx;
+  const pn = $("#plateNo"); const pl = groups.get(platePfx)||[];
+  pn.innerHTML = `<option value="" disabled>番号</option>` + pl.map(rackOpt).join("");
+  pn.value = racks.has(v) && rackPfx(v)===platePfx ? v : "";
+}
+function renderStore(){
+  const area = $("#storeArea");
+  if(!curRack || !racks.has(curRack)){ area.hidden = true; $("#pickRack").hidden = false; return; }
+  area.hidden = false; $("#pickRack").hidden = true;
+  const r = racks.get(curRack); const list = itemsIn(curRack);
+  $("#curCode").textContent = r.code; $("#curName").textContent = r.name || "";
+  const nSold = list.filter(([,v])=>v.soldAt).length;
+  $("#curCount").innerHTML = countLines(curRack);
+  if($("#bulkText").value) updateBulkPreview(); else $("#bulkGo").textContent=`${curRack} にまとめて収納`;
+  $("#rackItems").innerHTML = groupedList(list, false, curRack, "まだ商品がありません。管理番号を入れて収納してください。");
+}
+function itemRow(id,v,showRack){
+  if(editingId===id){
+    return `<div class="item" data-id="${esc(id)}"><div class="editbox">
+      <span class="label">商品情報を編集（${esc(v.rack)}）</span>
+      <input class="ed-no" value="${esc(editDraft.no)}" placeholder="管理番号" aria-label="管理番号">
+      <input class="ed-name" value="${esc(editDraft.name)}" placeholder="商品名・メモ" aria-label="商品名・メモ">
+      <div class="row"><button type="button" class="primary small" data-act="saveEdit" data-id="${esc(id)}">保存</button><button type="button" class="small" data-act="cancelEdit">やめる</button></div>
+    </div></div>`;
+  }
+  const on = !!v.soldAt;
+  return `<div class="item${on?" is-sold":""}" data-id="${esc(id)}">
+    <label class="sold"><input type="checkbox" data-sold="${esc(id)}" ${on?"checked":""} aria-label="${esc(v.no)} 売れた">売れた</label>
+    ${showRack? `<span class="code-chip">${esc(v.rack)}</span>`:""}
+    <div class="body"><div class="no">${esc(v.no)}</div>${v.name?`<div class="nm">${esc(v.name)}</div>`:""}<div class="when">${on? fmtTime(v.soldAt)+" 売却" : fmtTime(v.updatedAt)+" 収納"}</div></div>
+    <div class="acts"><button class="small ghost" data-act="edit" data-id="${esc(id)}" type="button">編集</button>${on?`<button class="small ghost danger" data-act="delItem" data-id="${esc(id)}" type="button">削除</button>`:""}</div>
+  </div>`;
+}
+function countLines(code){
+  const l=itemsIn(code), s=l.filter(([,v])=>v.soldAt).length;
+  return `<span class="cl">出品中 <b>${l.length-s}</b>点</span><span class="cl sold-cl">売却済 <b>${s}</b>点</span>`;
+}
+/* あいう順（商品名、なければ管理番号）*/
+function sortKey(v){ return String(v.name||v.no||""); }
+function byAiu(a,b){ return natural(sortKey(a[1]),sortKey(b[1])) || natural(String(a[1].no),String(b[1].no)); }
+function splitSold(list){
+  const act=list.filter(([,v])=>!v.soldAt).sort(byAiu), sd=list.filter(([,v])=>v.soldAt).sort(byAiu);
+  return [act,sd];
+}
+function groupedList(list, showRack, rackCode, emptyMsg){
+  const [act,sd]=splitSold(list);
+  if(!list.length) return `<div class="list"><div class="empty">${emptyMsg}</div></div>`;
+  let h = `<div class="grp-h"><span>出品中</span><span class="grp-n">${act.length}点</span></div>
+    <div class="list">${act.length? act.map(([id,v])=>itemRow(id,v,showRack)).join("") : `<div class="empty">出品中の商品はありません。</div>`}</div>`;
+  if(sd.length){
+    h += `<div class="grp-h sold-h"><span>売却済み</span><span class="grp-n">${sd.length}点</span>
+      ${rackCode? `<button type="button" class="small danger" data-act="purgeSold" data-rack="${esc(rackCode)}">売却済みをラックから削除</button>`:""}</div>
+      <div class="list">${sd.map(([id,v])=>itemRow(id,v,showRack)).join("")}</div>`;
+  }
+  return h;
+}
+function renderSoldBar(){
+  const bar=$("#soldBar");
+  if(lastRemoved){
+    bar.hidden=false; $("#soldMsg").textContent=`${lastRemoved.length}点をラックから削除しました`;
+    $("#soldGo").textContent="元に戻す"; $("#soldGo").dataset.mode="undo"; $("#soldClear").hidden=true; return;
+  }
+  bar.hidden=true;
+}
+function renderSearch(){
+  const q = $("#q").value.trim().toUpperCase();
+  const best = $("#bestHit"), res = $("#results");
+  if(!q){
+    best.innerHTML = "";
+    const recent = [...items.entries()].filter(([,v])=>!v.soldAt).sort((a,b)=>(b[1].updatedAt||0)-(a[1].updatedAt||0)).slice(0,15);
+    res.innerHTML = `<div class="list">` + (recent.length ? `<div class="item" style="background:var(--bg)"><span class="label">最近収納した商品（出品中）</span></div>` + recent.map(([id,v])=>itemRow(id,v,true)).join("")
+      : `<div class="empty">出品中の商品はまだありません。</div>`) + `</div>`;
+    return;
+  }
+  const hits = [...items.entries()].filter(([,v])=>String(v.no).toUpperCase().includes(q) || String(v.name||"").toUpperCase().includes(q))
+    .sort((a,b)=>{ const ea=String(a[1].no).toUpperCase()===q, eb=String(b[1].no).toUpperCase()===q; return eb-ea || natural(a[1].no,b[1].no); });
+  if(hits.length===1 || (hits.length && String(hits[0][1].no).toUpperCase()===q)){
+    const v = hits[0][1]; const r = racks.get(v.rack);
+    best.innerHTML = `<div class="big-result"><span class="label">${esc(v.no)} の場所</span><div class="code">${esc(v.rack)}</div>${r&&r.name?`<div class="note">${esc(r.name)}</div>`:""}</div>`;
+  } else best.innerHTML = "";
+  res.innerHTML = groupedList(hits.slice(0,200), true, "", `「${esc($("#q").value)}」に当てはまる商品はありません。`);
+}
+function renderRackGrid(){
+  const g = $("#rackGrid");
+  if(!racks.size){ g.innerHTML = `<div class="empty" style="grid-column:1/-1">ラックがまだありません。下の「ラックを追加する」から登録してください。</div>`; $("#addRackBox").open = true; return; }
+  g.innerHTML = sortedRacks().map(r=>`<button class="rack" type="button" data-rack="${esc(r.code)}" aria-pressed="${r.code===detailRack}">
+    <span class="c">${esc(r.code)}</span>${r.name?`<span class="n">${esc(r.name)}</span>`:""}<span class="cnt">${countLines(r.code)}</span></button>`).join("");
+}
+function renderDetail(){
+  const d = $("#rackDetail");
+  if(!detailRack || !racks.has(detailRack)){ d.innerHTML=""; return; }
+  const r = racks.get(detailRack); const list = itemsIn(detailRack);
+  d.innerHTML = `<div style="display:flex;flex-direction:column;gap:10px">
+    <div class="plate"><div class="code">${esc(r.code)}</div><div class="meta">${esc(r.name||"")}<div class="cnt2">${countLines(r.code)}</div></div></div>
+    <div class="row"><button type="button" class="primary" data-act="storeHere" data-rack="${esc(r.code)}">このラックに収納する</button><button type="button" data-act="exportRack" data-rack="${esc(r.code)}">このラックをCSVで出力</button></div>
+    ${groupedList(list, false, r.code, "空のラックです。")}
+    <div id="delArea">${list.length? `<p class="note" style="margin:0">商品が入っているラックは削除できません。</p>` : `<button type="button" class="small danger" data-act="askDel">ラック ${esc(r.code)} を削除</button>`}</div>
+  </div>`;
+}
+function renderLabels(){
+  const g = $("#labelGrid");
+  for(const c of [...selectedLabels]) if(!racks.has(c)) selectedLabels.delete(c);
+  if(!racks.size){ g.innerHTML = `<div class="empty" style="grid-column:1/-1">先に「ラック」タブでラックを追加してください。</div>`; return; }
+  g.innerHTML = sortedRacks().map(r=>`<label class="qrlabel">
+      <img alt="${esc(r.code)} のQR" src="${qrDataUrl(qrText(r.code))}">
+      <span class="c">${esc(r.code)}</span><span class="s">ReKiL 棚番</span>
+      <span class="check"><input type="checkbox" data-lab="${esc(r.code)}" ${selectedLabels.has(r.code)?"checked":""}> 印刷する</span>
+    </label>`).join("");
+  $("#saveSheet").disabled = !selectedLabels.size;
+  $("#saveSheet").textContent = selectedLabels.size ? `選択した${selectedLabels.size}枚をA4画像で保存` : "ラベルを選択してください";
+}
+
+/* ---------- QR ---------- */
+const qrCache = new Map();
+function qrMatrix(text){
+  const q = qrcode(0, "M"); q.addData(text); q.make(); return q;
+}
+function qrDataUrl(text){
+  if(qrCache.has(text)) return qrCache.get(text);
+  const q = qrMatrix(text); const n = q.getModuleCount(), s = 6, m = 4;
+  const c = document.createElement("canvas"); c.width = c.height = (n+m*2)*s;
+  const x = c.getContext("2d"); x.fillStyle="#fff"; x.fillRect(0,0,c.width,c.height); x.fillStyle="#000";
+  for(let r=0;r<n;r++) for(let k=0;k<n;k++) if(q.isDark(r,k)) x.fillRect((k+m)*s,(r+m)*s,s,s);
+  const u = c.toDataURL("image/png"); qrCache.set(text,u); return u;
+}
+/* QR読み取り：1枚に複数のQRが写っていても（A4ラベル用紙や画面撮影など）読めるよう、
+   ①ブラウザ内蔵の読み取り → ②画像全体 → ③画像を区切って中央に近い順に探す */
+function loadImg(file){
+  return new Promise(res=>{ const url=URL.createObjectURL(file); const img=new Image();
+    img.onload=()=>res({img,url}); img.onerror=()=>{ URL.revokeObjectURL(url); res(null); }; img.src=url; });
+}
+function isRackText(t){ if(!t) return false; const u=t.trim().toUpperCase(); return u.startsWith(QR_PREFIX) || u.includes("#"+HASH_PREFIX.toUpperCase()); }
+function jsqrOn(img, sx, sy, sw, sh, max){
+  if(typeof jsQR!=="function") return null;
+  const sc=Math.min(1.6, max/Math.max(sw,sh));
+  const c=document.createElement("canvas"); c.width=Math.max(1,Math.round(sw*sc)); c.height=Math.max(1,Math.round(sh*sc));
+  const x=c.getContext("2d",{willReadFrequently:true}); x.imageSmoothingEnabled=true; x.drawImage(img,sx,sy,sw,sh,0,0,c.width,c.height);
+  const d=x.getImageData(0,0,c.width,c.height);
+  const r=jsQR(d.data,c.width,c.height,{inversionAttempts:"attemptBoth"});
+  return r && r.data ? r.data : null;
+}
+async function decodeImage(file){
+  const L = await loadImg(file); if(!L) return null;
+  const {img,url} = L; const W=img.naturalWidth||img.width, H=img.naturalHeight||img.height;
+  let fallback=null;
+  try{
+    // ① 端末の読み取り機能（Android等）
+    if("BarcodeDetector" in window){
+      try{
+        const det=new BarcodeDetector({formats:["qr_code"]}); const codes=await det.detect(img);
+        const rk=codes.filter(c=>isRackText(c.rawValue));
+        if(rk.length){
+          rk.sort((a,b)=>{ const ca=a.boundingBox, cb=b.boundingBox;
+            const da=Math.hypot(ca.x+ca.width/2-W/2, ca.y+ca.height/2-H/2), db=Math.hypot(cb.x+cb.width/2-W/2, cb.y+cb.height/2-H/2); return da-db; });
+          return rk[0].rawValue;
+        }
+        if(codes[0]) fallback=codes[0].rawValue;
+      }catch(_){}
+    }
+    // ② 画像全体を数段階の大きさで
+    for(const max of [1200, 800, 1800]){
+      const t=jsqrOn(img,0,0,W,H,max); if(isRackText(t)) return t; if(t && !fallback) fallback=t;
+      await new Promise(r=>setTimeout(r,0));
+    }
+    // ③ 窓をずらしながら探す（大きい窓→小さい窓、中央に近い順）
+    const m=Math.min(W,H); const t0=Date.now();
+    for(const f of [0.6,0.45,0.34,0.26,0.2]){
+      const sz=m*f, st=sz/3, tiles=[];
+      for(let y=0;y<=H-sz+1;y+=st) for(let x=0;x<=W-sz+1;x+=st) tiles.push({x,y,d:Math.hypot(x+sz/2-W/2,y+sz/2-H/2)});
+      tiles.sort((a,b)=>a.d-b.d);
+      for(let i=0;i<tiles.length;i++){
+        const t=tiles[i]; const r=jsqrOn(img,t.x,t.y,sz,sz,600); if(isRackText(r)) return r; if(r && !fallback) fallback=r;
+        if(i%12===11) await new Promise(r=>setTimeout(r,0));
+      }
+      if(Date.now()-t0>12000) break;
+    }
+    return fallback;
+  }catch(err){ console.error(err); return fallback; }
+  finally{ URL.revokeObjectURL(url); }
+}
+function parseRack(text){
+  if(!text) return null;
+  let t = text.trim(); if(t.toUpperCase().startsWith(QR_PREFIX)) t = t.slice(QR_PREFIX.length);
+  const hi = t.toLowerCase().indexOf("#"+HASH_PREFIX); if(hi>=0) t = t.slice(hi+1+HASH_PREFIX.length);
+  t = t.trim().toUpperCase();
+  return racks.has(t) ? t : (t ? {unknown:t} : null);
+}
+function openCamera(purpose){ scanPurpose = purpose; $("#cam").value=""; $("#cam").click(); }
+$("#cam").addEventListener("change", async e=>{
+  const f = e.target.files && e.target.files[0]; if(!f) return;
+  toast("QRを読み取っています…");
+  const txt = await decodeImage(f);
+  const r = parseRack(txt);
+  if(!r){ toast(typeof jsQR!=="function" && !("BarcodeDetector" in window) ? "読み取り機能を読み込めませんでした。ページを開き直してください" : "QRが見つかりません。QRを画面の中央に大きめに写して撮り直してください"); return; }
+  if(typeof r === "object"){ toast(`「${r.unknown}」は登録されていないラックです`); return; }
+  if(scanPurpose==="view"){ detailRack = r; renderRackGrid(); renderDetail(); $("#rackDetail").scrollIntoView({behavior:"smooth"}); }
+  else { curRack = r; renderRackSelect(); renderStore(); setTimeout(()=>$("#itemNo").focus(),80); }
+  toast(`ラック ${r} を読み取りました`);
+});
+$("#scanRackBtn").onclick = ()=>openCamera("store");
+$("#scanViewBtn").onclick = ()=>openCamera("view");
+
+/* ---------- actions ---------- */
+$("#pfxSelect").onchange = e=>{ pickPfx = e.target.value; renderRackSelect(); if(pickPfx) $("#rackSelect").focus(); };
+$("#rackSelect").onchange = e=>{ curRack = e.target.value; renderStore(); if(curRack) setTimeout(()=>$("#itemNo").focus(),80); };
+$("#platePfx").onchange = e=>{
+  platePfx = e.target.value; renderRackSelect();
+  const l = rackGroups().get(platePfx)||[];
+  if(l.length===1) switchRack(l[0].code); else $("#plateNo").focus();
+};
+$("#plateNo").onchange = e=>{ const v=e.target.value; if(v && v!==curRack) switchRack(v); };
+function switchRack(v){
+  curRack = v; platePfx = rackPfx(v); renderRackSelect(); renderStore();
+  toast(`収納先を ${v} に変更しました`);
+  setTimeout(()=>$("#itemNo").focus(),80);
+}
+$("#changeRackQr").onclick = ()=>$("#scanRackBtn").click();
+
+async function storeMany(list, rack){
+  const res = await write("storeItems", {rack, list});
+  return (res||[]).map(x=>x.r);
+}
+async function storeOne(no, name, rack){ return (await storeMany([{no,name}], rack))[0] || "same"; }
+$("#storeForm").addEventListener("submit", async e=>{
+  e.preventDefault();
+  if(!online){ toast("データに接続できていません"); return; }
+  const no = $("#itemNo").value.trim(); const name = $("#itemName").value.trim();
+  if(!no || !curRack) return;
+  try{
+    const r = await storeOne(no, name, curRack);
+    toast(r==="same" ? `${no} はすでに ${curRack} にあります` : r==="new" ? `${no} を ${curRack} に収納しました`
+      : r==="updated" ? `${no} を更新しました` : `${no}：${r.slice(6)} → ${curRack} に移動しました`);
+    $("#itemNo").value=""; $("#itemName").value=""; $("#itemNo").focus();
+  }catch(err){ handleWriteErr(err); }
+});
+
+/* まとめて登録（箇条書き） */
+function parseBulk(text){
+  const map = new Map();
+  for(let line of String(text).split(/\r?\n/)){
+    line = line.replace(/^\s*(?:[・•●○◦◆■□\*＊]|[-－–—]\s+|\d+[\.\)．）]\s+)\s*/, "").trim();
+    if(!line) continue;
+    const m = line.match(/^(\S+?)(?:[\t,、，：:]+|\s+)(.*)$/);
+    const no = (m? m[1] : line).replace(/[,、，：:]+$/,"").trim();
+    const name = (m? m[2] : "").trim();
+    if(no) map.set(no.toUpperCase(), {no, name});
+  }
+  return [...map.values()];
+}
+function updateBulkPreview(){
+  const list = parseBulk($("#bulkText").value);
+  const nNew = list.filter(x=>!findByNo(x.no)).length;
+  const nMove = list.filter(x=>{ const h=findByNo(x.no); return h && h[1].rack!==curRack; }).length;
+  $("#bulkPreview").innerHTML = list.length
+    ? `${list.length}件を読み取りました（新規 ${nNew}件${nMove? `・他ラックから移動 ${nMove}件`:""}）<br>` +
+      list.slice(0,5).map(x=>`<span class="bp"><b>${esc(x.no)}</b> ${esc(x.name)}</span>`).join("") + (list.length>5? `<span class="bp">…ほか${list.length-5}件</span>`:"")
+    : "1行に1商品ずつ入力してください。";
+  $("#bulkGo").disabled = !list.length;
+  $("#bulkGo").textContent = list.length ? `${curRack} に ${list.length}件まとめて収納` : "このラックにまとめて収納";
+}
+$("#bulkText").addEventListener("input", updateBulkPreview);
+$("#bulkGo").onclick = async ()=>{
+  if(!online || !curRack){ toast("データに接続できていません"); return; }
+  const list = parseBulk($("#bulkText").value); if(!list.length) return;
+  const btn = $("#bulkGo"); btn.disabled = true;
+  let ok=0, moved=0, same=0;
+  try{
+    btn.textContent = `${list.length}件を登録中…`;
+    for(const r of await storeMany(list, curRack)){ if(r==="same") same++; else { ok++; if(r.startsWith("moved")) moved++; } }
+    toast(`${curRack} に ${ok}件収納しました${moved? `（うち移動 ${moved}件）`:""}${same? `・${same}件は登録済み`:""}`);
+    $("#bulkText").value = "";
+  }catch(err){ handleWriteErr(err); toast("登録できませんでした。通信状態を確認して、もう一度お試しください"); }
+  updateBulkPreview();
+};
+
+document.addEventListener("click", async e=>{
+  const b = e.target.closest("button[data-act]"); if(!b) return;
+  const act = b.dataset.act;
+  if(act==="edit"){
+    const v=items.get(b.dataset.id); if(!v) return;
+    editingId=b.dataset.id; editDraft={no:v.no||"",name:v.name||""}; renderAll();
+    const box=document.querySelector(`[data-view]:not([hidden]) .item[data-id="${CSS.escape(editingId)}"] .ed-name`); if(box) box.focus();
+  }
+  if(act==="exportRack") exportCsv([b.dataset.rack]);
+  if(act==="delItem") await removeItems([b.dataset.id]);
+  if(act==="purgeSold"){
+    const ids=itemsIn(b.dataset.rack).filter(([,v])=>v.soldAt).map(([id])=>id);
+    await removeItems(ids);
+  }
+  if(act==="cancelEdit"){ editingId=null; renderAll(); }
+  if(act==="saveEdit"){
+    const id=b.dataset.id, v=items.get(id); const box=b.closest(".editbox");
+    const no=box.querySelector(".ed-no").value.trim(), name=box.querySelector(".ed-name").value.trim();
+    if(!no){ toast("管理番号を入力してください"); return; }
+    const dup=findByNo(no); if(dup && dup[0]!==id){ toast(`${no} はすでに ${dup[1].rack} に登録されています`); return; }
+    try{ await write("updateItem", {id, no, name}); editingId=null; toast("保存しました"); renderAll(); }catch(err){ handleWriteErr(err); }
+  }
+  if(act==="storeHere"){ curRack = b.dataset.rack; location.hash="#store"; renderRackSelect(); renderStore(); }
+  if(act==="askDel"){
+    $("#delArea").innerHTML = `<div class="confirm"><span class="warn">ラック ${esc(detailRack)} を削除します。よろしいですか？</span>
+      <button class="small danger" data-act="doDel" type="button">削除する</button><button class="small" data-act="cancelDel" type="button">やめる</button></div>`;
+  }
+  if(act==="cancelDel") renderDetail();
+  if(act==="doDel"){
+    const c = detailRack;
+    try{ await write("deleteRack", {code:c}); detailRack=""; if(curRack===c) curRack=""; toast(`ラック ${c} を削除しました`); }catch(err){ handleWriteErr(err); }
+  }
+});
+$("#rackGrid").addEventListener("click", e=>{
+  const b = e.target.closest("[data-rack]"); if(!b) return;
+  detailRack = detailRack===b.dataset.rack ? "" : b.dataset.rack; renderRackGrid(); renderDetail();
+});
+$("#q").addEventListener("input", renderSearch);
+document.addEventListener("change", async e=>{
+  const id=e.target.dataset && e.target.dataset.sold; if(!id) return;
+  const v=items.get(id); if(!v || !online) return;
+  const {soldAt, ...rest} = v;
+  try{
+    if(e.target.checked){ items.set(id,{...rest, soldAt:Date.now()}); renderAll(); await write("setSold",{id, sold:true}); toast(`${v.no} を売却済みにしました`); }
+    else { items.set(id,rest); renderAll(); await write("setSold",{id, sold:false}); toast(`${v.no} を出品中に戻しました`); }
+  }catch(err){ items.set(id, v); renderAll(); handleWriteErr(err); }
+});
+async function removeItems(ids){
+  const removed=ids.filter(id=>items.has(id)).map(id=>[id,{...items.get(id)}]); if(!removed.length) return;
+  try{
+    await write("deleteItems", {ids: removed.map(([id])=>id)});
+    lastRemoved=removed; clearTimeout(undoTimer); undoTimer=setTimeout(()=>{ lastRemoved=null; renderSoldBar(); },10000);
+  }catch(err){ handleWriteErr(err); }
+  renderAll();
+}
+document.addEventListener("input", e=>{
+  if(e.target.classList.contains("ed-no")) editDraft.no=e.target.value;
+  if(e.target.classList.contains("ed-name")) editDraft.name=e.target.value;
+});
+$("#soldClear").onclick=()=>{ lastRemoved=null; renderAll(); };
+$("#soldGo").onclick=async ()=>{
+  if(!online || !lastRemoved) return;
+  const btn=$("#soldGo"); btn.disabled=true;
+  try{
+    const back=lastRemoved; lastRemoved=null; clearTimeout(undoTimer);
+    await write("restoreItems", {items: back.map(([id,v])=>({id, ...v}))});
+    toast(`${back.length}点をラックに戻しました`);
+  }catch(err){ handleWriteErr(err); }
+  btn.disabled=false; renderAll();
+};
+
+function rackRange(){
+  const p = $("#pfx").value.trim().toUpperCase().replace(/[^A-Z0-9]/g,"");
+  let a = parseInt($("#from").value,10), b = parseInt($("#to").value,10);
+  if(!p || !a || !b) return [];
+  if(a>b) [a,b]=[b,a]; if(b-a>99) b=a+99;
+  const out=[]; for(let i=a;i<=b;i++) out.push(`${p}-${String(i).padStart(2,"0")}`); return out;
+}
+function updatePreview(){
+  const r = rackRange(); const fresh = r.filter(c=>!racks.has(c));
+  $("#addPreview").textContent = r.length ? `${r[0]} 〜 ${r[r.length-1]}（新規 ${fresh.length}件${r.length-fresh.length? `、登録済み ${r.length-fresh.length}件は変更しません`:""}）` : "記号と番号を入力してください";
+  $("#addRacks").disabled = !fresh.length;
+}
+["#pfx","#from","#to"].forEach(s=>$(s).addEventListener("input",updatePreview));
+$("#addRacks").onclick = async ()=>{
+  if(!online) return;
+  const fresh = rackRange().filter(c=>!racks.has(c) && rackCodeOk(c)); const name = $("#rackNameIn").value.trim();
+  $("#addRacks").disabled = true;
+  try{
+    await write("addRacks", {codes: fresh, name}); fresh.forEach(c=>selectedLabels.add(c));
+    toast(`${fresh.length}件のラックを追加しました`); $("#rackNameIn").value="";
+  }catch(err){ handleWriteErr(err); }
+  updatePreview();
+};
+
+/* labels */
+$("#labelGrid").addEventListener("change", e=>{
+  const c = e.target.dataset.lab; if(!c) return;
+  e.target.checked ? selectedLabels.add(c) : selectedLabels.delete(c); renderLabels();
+});
+$("#selAll").onclick = ()=>{ racks.forEach((_,c)=>selectedLabels.add(c)); renderLabels(); };
+$("#selNone").onclick = ()=>{ selectedLabels.clear(); renderLabels(); };
+
+function buildSheets(codes){
+  // A4 @ 300dpi, 3 x 6 labels (約65mm x 45mm)
+  const W=2480,H=3508,cols=3,rows=6,mx=120,my=150;
+  const cw=(W-mx*2)/cols, ch=(H-my*2)/rows; const sheets=[];
+  for(let p=0;p<codes.length;p+=cols*rows){
+    const c=document.createElement("canvas"); c.width=W; c.height=H; const x=c.getContext("2d");
+    x.fillStyle="#fff"; x.fillRect(0,0,W,H);
+    codes.slice(p,p+cols*rows).forEach((code,i)=>{
+      const cx=mx+(i%cols)*cw, cy=my+Math.floor(i/cols)*ch;
+      x.strokeStyle="#bbb"; x.lineWidth=3; x.setLineDash([18,14]); x.strokeRect(cx+10,cy+10,cw-20,ch-20); x.setLineDash([]);
+      const q=qrMatrix(qrText(code)); const n=q.getModuleCount(); const qs=ch-120; const mod=Math.floor(qs/(n+4));
+      const qx=cx+40, qy=cy+(ch-mod*(n+4))/2; x.fillStyle="#000";
+      for(let r=0;r<n;r++) for(let k=0;k<n;k++) if(q.isDark(r,k)) x.fillRect(qx+(k+2)*mod,qy+(r+2)*mod,mod,mod);
+      const tx=qx+mod*(n+4)+20, tw=cx+cw-30-tx;
+      let fs=150; x.font=`700 ${fs}px "IBM Plex Mono", monospace`; while(x.measureText(code).width>tw && fs>50){ fs-=6; x.font=`700 ${fs}px "IBM Plex Mono", monospace`; }
+      x.textBaseline="middle"; x.fillText(code, tx, cy+ch/2);
+      x.font=`500 34px "Zen Kaku Gothic New", sans-serif`; x.fillStyle="#555"; x.fillText("ReKiL 棚番", tx, cy+ch/2+fs*0.75);
+      x.fillStyle="#f2b705"; x.fillRect(tx, cy+ch/2-fs*0.75-24, Math.min(tw,180), 14);
+    });
+    sheets.push(c);
+  }
+  return sheets;
+}
+$("#saveSheet").onclick = async ()=>{
+  const codes = [...selectedLabels].sort(natural); if(!codes.length) return;
+  await document.fonts.ready;
+  const sheets = buildSheets(codes);
+  for(let i=0;i<sheets.length;i++){
+    const blob = await new Promise(r=>sheets[i].toBlob(r,"image/png"));
+    try{ await saveFile(`棚番QRラベル_${i+1}.png`, blob, "image/png"); $("#saveNote").textContent=`${i+1}/${sheets.length}枚目を保存しました。A4・等倍（拡大縮小なし）で印刷してください。`; }
+    catch(err){ $("#saveNote").textContent = err && err.code==="declined" ? "保存をキャンセルしました。" : "保存できませんでした。時間をおいてもう一度お試しください。"; break; }
+  }
+};
+
+function csvCell(v){ const t=String(v??""); return /[",\n\r]/.test(t) ? '"'+t.replace(/"/g,'""')+'"' : t; }
+function stamp(ms){ if(!ms) return ""; const d=new Date(ms), z=n=>String(n).padStart(2,"0"); return `${d.getFullYear()}/${z(d.getMonth()+1)}/${z(d.getDate())} ${z(d.getHours())}:${z(d.getMinutes())}`; }
+async function exportCsv(codes){
+  const note=$("#exportNote");
+  const set=codes? new Set(codes) : null;
+  const rows=[...items.values()].filter(v=>!set||set.has(v.rack))
+    .sort((a,b)=>natural(a.rack||"",b.rack||"") || (!!a.soldAt - !!b.soldAt) || natural(sortKey(a),sortKey(b)) || natural(String(a.no),String(b.no)));
+  const head=["ラック番号","ラックの場所","状態","管理番号","商品名・メモ","収納日時","売却日時"];
+  const lines=[head.join(",")].concat(rows.map(v=>{ const r=racks.get(v.rack); return [v.rack, r?r.name:"", v.soldAt?"売却済み":"出品中", v.no, v.name, stamp(v.updatedAt), stamp(v.soldAt)].map(csvCell).join(","); }));
+  const today=new Date(), z=n=>String(n).padStart(2,"0");
+  const ymd=`${today.getFullYear()}${z(today.getMonth()+1)}${z(today.getDate())}`;
+  const filename = codes && codes.length===1 ? `ReKiL_Stock_${codes[0]}_${ymd}.csv` : `ReKiL_Stock_全在庫_${ymd}.csv`;
+  if(!rows.length){ toast(codes? "このラックには商品がありません":"出力する在庫がありません"); return; }
+  try{
+    await saveFile(filename, new Blob(["\uFEFF"+lines.join("\r\n")], {type:"text/csv"}), "text/csv");
+    note.textContent=`${rows.length}点を「${filename}」で保存しました。`; toast(`${rows.length}点を出力しました`);
+  }catch(err){ const m = err&&err.code==="declined" ? "保存をキャンセルしました。" : "保存できませんでした。時間をおいてもう一度お試しください。"; note.textContent=m; toast(m); }
+}
+$("#exportAll").onclick=()=>exportCsv(null);
+
+async function saveFile(filename, blob, type){
+  const file = new File([blob], filename, {type});
+  // iPhone・Android：共有メニューから「ファイルに保存」「画像を保存」などを選べる
+  if(navigator.canShare && navigator.canShare({files:[file]}) && /iPhone|iPad|Android/i.test(navigator.userAgent)){
+    try{ await navigator.share({files:[file]}); return; }
+    catch(err){ if(err && err.name==="AbortError"){ const e=new Error("declined"); e.code="declined"; throw e; } }
+  }
+  const url = URL.createObjectURL(blob); const a = document.createElement("a");
+  a.href = url; a.download = filename; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url), 4000);
+}
+function handleWriteErr(err){
+  console.error(err);
+  const c = err && err.code || "";
+  if(c==="network") toast("通信できませんでした。電波の良い場所でもう一度お試しください");
+  else if(c==="passcode") toast("暗証番号が違います");
+  else if(c==="rack_not_empty") toast("商品が入っているラックは削除できません");
+  else if(c.startsWith("duplicate:")) toast(`その管理番号はすでに ${c.slice(10)} に登録されています`);
+  else toast("保存できませんでした。もう一度お試しください");
+  refresh();
+}
+
+/* ---------- 暗証番号 ---------- */
+function showLock(err){
+  online = false;
+  $("#lock").hidden = false;
+  $("#lockMsg").textContent = err==="passcode_not_set" ? "データ側で暗証番号がまだ設定されていません。Apps Scriptの PASSCODE を書き換えて、もう一度デプロイしてください。"
+    : err==="passcode" && pass ? "暗証番号が違います。もう一度入力してください。" : "社内の暗証番号を入力してください。一度入力すると、このスマホでは次から入力不要です。";
+  setTimeout(()=>$("#passIn").focus(), 100);
+}
+$("#lockForm").addEventListener("submit", async e=>{
+  e.preventDefault();
+  pass = $("#passIn").value.trim(); if(!pass) return;
+  $("#lockGo").disabled = true; $("#lockGo").textContent = "確認中…";
+  try{ await api("list"); try{ localStorage.setItem("rekil-pass", pass); }catch(_){} $("#lock").hidden = true; $("#passIn").value=""; toast("接続しました"); }
+  catch(err){ if(err.code==="network") $("#lockMsg").textContent="通信できませんでした。電波を確認してもう一度お試しください。"; }
+  $("#lockGo").disabled = false; $("#lockGo").textContent = "開く";
+});
+
+/* ---------- 同期 ---------- */
+let refreshing = false;
+async function refresh(){
+  if(refreshing || busy>0 || !pass) return; refreshing = true;
+  try{ await api("list"); }
+  catch(err){ if(err.code==="network"){ $("#sync").textContent = online? "通信待ち（最新でない可能性）" : "未接続"; } }
+  refreshing = false;
+}
+// 開いている間は20秒ごと、画面に戻ったときはすぐ最新にする
+setInterval(()=>{ if(document.visibilityState==="visible") refresh(); }, 20000);
+document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState==="visible" && Date.now()-lastSync>5000) refresh(); });
+
+/* ---------- boot ---------- */
+showView(); renderAll(); updatePreview();
+if(!API_URL){ $("#sync").textContent="未設定"; toast("データの接続先がまだ設定されていません"); }
+else if(!pass) showLock();
+else { $("#sync").textContent="接続中…"; refresh(); }
+</script>
+
+</body></html>
