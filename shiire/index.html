@@ -73,6 +73,22 @@ ul.list li:first-child{border-top:0}
 #lock form{width:100%;max-width:360px;display:flex;flex-direction:column;gap:12px}
 #lock h2{margin:0;font-size:20px}
 .note{font-size:13px;color:var(--muted);margin:0}
+.seg{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:4px}
+.seg button{min-height:40px;border:0;background:transparent;color:var(--muted);font-size:14px}
+.seg button[aria-selected="true"]{background:var(--surface);color:var(--fg);box-shadow:inset 0 -3px 0 var(--accent)}
+.mode{display:flex;flex-direction:column;gap:12px}
+textarea{font:inherit;width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--fg);resize:vertical;line-height:1.7}
+button.photo{min-height:72px;font-size:17px;width:100%;border-style:dashed}
+button.ghost{background:transparent;border-color:transparent;color:var(--muted)}
+pre{white-space:pre-wrap;font-size:12px;color:var(--muted);background:var(--bg);border-radius:8px;padding:10px;margin:8px 0 0;max-height:240px;overflow:auto}
+#preview{display:flex;flex-direction:column;gap:10px;border-top:1px solid var(--line);padding-top:12px}
+ul.pv{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+ul.pv li{display:grid;grid-template-columns:1fr 104px 40px;gap:6px;align-items:center}
+ul.pv li input{min-height:42px;padding:8px 10px}
+ul.pv li input.p{font-family:var(--font-code);font-weight:700;text-align:right}
+ul.pv li .sh{grid-column:1/-1;font-size:12px;color:var(--muted);margin-top:-4px}
+ul.pv li button{min-height:42px;padding:0;color:var(--danger)}
+ul.pv li.bad input.p{border-color:var(--danger)}
 </style>
 </head>
 <body>
@@ -82,32 +98,63 @@ ul.list li:first-child{border-top:0}
 </header>
 
 <main>
-  <form class="panel" id="form" autocomplete="off" novalidate>
+  <div class="panel">
     <label class="f"><span class="label">仕入先</span>
-      <input id="shop" class="big" placeholder="例：BOOKOFF相模原" enterkeyhint="next" list="shopList">
+      <input id="shop" class="big" placeholder="例：BOOKOFF相模原" enterkeyhint="next" list="shopList" autocomplete="off">
       <datalist id="shopList"></datalist>
     </label>
     <div class="chips" id="shopChips" aria-label="最近の仕入先"></div>
 
-    <label class="f"><span class="label">商品名</span>
-      <input id="name" class="big" placeholder="例：GUCCIショルダーバッグ" enterkeyhint="next">
-    </label>
+    <div class="seg" role="tablist" aria-label="入力のしかた">
+      <button type="button" role="tab" data-mode="one" aria-selected="true">1点ずつ</button>
+      <button type="button" role="tab" data-mode="bulk" aria-selected="false">まとめて</button>
+      <button type="button" role="tab" data-mode="photo" aria-selected="false">写真</button>
+    </div>
 
-    <label class="f"><span class="label">仕入値（円）</span>
-      <input id="price" class="price" inputmode="numeric" placeholder="0" enterkeyhint="done">
-    </label>
+    <!-- 1点ずつ -->
+    <form id="form" class="mode" data-for="one" autocomplete="off" novalidate>
+      <label class="f"><span class="label">商品名</span>
+        <input id="name" class="big" placeholder="例：GUCCIショルダーバッグ" enterkeyhint="next">
+      </label>
+      <label class="f"><span class="label">仕入値（円）</span>
+        <input id="price" class="price" inputmode="numeric" placeholder="0" enterkeyhint="done">
+      </label>
+      <label class="f"><span class="label">備考（任意）</span><input id="note" placeholder="型番など"></label>
+      <button class="primary" id="go" type="submit">記帳する</button>
+    </form>
+
+    <!-- まとめて -->
+    <div class="mode" data-for="bulk" hidden>
+      <label class="f"><span class="label">1行に1点（商品名と金額）</span>
+        <textarea id="bulkText" rows="6" placeholder="GUCCIショルダーバッグ 12000&#10;COACHトートバッグ 3300&#10;PRADAナイロンポーチ 2,200円"></textarea>
+      </label>
+      <p class="note">金額は行の最後に。仕入先は上の欄がすべてに入ります（行の最後に店名を書くと、その行だけ別の仕入先にできます）。</p>
+      <button type="button" id="bulkCheck">確認する</button>
+    </div>
+
+    <!-- 写真 -->
+    <div class="mode" data-for="photo" hidden>
+      <p class="note">レシートや値札を撮ると、文字を読み取って商品名と金額の候補を出します。記帳する前に必ず確認・修正してください。</p>
+      <button type="button" id="photoBtn" class="photo"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>写真を撮る・選ぶ</button>
+      <input type="file" id="photoIn" accept="image/*" hidden>
+      <details id="ocrRaw" hidden><summary>読み取った文字をすべて見る</summary><pre id="ocrText"></pre></details>
+    </div>
+
+    <!-- まとめて・写真の確認画面 -->
+    <div id="preview" hidden>
+      <div class="sum"><span class="label">記帳する内容を確認</span><span class="label" id="pvSum"></span></div>
+      <ul class="pv" id="pvList"></ul>
+      <button type="button" class="small" id="pvAdd">＋ 行を追加</button>
+      <button type="button" class="primary" id="pvGo">記帳する</button>
+      <button type="button" class="ghost" id="pvCancel">やめる</button>
+    </div>
 
     <details id="more">
-      <summary>備考・仕入日を変える</summary>
-      <div class="row2" style="margin-top:10px">
-        <label class="f"><span class="label">仕入日</span><input id="date" type="date"></label>
-        <label class="f"><span class="label">備考（任意）</span><input id="note" placeholder="型番など"></label>
-      </div>
+      <summary>仕入日を変える（前日以前の分）</summary>
+      <label class="f" style="margin-top:10px"><span class="label">仕入日</span><input id="date" type="date"></label>
     </details>
     <p class="past" id="pastMsg" hidden></p>
-
-    <button class="primary" id="go" type="submit">記帳する</button>
-  </form>
+  </div>
 
   <section class="panel" aria-labelledby="listT">
     <div class="sum">
@@ -115,7 +162,7 @@ ul.list li:first-child{border-top:0}
       <div class="tot"><small id="cnt">0点</small><span id="tot">¥0</span></div>
     </div>
     <ul class="list" id="list"></ul>
-    <p class="empty" id="empty">まだありません。上から記帳すると、商品リストに入った内容がここに出ます。</p>
+    <p class="empty" id="empty">まだありません。記帳すると、商品リストに入った内容がここに出ます。</p>
     <p class="note">商品リストに入っているその日の仕入をすべて表示しています（オークション分も含む）。「取消」はこのスマホから記帳した分だけ出ます。</p>
   </section>
 </main>
@@ -133,7 +180,7 @@ ul.list li:first-child{border-top:0}
 <script>
 /* ▼ Apps Script をデプロイしたときの「ウェブアプリのURL」 */
 const API_URL = "https://script.google.com/macros/s/AKfycbwMrGyfC24OulRxZ5xkpKnA0rPlK1Fi0wWacCv17PgV7FsUF7CPBVEKj9O5TVpwHW6y/exec";
-const APP_VERSION = "2026-11-08-3";
+const APP_VERSION = "2026-11-08-4";
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -240,37 +287,192 @@ $("#form").addEventListener("submit", e=>{
   if(!shop){ toast("仕入先を入れてください"); $("#shop").focus(); return; }
   if(!name){ toast("商品名を入れてください"); $("#name").focus(); return; }
   if(price===""){ toast("仕入値を入れてください"); $("#price").focus(); return; }
-  const cid = Date.now().toString(36) + Math.random().toString(36).slice(2,8);
-  const item = {cid, shop, name, price:Number(price), note, date:viewDate};
-  queue.push(item); ls.set("shiire-queue", queue);
+  enqueue([{shop, name, price:Number(price), note}]);
   ls.set("shiire-lastshop", shop);
   $("#name").value = ""; $("#price").value = ""; $("#note").value = "";
-  render(); $("#name").focus();
-  flush();
+  $("#name").focus();
 });
 
+const newCid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,8);
+function enqueue(items){
+  items.forEach(it=>queue.push({cid:newCid(), note:"", ...it, date:viewDate}));
+  ls.set("shiire-queue", queue);
+  render(); flush();
+}
+
+let batchOk = true;   // データ側が古い版（まとめて記帳に未対応）なら1点ずつ送る
 async function flush(){
   if(sending || !queue.length || !pass) return;
   sending = true; status();
-  let failed = false;
+  let failed = false, done = 0;
+  const accept = q => {
+    queue = queue.filter(x=>x.cid!==q.cid); ls.set("shiire-queue", queue);
+    mine.push({cid:q.cid, name:q.name, price:q.price, shop:q.shop, date:q.date});
+    mine = mine.slice(-300); ls.set("shiire-mine", mine); done++;
+  };
+  const reject = (q, code) => {
+    queue = queue.filter(x=>x.cid!==q.cid); ls.set("shiire-queue", queue);
+    toast(`記帳できませんでした：${q.name}（${code}）`);
+  };
   while(queue.length){
-    const q = queue[0];
+    const chunk = batchOk ? queue.slice(0, 20) : queue.slice(0, 1);
     try{
-      await api("add", q);
-      queue.shift(); ls.set("shiire-queue", queue);
-      mine.push({cid:q.cid, name:q.name, price:q.price, shop:q.shop, date:q.date});
-      mine = mine.slice(-200); ls.set("shiire-mine", mine);
-      toast(`記帳しました：${q.name}`);
+      if(batchOk){
+        const res = await api("addMany", {items: chunk});
+        chunk.forEach((q,i)=>{ const r = res && res[i]; if(r && r.ok) accept(q); else reject(q, r && r.error || "error"); });
+      }else{
+        await api("add", chunk[0]); accept(chunk[0]);
+      }
     }catch(err){
-      if(err.code==="network"){ failed = true; break; }
-      if(err.code==="passcode"||err.code==="passcode_not_set"){ failed = true; break; }
-      // 内容の不備などで入らなかったものは外して知らせる
-      queue.shift(); ls.set("shiire-queue", queue);
-      toast(`記帳できませんでした：${q.name}（${err.code}）`);
+      if(err.code==="unknown_action" && batchOk){ batchOk = false; continue; }
+      if(["network","passcode","passcode_not_set"].includes(err.code)){ failed = true; break; }
+      if(batchOk){ failed = true; break; }
+      reject(chunk[0], err.code);
     }
   }
   sending = false; render();
+  if(done) toast(done===1 ? "記帳しました" : `${done}点を記帳しました`);
   if(failed && queue.length){ toast("電波が弱いため送信待ちにしました。つながったら自動で送ります"); setTimeout(flush, 15000); }
+}
+
+/* ---------- 入力のしかた（1点ずつ／まとめて／写真） ---------- */
+let mode = "one";
+function setMode(m){
+  mode = m;
+  document.querySelectorAll(".seg [data-mode]").forEach(b=>b.setAttribute("aria-selected", b.dataset.mode===m));
+  document.querySelectorAll(".mode").forEach(el=>el.hidden = el.dataset.for!==m);
+  if(m==="one") $("#preview").hidden = true;
+  else $("#preview").hidden = !pv.length;
+}
+$(".seg").addEventListener("click", e=>{ const b = e.target.closest("[data-mode]"); if(b) setMode(b.dataset.mode); });
+
+const PRICE_RE = /[¥￥]?\s*(\d{1,3}(?:[,，]\d{3})+|\d+)\s*(?:円|-|ー)?\s*$/;
+// 「商品名 金額 [仕入先]」の行を読み取る。金額は最後の数字のかたまり
+function parseLine(line){
+  line = line.replace(/　/g," ").trim();
+  if(!line) return null;
+  const toks = line.split(/\s+/);
+  for(let i=toks.length-1;i>=1;i--){
+    const t = toks[i].replace(/[¥￥円,，]/g,"");
+    if(/^\d+$/.test(t) && toks.slice(0,i).join("").length){
+      return {name: toks.slice(0,i).join(" ").replace(/[¥￥]$/,"").trim(), price: Number(t), shop: toks.slice(i+1).join(" ")};
+    }
+  }
+  const m = line.match(PRICE_RE);
+  if(m && m.index>0){ return {name: line.slice(0,m.index).replace(/[¥￥]\s*$/,"").trim(), price: Number(m[1].replace(/[,，]/g,"")), shop:""}; }
+  return {name: line, price: null, shop:""};
+}
+
+// レシート・値札の文字から、商品名と金額の候補を拾う
+const SKIP = /(合計|小計|総計|計\s|お預|預り|預かり|お釣|釣銭|おつり|現金|クレジット|カード|ポイント|税|対象|点数|値引|割引|領収|ありがとう|電話|TEL|〒|登録番号|レジ|担当|No\.|NO\.|ご来店|残高|支払|交通系|QR|PayPay)/i;
+function parseReceipt(text){
+  const lines = text.split(/\r?\n/).map(s=>s.replace(/　/g," ").trim()).filter(Boolean);
+  const out = []; let pending = "";
+  for(const ln of lines){
+    if(SKIP.test(ln)){ pending = ""; continue; }
+    const m = ln.match(PRICE_RE);
+    const hasYen = /[¥￥円]/.test(ln) || /\d{1,3}[,，]\d{3}/.test(ln);
+    if(m && hasYen){
+      const before = ln.slice(0, m.index).replace(/[¥￥*＊※]\s*$/,"").trim();
+      const name = before && !/^\d+$/.test(before) ? before : pending;
+      const price = Number(m[1].replace(/[,，]/g,""));
+      if(name && price>0 && price<10000000) out.push({name: name.replace(/^[*＊※\d\s]+(?=\D)/,""), price, shop:""});
+      pending = "";
+    }else if(!/^[\d\s\-:\/.]+$/.test(ln)){
+      pending = ln;
+    }
+  }
+  return out;
+}
+
+/* ---------- 確認画面 ---------- */
+let pv = [];
+function renderPv(){
+  const def = $("#shop").value.trim();
+  $("#pvList").innerHTML = pv.map((r,i)=>`
+    <li class="${r.price==null||r.price===""?"bad":""}">
+      <input data-i="${i}" data-k="name" value="${esc(r.name)}" aria-label="商品名">
+      <input data-i="${i}" data-k="price" class="p" inputmode="numeric" value="${r.price==null?"":Number(r.price).toLocaleString("ja-JP")}" placeholder="金額" aria-label="金額">
+      <button type="button" data-del="${i}" aria-label="この行を消す">✕</button>
+      ${r.shop && r.shop!==def ? `<span class="sh">仕入先：${esc(r.shop)}</span>` : ""}
+    </li>`).join("");
+  const ok = pv.filter(r=>r.name && r.price!=null && r.price!=="");
+  $("#pvSum").textContent = `${pv.length}点　${yen(ok.reduce((s,r)=>s+Number(r.price),0))}`;
+  $("#pvGo").textContent = `${pv.length}点を記帳する`;
+  $("#pvGo").disabled = !pv.length;
+  $("#preview").hidden = !pv.length;
+}
+$("#pvList").addEventListener("input", e=>{
+  const el = e.target; const i = +el.dataset.i; if(!pv[i]) return;
+  if(el.dataset.k==="price"){
+    const v = el.value.replace(/[^\d]/g,"");
+    pv[i].price = v===""? null : Number(v);
+    el.value = v? Number(v).toLocaleString("ja-JP") : "";
+    el.closest("li").classList.toggle("bad", v==="");
+    const ok = pv.filter(r=>r.price!=null);
+    $("#pvSum").textContent = `${pv.length}点　${yen(ok.reduce((s,r)=>s+Number(r.price),0))}`;
+  }else pv[i].name = el.value;
+});
+$("#pvList").addEventListener("click", e=>{ const b = e.target.closest("[data-del]"); if(!b) return; pv.splice(+b.dataset.del,1); renderPv(); });
+$("#pvAdd").addEventListener("click", ()=>{ pv.push({name:"", price:null, shop:""}); renderPv(); $("#pvList").lastElementChild.querySelector("input").focus(); });
+$("#pvCancel").addEventListener("click", ()=>{ pv = []; renderPv(); });
+$("#pvGo").addEventListener("click", ()=>{
+  const def = $("#shop").value.trim();
+  const bad = pv.findIndex(r=>!String(r.name||"").trim() || r.price==null || r.price==="");
+  if(bad>=0){ toast(`${bad+1}行目の商品名か金額が空です`); $(`#pvList [data-i="${bad}"][data-k="${String(pv[bad].name||"").trim()?"price":"name"}"]`).focus(); return; }
+  if(pv.some(r=>!r.shop) && !def){ toast("仕入先を入れてください"); $("#shop").focus(); return; }
+  enqueue(pv.map(r=>({name:String(r.name).trim(), price:Number(r.price), shop:(r.shop||def).trim()})));
+  if(def) ls.set("shiire-lastshop", def);
+  pv = []; renderPv();
+  if(mode==="bulk") $("#bulkText").value = "";
+  if(mode==="photo"){ $("#ocrRaw").hidden = true; }
+});
+
+$("#bulkCheck").addEventListener("click", ()=>{
+  const rows = $("#bulkText").value.split(/\r?\n/).map(parseLine).filter(Boolean);
+  if(!rows.length){ toast("商品名と金額を1行ずつ入れてください"); $("#bulkText").focus(); return; }
+  pv = rows; renderPv();
+  $("#preview").scrollIntoView({behavior:"smooth", block:"start"});
+});
+
+/* ---------- 写真から読み取り ---------- */
+$("#photoBtn").addEventListener("click", ()=>$("#photoIn").click());
+$("#photoIn").addEventListener("change", async ()=>{
+  const f = $("#photoIn").files[0]; $("#photoIn").value = ""; if(!f) return;
+  const btn = $("#photoBtn"), label = btn.innerHTML;
+  btn.disabled = true; btn.textContent = "読み取り中…（10〜20秒）";
+  try{
+    const image = await shrink(f, 1800);
+    const r = await api("ocr", {image});
+    const text = (r && r.text) || "";
+    $("#ocrText").textContent = text || "（文字が見つかりませんでした）";
+    $("#ocrRaw").hidden = false;
+    const found = parseReceipt(text);
+    if(found.length){ pv = pv.concat(found); renderPv(); toast(`${found.length}点の候補を読み取りました。確認してください`); $("#preview").scrollIntoView({behavior:"smooth", block:"start"}); }
+    else { $("#ocrRaw").open = true; toast("金額の行を見つけられませんでした。「＋ 行を追加」で入れてください"); pv = pv.length? pv : [{name:"",price:null,shop:""}]; renderPv(); }
+  }catch(err){
+    const c = err && err.code || "";
+    toast(c==="network" ? "通信できませんでした。電波の良い場所でもう一度お試しください"
+      : c==="unknown_action" ? "データ側が写真読み取りに未対応です。Apps Scriptを最新版に更新してください"
+      : /drive|Drive/.test(c) ? "データ側でDrive APIが有効になっていません（設定手順を確認してください）"
+      : `読み取りできませんでした（${c}）`);
+  }
+  btn.disabled = false; btn.innerHTML = label;
+});
+// 写真を縮小してJPEGのbase64にする（通信量を減らす）
+function shrink(file, max){
+  return new Promise((ok, ng)=>{
+    const img = new Image(), url = URL.createObjectURL(file);
+    img.onload = ()=>{
+      const s = Math.min(1, max/Math.max(img.width, img.height));
+      const c = document.createElement("canvas"); c.width = Math.round(img.width*s); c.height = Math.round(img.height*s);
+      c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(url);
+      ok(c.toDataURL("image/jpeg", 0.85).split(",")[1]);
+    };
+    img.onerror = ()=>{ URL.revokeObjectURL(url); ng(new ApiError("image")); };
+    img.src = url;
+  });
 }
 
 /* ---------- 取消 ---------- */
