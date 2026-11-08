@@ -27,7 +27,7 @@ header{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var
 .sync{font-size:12px;color:#c9d1d9}
 main{max-width:640px;margin:0 auto;padding-block:16px 180px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:16px}
 nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--surface);border-top:1px solid var(--line);
-  display:grid;grid-template-columns:repeat(4,1fr);padding-bottom:env(safe-area-inset-bottom,0px);
+  display:grid;grid-template-columns:repeat(5,1fr);padding-bottom:env(safe-area-inset-bottom,0px);
   padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
 nav.tabs a{display:flex;flex-direction:column;align-items:center;gap:2px;padding:9px 4px 10px;color:var(--muted);text-decoration:none;font-size:12px;font-weight:700}
 nav.tabs a svg{width:22px;height:22px}
@@ -121,6 +121,22 @@ input,select{font:inherit;width:100%;padding:11px 12px;border:1px solid var(--li
 .lock{position:fixed;inset:0;z-index:30;background:var(--bg);display:flex;align-items:center;justify-content:center;
   padding:max(24px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) 24px max(16px,env(safe-area-inset-left,0px))}
 .lockbox{width:100%;max-width:360px;display:flex;flex-direction:column;gap:14px}
+.tabicon{position:relative;display:inline-flex}
+.badge{position:absolute;top:-6px;right:-12px;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--danger);color:#fff;font-size:11px;line-height:18px;text-align:center;font-weight:700;font-style:normal}
+.picksum{display:flex;gap:16px;font-size:14px;color:var(--muted)}
+.picksum b{font-size:22px;color:var(--fg);font-variant-numeric:tabular-nums;margin-right:2px}
+.picksum:empty{display:none}
+.pk-rack{display:flex;flex-direction:column;gap:8px}
+.pk-h{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.pk-h .pk-n{color:var(--muted);font-size:13px;font-weight:700}
+.pk-h button{margin-left:auto}
+.pk-go{flex:none;min-width:92px}
+.labsize{display:flex;flex-direction:column;gap:8px}
+.labsize label{display:flex;align-items:flex-start;gap:10px;padding:12px;border:1px solid var(--line);border-radius:10px;background:var(--surface);cursor:pointer}
+.labsize input{width:20px;height:20px;min-height:0;margin-top:3px;accent-color:var(--accent)}
+.labsize b{display:block}
+.labsize span{font-size:13px;color:var(--muted)}
+.labsize label:has(input:checked){border:2px solid var(--accent)}
 .warn{font-size:13px;color:var(--danger);font-weight:700}
 .confirm{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:13px}
 @media (prefers-reduced-motion:no-preference){.toast{animation:pop .18s ease-out}@keyframes pop{from{opacity:0;transform:translate(-50%,8px)}}}
@@ -187,6 +203,17 @@ input,select{font:inherit;width:100%;padding:11px 12px;border:1px solid var(--li
   </section>
 
   <!-- 探す -->
+  <section id="v-pickup" data-view="pickup" hidden>
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <div>
+        <h2>ピックアップ待ち</h2>
+        <p class="lead">「売れた」にした商品が、ラック番号順に並びます。棚から取り出したら「取り出した」を押すと、こことラックから消えます。</p>
+      </div>
+      <div class="picksum" id="pickSum"></div>
+      <div class="grp" id="pickList"></div>
+    </div>
+  </section>
+
   <section id="v-search" data-view="search" hidden>
     <div style="display:flex;flex-direction:column;gap:16px">
       <div>
@@ -234,14 +261,18 @@ input,select{font:inherit;width:100%;padding:11px 12px;border:1px solid var(--li
     <div style="display:flex;flex-direction:column;gap:16px">
       <div>
         <h2>QRラベル発行</h2>
-        <p class="lead">番号入りのQRラベルをA4画像（1枚18枚分）で保存して印刷し、各ラックに貼ってください。スマホの標準カメラで読み取ると、このアプリがそのラックを選んだ状態で開きます。</p>
+        <p class="lead">番号入りのQRラベルを画像で保存して、A4で印刷します。スマホの標準カメラで読み取ると、このアプリがそのラックを選んだ状態で開きます。</p>
+      </div>
+      <div class="labsize" role="radiogroup" aria-label="ラベルの大きさ">
+        <label><input type="radio" name="labsize" id="sizeA5" value="a5" checked><div><b>大きいラベル（A4の半分）</b><span>A4に2ラック分。真ん中の線で切ってラミネートしやすい大きさです。</span></div></label>
+        <label><input type="radio" name="labsize" id="sizeSmall" value="small"><div><b>小さいラベル</b><span>A4に18ラック分（約65×45mm）。</span></div></label>
       </div>
       <div class="row">
         <button type="button" id="selAll">すべて選択</button>
         <button type="button" id="selNone">選択を外す</button>
       </div>
       <div class="labels" id="labelGrid"></div>
-      <button class="primary" id="saveSheet" type="button">選択したラベルをA4画像で保存</button>
+      <button class="primary" id="saveSheet" type="button">選択したラベルを画像で保存</button>
       <p class="note" id="saveNote" style="margin:0"></p>
     </div>
   </section>
@@ -249,6 +280,7 @@ input,select{font:inherit;width:100%;padding:11px 12px;border:1px solid var(--li
 
 <nav class="tabs" aria-label="メニュー">
   <a href="#store" data-tab="store"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7V4h3M21 7V4h-3M3 17v3h3M21 17v3h-3"/><path d="M8 12h8M12 8v8"/></svg>収納</a>
+  <a href="#pickup" data-tab="pickup"><span class="tabicon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16l-1.5 12h-13z"/><path d="M9 7V5a3 3 0 0 1 6 0v2"/><path d="M9 13l2 2 4-4"/></svg><b class="badge" id="pickBadge" hidden></b></span>ピック</a>
   <a href="#search" data-tab="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/></svg>探す</a>
   <a href="#racks" data-tab="racks"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 3v18M20 3v18M4 8h16M4 14h16M4 20h16"/></svg>ラック</a>
   <a href="#labels" data-tab="labels"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="6" height="6"/><rect x="14" y="4" width="6" height="6"/><rect x="4" y="14" width="6" height="6"/><path d="M14 14h2v2h-2zM18 18h2v2h-2zM14 18h2M18 14h2"/></svg>QR発行</a>
@@ -337,7 +369,7 @@ function sortedRacks(){ return [...racks.values()].sort((a,b)=>natural(a.code,b.
 function rackCodeOk(c){ return /^[A-Za-z0-9_\-.]+$/.test(c); }
 
 /* ---------- views ---------- */
-const VIEWS = ["store","search","racks","labels"];
+const VIEWS = ["store","pickup","search","racks","labels"];
 function showView(){
   const hh = location.hash.slice(1);
   if(hh.toLowerCase().startsWith(HASH_PREFIX)){
@@ -364,7 +396,7 @@ function applyPendingRack(){
 
 /* ---------- render ---------- */
 function renderAll(){
-  for(const f of [renderRackSelect, renderStore, renderSearch, renderRackGrid, renderDetail, renderLabels, renderSoldBar]){ try{ f(); }catch(err){ console.error(err); } }
+  for(const f of [renderRackSelect, renderStore, renderPickup, renderSearch, renderRackGrid, renderDetail, renderLabels, renderSoldBar]){ try{ f(); }catch(err){ console.error(err); } }
 }
 function rackPfx(code){ const i=code.lastIndexOf("-"); return i>0? code.slice(0,i) : code.replace(/\d+$/,"") || code; }
 function rackGroups(){
@@ -447,10 +479,29 @@ function groupedList(list, showRack, rackCode, emptyMsg){
   }
   return h;
 }
+function renderPickup(){
+  const list=[...items.entries()].filter(([,v])=>v.soldAt);
+  const b=$("#pickBadge"); b.hidden=!list.length; b.textContent=list.length>99?"99+":String(list.length);
+  const sum=$("#pickSum"), box=$("#pickList");
+  if(!list.length){ sum.innerHTML=""; box.innerHTML=`<div class="list"><div class="empty">ピックアップ待ちの商品はありません。<br>売れた商品は、ラックや検索の画面で「売れた」にチェックすると、ここに並びます。</div></div>`; return; }
+  const by=new Map(); for(const e of list){ const r=e[1].rack||""; if(!by.has(r)) by.set(r,[]); by.get(r).push(e); }
+  const codes=[...by.keys()].sort(natural);
+  sum.innerHTML=`<span><b>${list.length}</b>点</span><span><b>${codes.length}</b>ラック</span>`;
+  box.innerHTML=codes.map(c=>{
+    const r=racks.get(c); const l=by.get(c).sort(byAiu);
+    return `<div class="pk-rack">
+      <div class="pk-h"><span class="code-chip">${esc(c)}</span><span class="pk-n">${esc(r&&r.name||"")}</span><span class="grp-n">${l.length}点</span>
+        ${l.length>1?`<button type="button" class="small" data-act="pickRack" data-rack="${esc(c)}">${l.length}点まとめて取り出した</button>`:""}</div>
+      <div class="list">${l.map(([id,v])=>`<div class="item" data-id="${esc(id)}">
+        <div class="body"><div class="no">${esc(v.no)}</div>${v.name?`<div class="nm">${esc(v.name)}</div>`:""}<div class="when">${fmtTime(v.soldAt)} 売却</div></div>
+        <button type="button" class="primary small pk-go" data-act="pickOne" data-id="${esc(id)}">取り出した</button>
+      </div>`).join("")}</div></div>`;
+  }).join("");
+}
 function renderSoldBar(){
   const bar=$("#soldBar");
   if(lastRemoved){
-    bar.hidden=false; $("#soldMsg").textContent=`${lastRemoved.length}点をラックから削除しました`;
+    bar.hidden=false; $("#soldMsg").textContent=`${lastRemoved.length}点を${removedMsg}`;
     $("#soldGo").textContent="元に戻す"; $("#soldGo").dataset.mode="undo"; $("#soldClear").hidden=true; return;
   }
   bar.hidden=true;
@@ -676,6 +727,8 @@ document.addEventListener("click", async e=>{
   }
   if(act==="exportRack") exportCsv([b.dataset.rack]);
   if(act==="delItem") await removeItems([b.dataset.id]);
+  if(act==="pickOne") await removeItems([b.dataset.id], "取り出し済みにしました");
+  if(act==="pickRack"){ const ids=itemsIn(b.dataset.rack).filter(([,v])=>v.soldAt).map(([id])=>id); await removeItems(ids, "取り出し済みにしました"); }
   if(act==="purgeSold"){
     const ids=itemsIn(b.dataset.rack).filter(([,v])=>v.soldAt).map(([id])=>id);
     await removeItems(ids);
@@ -713,7 +766,9 @@ document.addEventListener("change", async e=>{
     else { items.set(id,rest); renderAll(); await write("setSold",{id, sold:false}); toast(`${v.no} を出品中に戻しました`); }
   }catch(err){ items.set(id, v); renderAll(); handleWriteErr(err); }
 });
-async function removeItems(ids){
+let removedMsg="ラックから削除しました";
+async function removeItems(ids, msg){
+  removedMsg = msg || "ラックから削除しました";
   const removed=ids.filter(id=>items.has(id)).map(id=>[id,{...items.get(id)}]); if(!removed.length) return;
   try{
     await write("deleteItems", {ids: removed.map(([id])=>id)});
@@ -769,6 +824,39 @@ $("#labelGrid").addEventListener("change", e=>{
 $("#selAll").onclick = ()=>{ racks.forEach((_,c)=>selectedLabels.add(c)); renderLabels(); };
 $("#selNone").onclick = ()=>{ selectedLabels.clear(); renderLabels(); };
 
+function buildSheetsA5(codes){
+  // A4縦 @ 300dpi を上下2つ（A5横 210×148mm）に分け、1ラック1枚の大きいラベル
+  const W=2480,H=3508,half=H/2; const sheets=[];
+  for(let p=0;p<codes.length;p+=2){
+    const c=document.createElement("canvas"); c.width=W; c.height=H; const x=c.getContext("2d");
+    x.fillStyle="#fff"; x.fillRect(0,0,W,H);
+    codes.slice(p,p+2).forEach((code,i)=>{
+      const top=i*half, r=racks.get(code);
+      // 外枠（ラミネートの目安）
+      x.strokeStyle="#222"; x.lineWidth=8; x.strokeRect(110,top+110,W-220,half-220);
+      // QR（約115mm角）
+      const q=qrMatrix(qrText(code)); const n=q.getModuleCount(); const mod=Math.floor(1360/(n+4));
+      const qs=mod*(n+4), qx=170, qy=top+(half-qs)/2; x.fillStyle="#000";
+      for(let rr=0;rr<n;rr++) for(let k=0;k<n;k++) if(q.isDark(rr,k)) x.fillRect(qx+(k+2)*mod,qy+(rr+2)*mod,mod,mod);
+      // 右側：棚番号
+      const tx=qx+qs+70, tw=W-170-tx;
+      x.fillStyle="#f2b705"; x.fillRect(tx, top+half/2-330, Math.min(tw,420), 34);
+      x.fillStyle="#111"; x.textBaseline="middle";
+      let fs=420; x.font=`700 ${fs}px "IBM Plex Mono", monospace`; while(x.measureText(code).width>tw && fs>120){ fs-=10; x.font=`700 ${fs}px "IBM Plex Mono", monospace`; }
+      x.fillText(code, tx, top+half/2-40);
+      let y=top+half/2+fs*0.5+40;
+      if(r && r.name){ let nf=72; x.font=`700 ${nf}px "Zen Kaku Gothic New", sans-serif`; while(x.measureText(r.name).width>tw && nf>36){ nf-=2; x.font=`700 ${nf}px "Zen Kaku Gothic New", sans-serif`; } x.fillStyle="#333"; x.fillText(r.name, tx, y); y+=100; }
+      let sf=54; x.font=`500 ${sf}px "Zen Kaku Gothic New", sans-serif`; while(x.measureText("ReKiL 棚番 ／ カメラで読み取り").width>tw && sf>30){ sf-=2; x.font=`500 ${sf}px "Zen Kaku Gothic New", sans-serif`; }
+      x.fillStyle="#666"; x.fillText("ReKiL 棚番 ／ カメラで読み取り", tx, y);
+    });
+    // 切り取り線
+    x.strokeStyle="#999"; x.lineWidth=4; x.setLineDash([30,24]); x.beginPath(); x.moveTo(40,half); x.lineTo(W-40,half); x.stroke(); x.setLineDash([]);
+    x.fillStyle="#fff"; x.fillRect(W/2-190,half-34,380,68);
+    x.fillStyle="#888"; x.font=`500 40px "Zen Kaku Gothic New", sans-serif`; x.textAlign="center"; x.fillText("ここで切る", W/2, half); x.textAlign="left";
+    sheets.push(c);
+  }
+  return sheets;
+}
 function buildSheets(codes){
   // A4 @ 300dpi, 3 x 6 labels (約65mm x 45mm)
   const W=2480,H=3508,cols=3,rows=6,mx=120,my=150;
@@ -795,12 +883,17 @@ function buildSheets(codes){
 $("#saveSheet").onclick = async ()=>{
   const codes = [...selectedLabels].sort(natural); if(!codes.length) return;
   await document.fonts.ready;
-  const sheets = buildSheets(codes);
+  const big = $("#sizeA5").checked;
+  const sheets = big ? buildSheetsA5(codes) : buildSheets(codes);
+  const files = [];
   for(let i=0;i<sheets.length;i++){
     const blob = await new Promise(r=>sheets[i].toBlob(r,"image/png"));
-    try{ await saveFile(`棚番QRラベル_${i+1}.png`, blob, "image/png"); $("#saveNote").textContent=`${i+1}/${sheets.length}枚目を保存しました。A4・等倍（拡大縮小なし）で印刷してください。`; }
-    catch(err){ $("#saveNote").textContent = err && err.code==="declined" ? "保存をキャンセルしました。" : "保存できませんでした。時間をおいてもう一度お試しください。"; break; }
+    files.push(new File([blob], `棚番QRラベル_${big?"A4半分":"小"}_${i+1}.png`, {type:"image/png"}));
   }
+  try{
+    await saveFiles(files);
+    $("#saveNote").textContent=`A4 ${files.length}枚分を保存しました。A4・等倍（拡大縮小なし／フチなしはオフ）で印刷してください。${big?"真ん中の線で切ってラミネートしてください。":""}`;
+  }catch(err){ $("#saveNote").textContent = err && err.code==="declined" ? "保存をキャンセルしました。" : "保存できませんでした。時間をおいてもう一度お試しください。"; }
 };
 
 function csvCell(v){ const t=String(v??""); return /[",\n\r]/.test(t) ? '"'+t.replace(/"/g,'""')+'"' : t; }
@@ -823,10 +916,17 @@ async function exportCsv(codes){
 }
 $("#exportAll").onclick=()=>exportCsv(null);
 
-async function saveFile(filename, blob, type){
+async function saveFiles(files){
+  if(navigator.canShare && navigator.canShare({files}) && /iPhone|iPad|Android/i.test(navigator.userAgent)){
+    try{ await navigator.share({files}); return; }
+    catch(err){ if(err && err.name==="AbortError"){ const e=new Error("declined"); e.code="declined"; throw e; } }
+  }
+  for(const f of files){ await saveFile(f.name, f, f.type, true); await new Promise(r=>setTimeout(r,400)); }
+}
+async function saveFile(filename, blob, type, noShare){
   const file = new File([blob], filename, {type});
   // iPhone・Android：共有メニューから「ファイルに保存」「画像を保存」などを選べる
-  if(navigator.canShare && navigator.canShare({files:[file]}) && /iPhone|iPad|Android/i.test(navigator.userAgent)){
+  if(!noShare && navigator.canShare && navigator.canShare({files:[file]}) && /iPhone|iPad|Android/i.test(navigator.userAgent)){
     try{ await navigator.share({files:[file]}); return; }
     catch(err){ if(err && err.name==="AbortError"){ const e=new Error("declined"); e.code="declined"; throw e; } }
   }
