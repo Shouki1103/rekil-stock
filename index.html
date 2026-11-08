@@ -1113,6 +1113,24 @@ async function refresh(){
 setInterval(()=>{ if(document.visibilityState==="visible") refresh(); }, 20000);
 document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState==="visible" && Date.now()-lastSync>5000) refresh(); });
 
+/* ---------- 新しい版の自動反映 ----------
+   GitHub Pagesやスマホが古い画面を覚えていても、開いたとき・画面に戻ったときに
+   最新版があるか確認し、あれば自動で読み直す */
+const APP_VERSION = "2026-11-08-3";
+async function checkUpdate(){
+  try{
+    const r = await fetch(location.pathname + "?v=" + Date.now(), {cache:"no-store"});
+    const t = await r.text(); const m = t.match(/const APP_VERSION = "([^"]+)"/);
+    if(m && m[1] !== APP_VERSION && busy===0){
+      try{ sessionStorage.setItem("rekil-updated", m[1]); }catch(_){}
+      location.replace(location.pathname + "?v=" + encodeURIComponent(m[1]) + location.hash);
+    }
+  }catch(_){}
+}
+try{ if(sessionStorage.getItem("rekil-updated")){ sessionStorage.removeItem("rekil-updated"); setTimeout(()=>toast("最新版に更新しました"),600); } }catch(_){}
+checkUpdate();
+document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState==="visible") checkUpdate(); });
+
 /* ---------- boot ---------- */
 showView(); renderAll(); updatePreview();
 if(!API_URL){ $("#sync").textContent="未設定"; toast("データの接続先がまだ設定されていません"); }
