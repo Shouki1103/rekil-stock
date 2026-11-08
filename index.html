@@ -137,6 +137,17 @@ input,select{font:inherit;width:100%;padding:11px 12px;border:1px solid var(--li
 .labsize b{display:block}
 .labsize span{font-size:13px;color:var(--muted)}
 .labsize label:has(input:checked){border:2px solid var(--accent)}
+.backbtn{align-self:flex-start;min-height:40px;padding:6px 12px 6px 8px;background:transparent;border-color:var(--line);color:var(--fg);font-size:14px}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:4px;background:var(--bg);border:1px solid var(--line);border-radius:10px}
+.seg button{min-height:40px;border:0;background:transparent;color:var(--muted);font-size:14px}
+.seg button[aria-selected="true"]{background:var(--accent);color:var(--accent-ink)}
+.seltools{display:flex;gap:8px;flex-wrap:wrap}
+.selbox{flex:none;display:flex;align-items:center;justify-content:center;width:36px;cursor:pointer}
+.selbox input{width:24px;height:24px;min-height:0;accent-color:var(--accent);cursor:pointer}
+.item.is-picked{outline:2px solid var(--accent);outline-offset:-2px}
+.stchip{font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;white-space:nowrap;border:1px solid var(--line);color:var(--muted)}
+.stchip.sd{color:var(--ok);border-color:var(--ok)}
+.selbar .ghost{color:#fff;border-color:#ffffff66}
 .warn{font-size:13px;color:var(--danger);font-weight:700}
 .confirm{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:13px}
 @media (prefers-reduced-motion:no-preference){.toast{animation:pop .18s ease-out}@keyframes pop{from{opacity:0;transform:translate(-50%,8px)}}}
@@ -153,7 +164,7 @@ input,select{font:inherit;width:100%;padding:11px 12px;border:1px solid var(--li
     <div style="display:flex;flex-direction:column;gap:16px">
       <div>
         <h2>商品をラックに収納</h2>
-        <p class="lead">ラックのQRを読み取るか一覧から選んで、管理番号を入力します。収納先は「変更」からすぐ切り替えられます。</p>
+        <p class="lead" id="storeLead">① ラックのQRを撮影するか一覧から選び、② 商品を1点ずつ、またはまとめて入れます。</p>
       </div>
 
       <div class="panel" id="pickRack">
@@ -170,6 +181,7 @@ input,select{font:inherit;width:100%;padding:11px 12px;border:1px solid var(--li
       </div>
 
       <div id="storeArea" hidden style="display:flex;flex-direction:column;gap:16px">
+        <button type="button" class="backbtn" id="backToPick"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M15 5l-7 7 7 7"/></svg>ラックを選び直す</button>
         <div class="plate">
           <div><div class="label" style="color:inherit;opacity:.75">収納先ラック</div><div class="code" id="curCode">—</div></div>
           <div class="meta"><div id="curName"></div><div id="curCount"></div>
@@ -180,20 +192,25 @@ input,select{font:inherit;width:100%;padding:11px 12px;border:1px solid var(--li
               <button class="small ghost" id="changeRackQr" type="button" aria-label="QRで変更" title="QRで変更"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7V4h3M21 7V4h-3M3 17v3h3M21 17v3h-3"/><rect x="8" y="8" width="8" height="8"/></svg></button>
             </div></div>
         </div>
-        <form class="panel" id="storeForm" autocomplete="off">
-          <span class="label">② 商品を入れる</span>
+        <div class="panel" style="gap:14px">
+        <span class="label">② 商品を入れる</span>
+        <div class="seg" role="tablist" aria-label="入れ方">
+          <button type="button" role="tab" id="modeOne" aria-selected="true">1点ずつ</button>
+          <button type="button" role="tab" id="modeBulk" aria-selected="false">まとめて</button>
+        </div>
+        <form id="storeForm" autocomplete="off" style="display:flex;flex-direction:column;gap:12px">
           <input id="itemNo" placeholder="管理番号（例：26-1108-001）" enterkeyhint="done" required>
           <input id="itemName" placeholder="商品名・メモ（任意）">
           <button class="primary" type="submit">このラックに収納</button>
           <p class="note" style="margin:0">別のラックに入っている商品は、こちらへ移動として記録されます。</p>
         </form>
-        <details class="panel" id="bulkBox">
-          <summary style="font-weight:700;cursor:pointer">まとめて登録（箇条書きで一括入力）</summary>
+        <div id="bulkBox" hidden style="display:flex;flex-direction:column;gap:12px">
           <p class="note" style="margin:0">1行に1商品、「管理番号　商品名」の順で入力します。間はスペース・タブ・カンマのどれでもOK。先頭の「・」や「-」は自動で外します。Excelから2列コピーして貼り付けもできます。</p>
           <textarea id="bulkText" rows="7" placeholder="・26-1108-001 ルイヴィトン モノグラム スピーディ30&#10;・26-1108-002 グッチ GGマーモント ショルダー&#10;・26-1108-003 プラダ ナイロン リュック"></textarea>
           <div class="note" id="bulkPreview" aria-live="polite">1行に1商品ずつ入力してください。</div>
           <button class="primary" id="bulkGo" type="button" disabled>このラックにまとめて収納</button>
-        </details>
+        </div>
+        </div>
         <div>
           <div class="label" style="margin-bottom:6px">このラックの商品（あいう順）</div>
           <div class="grp" id="rackItems"></div>
@@ -218,9 +235,21 @@ input,select{font:inherit;width:100%;padding:11px 12px;border:1px solid var(--li
     <div style="display:flex;flex-direction:column;gap:16px">
       <div>
         <h2>商品はどこ？</h2>
-        <p class="lead">管理番号か商品名の一部で探せます。売れた商品は「売れた」にチェックすると売却済みに移り、「削除」でラックから消せます。</p>
+        <p class="lead">管理番号か商品名で探せます。商品の左のチェックで選んで、まとめて「売れた」にできます。</p>
+      </div>
+      <div class="seg" role="tablist" aria-label="探し方">
+        <button type="button" role="tab" id="qModeOne" aria-selected="true">1件で探す</button>
+        <button type="button" role="tab" id="qModeMulti" aria-selected="false">まとめて探す</button>
       </div>
       <input id="q" type="search" placeholder="管理番号・商品名で検索" aria-label="検索">
+      <div id="qMultiBox" hidden style="display:flex;flex-direction:column;gap:8px">
+        <textarea id="qMulti" rows="5" placeholder="管理番号を1行に1つずつ（Excelからの貼り付けもOK）&#10;26-1108-001&#10;26-1108-002" aria-label="まとめて探す管理番号"></textarea>
+        <div class="note" id="qMissing"></div>
+      </div>
+      <div class="seltools" id="selTools" hidden>
+        <button type="button" class="small" id="selAllHits">表示中の出品中をすべて選択</button>
+        <button type="button" class="small ghost" id="selClear">選択を外す</button>
+      </div>
       <div id="bestHit"></div>
       <div class="grp" id="results"></div>
     </div>
@@ -280,12 +309,17 @@ input,select{font:inherit;width:100%;padding:11px 12px;border:1px solid var(--li
 
 <nav class="tabs" aria-label="メニュー">
   <a href="#store" data-tab="store"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7V4h3M21 7V4h-3M3 17v3h3M21 17v3h-3"/><path d="M8 12h8M12 8v8"/></svg>収納</a>
-  <a href="#pickup" data-tab="pickup"><span class="tabicon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16l-1.5 12h-13z"/><path d="M9 7V5a3 3 0 0 1 6 0v2"/><path d="M9 13l2 2 4-4"/></svg><b class="badge" id="pickBadge" hidden></b></span>ピック</a>
   <a href="#search" data-tab="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/></svg>探す</a>
+  <a href="#pickup" data-tab="pickup"><span class="tabicon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16l-1.5 12h-13z"/><path d="M9 7V5a3 3 0 0 1 6 0v2"/><path d="M9 13l2 2 4-4"/></svg><b class="badge" id="pickBadge" hidden></b></span>ピック</a>
   <a href="#racks" data-tab="racks"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 3v18M20 3v18M4 8h16M4 14h16M4 20h16"/></svg>ラック</a>
   <a href="#labels" data-tab="labels"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="6" height="6"/><rect x="14" y="4" width="6" height="6"/><rect x="4" y="14" width="6" height="6"/><path d="M14 14h2v2h-2zM18 18h2v2h-2zM14 18h2M18 14h2"/></svg>QR発行</a>
 </nav>
 
+<div class="soldbar selbar" id="selBar" hidden role="region" aria-label="選択した商品の操作">
+  <span class="msg" id="selMsg"></span>
+  <button type="button" class="primary" id="selSold">売れたにする</button>
+  <button type="button" class="ghost" id="selUnsold">出品中に戻す</button>
+</div>
 <div class="soldbar" id="soldBar" hidden role="region" aria-label="売れた商品の操作">
   <span class="msg" id="soldMsg"></span>
   <button type="button" class="primary" id="soldGo"></button>
@@ -382,7 +416,7 @@ function showView(){
   document.querySelectorAll("[data-tab]").forEach(a => { if(a.dataset.tab===v) a.setAttribute("aria-current","page"); else a.removeAttribute("aria-current"); });
   if(v==="search") setTimeout(()=>$("#q").focus(),50);
 }
-addEventListener("hashchange", showView);
+addEventListener("hashchange", ()=>{ showView(); try{ renderSelBar(); }catch(_){} });
 function applyPendingRack(){
   if(!pendingRack || !racks.size) return;
   const c = pendingRack; pendingRack = "";
@@ -506,23 +540,77 @@ function renderSoldBar(){
   }
   bar.hidden=true;
 }
+let qMulti=false; const picked=new Set();
+function selRow(id,v){
+  const on=!!v.soldAt, sel=picked.has(id);
+  return `<div class="item${on?" is-sold":""}${sel?" is-picked":""}" data-id="${esc(id)}">
+    <label class="selbox"><input type="checkbox" data-pick="${esc(id)}" ${sel?"checked":""} aria-label="${esc(v.no)} を選択"></label>
+    <span class="code-chip">${esc(v.rack)}</span>
+    <div class="body"><div class="no">${esc(v.no)}</div>${v.name?`<div class="nm">${esc(v.name)}</div>`:""}<div class="when">${on? fmtTime(v.soldAt)+" 売却" : fmtTime(v.updatedAt)+" 収納"}</div></div>
+    <span class="stchip${on?" sd":""}">${on?"売却済み":"出品中"}</span>
+  </div>`;
+}
+function selList(list, emptyMsg){
+  const [act,sd]=splitSold(list);
+  if(!list.length) return `<div class="list"><div class="empty">${emptyMsg}</div></div>`;
+  let out=`<div class="grp-h"><span>出品中</span><span class="grp-n">${act.length}点</span></div>
+    <div class="list">${act.length? act.map(([id,v])=>selRow(id,v)).join("") : `<div class="empty">出品中の商品はありません。</div>`}</div>`;
+  if(sd.length) out+=`<div class="grp-h sold-h"><span>売却済み</span><span class="grp-n">${sd.length}点</span></div><div class="list">${sd.map(([id,v])=>selRow(id,v)).join("")}</div>`;
+  return out;
+}
+function multiTerms(){ return [...new Set(String($("#qMulti").value).split(/[\r\n\t,、，]+|\s{2,}/).map(t=>t.replace(/^[・•\-*]\s*/,"").trim()).filter(Boolean))]; }
+let shownHits=[];
 function renderSearch(){
-  const q = $("#q").value.trim().toUpperCase();
-  const best = $("#bestHit"), res = $("#results");
-  if(!q){
-    best.innerHTML = "";
-    const recent = [...items.entries()].filter(([,v])=>!v.soldAt).sort((a,b)=>(b[1].updatedAt||0)-(a[1].updatedAt||0)).slice(0,15);
-    res.innerHTML = `<div class="list">` + (recent.length ? `<div class="item" style="background:var(--bg)"><span class="label">最近収納した商品（出品中）</span></div>` + recent.map(([id,v])=>itemRow(id,v,true)).join("")
-      : `<div class="empty">出品中の商品はまだありません。</div>`) + `</div>`;
-    return;
+  for(const id of [...picked]) if(!items.has(id)) picked.delete(id);
+  const best = $("#bestHit"), res = $("#results"), miss=$("#qMissing");
+  let hits=null;
+  if(qMulti){
+    best.innerHTML="";
+    const terms=multiTerms();
+    if(terms.length){
+      const found=new Map(), missing=[];
+      for(const t of terms){
+        const T=t.toUpperCase();
+        let m=[...items.entries()].filter(([,v])=>String(v.no).toUpperCase()===T);
+        if(!m.length) m=[...items.entries()].filter(([,v])=>String(v.no).toUpperCase().includes(T) || String(v.name||"").toUpperCase().includes(T));
+        if(m.length) m.forEach(([id,v])=>found.set(id,v)); else missing.push(t);
+      }
+      hits=[...found.entries()];
+      miss.innerHTML = `${terms.length}件中 ${terms.length-missing.length}件が見つかりました。` + (missing.length? `<br><span class="warn">見つからない：${missing.map(esc).join("、")}</span>`:"");
+    } else miss.textContent="";
+  } else {
+    const q = $("#q").value.trim().toUpperCase();
+    if(q){
+      hits = [...items.entries()].filter(([,v])=>String(v.no).toUpperCase().includes(q) || String(v.name||"").toUpperCase().includes(q));
+      const exact = hits.find(([,v])=>String(v.no).toUpperCase()===q);
+      if(hits.length===1 || exact){
+        const v = (exact||hits[0])[1]; const r = racks.get(v.rack);
+        best.innerHTML = `<div class="big-result"><span class="label">${esc(v.no)} の場所</span><div class="code">${esc(v.rack)}</div>${r&&r.name?`<div class="note">${esc(r.name)}</div>`:""}</div>`;
+      } else best.innerHTML = "";
+    } else best.innerHTML="";
   }
-  const hits = [...items.entries()].filter(([,v])=>String(v.no).toUpperCase().includes(q) || String(v.name||"").toUpperCase().includes(q))
-    .sort((a,b)=>{ const ea=String(a[1].no).toUpperCase()===q, eb=String(b[1].no).toUpperCase()===q; return eb-ea || natural(a[1].no,b[1].no); });
-  if(hits.length===1 || (hits.length && String(hits[0][1].no).toUpperCase()===q)){
-    const v = hits[0][1]; const r = racks.get(v.rack);
-    best.innerHTML = `<div class="big-result"><span class="label">${esc(v.no)} の場所</span><div class="code">${esc(v.rack)}</div>${r&&r.name?`<div class="note">${esc(r.name)}</div>`:""}</div>`;
-  } else best.innerHTML = "";
-  res.innerHTML = groupedList(hits.slice(0,200), true, "", `「${esc($("#q").value)}」に当てはまる商品はありません。`);
+  if(!hits){
+    const recent = [...items.entries()].filter(([,v])=>!v.soldAt).sort((a,b)=>(b[1].updatedAt||0)-(a[1].updatedAt||0)).slice(0,15);
+    shownHits = recent;
+    res.innerHTML = `<div class="grp-h"><span>最近収納した商品（出品中）</span></div>` + `<div class="list">` + (recent.length ? recent.map(([id,v])=>selRow(id,v)).join("")
+      : `<div class="empty">出品中の商品はまだありません。</div>`) + `</div>`;
+  } else {
+    shownHits = hits.slice(0,300);
+    res.innerHTML = selList(shownHits, qMulti? "入力した管理番号の商品は見つかりませんでした。" : `「${esc($("#q").value)}」に当てはまる商品はありません。`);
+  }
+  $("#selTools").hidden = !shownHits.length;
+  renderSelBar();
+}
+function renderSelBar(){
+  const n=picked.size, bar=$("#selBar");
+  const onSearch = location.hash==="#search";
+  bar.hidden = !(n && onSearch);
+  if(!n) return;
+  const sel=[...picked].map(id=>items.get(id)).filter(Boolean);
+  const nAct=sel.filter(v=>!v.soldAt).length, nSold=sel.length-nAct;
+  $("#selMsg").textContent=`${n}点を選択中`;
+  $("#selSold").hidden=!nAct; $("#selSold").textContent=`${nAct}点を売れたにする`;
+  $("#selUnsold").hidden=!nSold; $("#selUnsold").textContent=`${nSold}点を出品中に戻す`;
 }
 function renderRackGrid(){
   const g = $("#rackGrid");
@@ -659,6 +747,17 @@ function switchRack(v){
   setTimeout(()=>$("#itemNo").focus(),80);
 }
 $("#changeRackQr").onclick = ()=>$("#scanRackBtn").click();
+function backToPick(){ curRack=""; renderRackSelect(); renderStore(); scrollTo({top:0}); }
+$("#backToPick").onclick = backToPick;
+// 収納タブを表示中にもう一度押すと、ラック選びに戻る
+document.querySelector('[data-tab="store"]').addEventListener("click", ()=>{ if(location.hash==="#store" || !location.hash) { if(curRack) backToPick(); } });
+function setStoreMode(bulk){
+  $("#modeOne").setAttribute("aria-selected", String(!bulk)); $("#modeBulk").setAttribute("aria-selected", String(bulk));
+  $("#storeForm").hidden = bulk; $("#bulkBox").hidden = !bulk;
+  setTimeout(()=> (bulk? $("#bulkText") : $("#itemNo")).focus(), 60);
+}
+$("#modeOne").onclick = ()=>setStoreMode(false);
+$("#modeBulk").onclick = ()=>setStoreMode(true);
 
 async function storeMany(list, rack){
   const res = await write("storeItems", {rack, list});
@@ -757,6 +856,40 @@ $("#rackGrid").addEventListener("click", e=>{
   detailRack = detailRack===b.dataset.rack ? "" : b.dataset.rack; renderRackGrid(); renderDetail();
 });
 $("#q").addEventListener("input", renderSearch);
+$("#qMulti").addEventListener("input", renderSearch);
+function setQMode(multi){
+  qMulti=multi;
+  $("#qModeOne").setAttribute("aria-selected", String(!multi)); $("#qModeMulti").setAttribute("aria-selected", String(multi));
+  $("#q").hidden=multi; $("#qMultiBox").hidden=!multi; $("#qMissing").textContent="";
+  renderSearch(); setTimeout(()=>(multi? $("#qMulti") : $("#q")).focus(),60);
+}
+$("#qModeOne").onclick=()=>setQMode(false);
+$("#qModeMulti").onclick=()=>setQMode(true);
+$("#selAllHits").onclick=()=>{ shownHits.filter(([,v])=>!v.soldAt).forEach(([id])=>picked.add(id)); renderSearch(); };
+$("#selClear").onclick=()=>{ picked.clear(); renderSearch(); };
+async function setSoldMany(ids, sold){
+  ids=ids.filter(id=>{ const v=items.get(id); return v && !!v.soldAt!==sold; }); if(!ids.length) return;
+  const backup=ids.map(id=>[id,items.get(id)]);
+  for(const id of ids){ const {soldAt,...rest}=items.get(id); items.set(id, sold? {...rest, soldAt:Date.now()} : rest); }
+  picked.clear(); renderAll();
+  let done=0;
+  try{
+    for(const id of ids){ $("#sync").textContent=`保存中… ${done+1}/${ids.length}`; busy++; try{ await api("setSold",{id, sold}); } finally{ busy--; } done++; }
+    toast(sold? `${done}点を売れたにしました（ピックタブに並びます）` : `${done}点を出品中に戻しました`);
+  }catch(err){
+    backup.slice(done).forEach(([id,v])=>items.set(id,v)); renderAll();
+    handleWriteErr(err); toast(`${done}点まで反映しました。残りはもう一度お試しください`);
+  }
+  setBusy(0);
+}
+$("#selSold").onclick=()=>setSoldMany([...picked], true);
+$("#selUnsold").onclick=()=>setSoldMany([...picked], false);
+document.addEventListener("change", e=>{
+  const pid=e.target.dataset && e.target.dataset.pick; if(!pid) return;
+  e.target.checked ? picked.add(pid) : picked.delete(pid);
+  const row=e.target.closest(".item"); if(row) row.classList.toggle("is-picked", e.target.checked);
+  renderSelBar();
+});
 document.addEventListener("change", async e=>{
   const id=e.target.dataset && e.target.dataset.sold; if(!id) return;
   const v=items.get(id); if(!v || !online) return;
