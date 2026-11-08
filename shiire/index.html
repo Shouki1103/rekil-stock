@@ -82,7 +82,7 @@ ul.list li:first-child{border-top:0}
 </header>
 
 <main>
-  <form class="panel" id="form" autocomplete="off">
+  <form class="panel" id="form" autocomplete="off" novalidate>
     <label class="f"><span class="label">仕入先</span>
       <input id="shop" class="big" placeholder="例：BOOKOFF相模原" enterkeyhint="next" list="shopList">
       <datalist id="shopList"></datalist>
@@ -94,7 +94,7 @@ ul.list li:first-child{border-top:0}
     </label>
 
     <label class="f"><span class="label">仕入値（円）</span>
-      <input id="price" class="price" inputmode="numeric" pattern="[0-9]*" placeholder="0" enterkeyhint="done">
+      <input id="price" class="price" inputmode="numeric" placeholder="0" enterkeyhint="done">
     </label>
 
     <details id="more">
@@ -133,7 +133,7 @@ ul.list li:first-child{border-top:0}
 <script>
 /* ▼ Apps Script をデプロイしたときの「ウェブアプリのURL」 */
 const API_URL = "https://script.google.com/macros/s/AKfycbwMrGyfC24OulRxZ5xkpKnA0rPlK1Fi0wWacCv17PgV7FsUF7CPBVEKj9O5TVpwHW6y/exec";
-const APP_VERSION = "2026-11-08-2";
+const APP_VERSION = "2026-11-08-3";
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
