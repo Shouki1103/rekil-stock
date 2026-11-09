@@ -1,0 +1,506 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="eBay依頼">
+<meta name="theme-color" content="#f3f4f6" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#14171d" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-192.png">
+<title>eBay出品依頼リスト</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Layout: one narrow working column; tabs on top, grouped form sections like a 検品カード */
+:root{
+  --bg:#f3f4f6; --surface:#ffffff; --fg:#1d2330; --muted:#636b7a; --line:#d9dde4;
+  --accent:#1f4f8f; --accent-soft:#e4ecf7; --ok:#1d7a4d; --ok-soft:#e1f2e8; --warn:#9a5b00; --warn-soft:#fbefd9; --danger:#b3261e;
+  --f-body:"Zen Kaku Gothic New","Hiragino Sans","Yu Gothic",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#14171d; --surface:#1c2028; --fg:#e7eaf0; --muted:#9aa2b1; --line:#2e3440;
+  --accent:#8db4ec; --accent-soft:#22324a; --ok:#6fcf9b; --ok-soft:#1b3326; --warn:#e8b45c; --warn-soft:#3a2d14; --danger:#f08c84; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#14171d; --surface:#1c2028; --fg:#e7eaf0; --muted:#9aa2b1; --line:#2e3440;
+  --accent:#8db4ec; --accent-soft:#22324a; --ok:#6fcf9b; --ok-soft:#1b3326; --warn:#e8b45c; --warn-soft:#3a2d14; --danger:#f08c84; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.6}
+.wrap{max-width:760px;margin:0 auto;padding-block:20px 80px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1{font-size:22px;font-weight:700;margin:0;text-wrap:balance}
+.sub{color:var(--muted);font-size:13px;margin:2px 0 16px}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:18px;overflow-x:auto}
+.tab{appearance:none;border:0;background:none;color:var(--muted);font:inherit;font-weight:500;padding:10px 12px;border-bottom:2px solid transparent;cursor:pointer;white-space:nowrap}
+.tab[aria-selected="true"]{color:var(--accent);border-bottom-color:var(--accent)}
+.tab .n{font-family:var(--f-mono);font-size:12px;margin-left:4px}
+.tab:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+section.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px;display:grid;gap:12px;margin-bottom:14px}
+.card h2{font-size:14px;margin:0;color:var(--muted);font-weight:700;letter-spacing:.04em}
+.preset{background:var(--accent-soft);border-color:transparent}
+.preset h2{color:var(--accent)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.grid.sizes{grid-template-columns:repeat(auto-fit,minmax(130px,1fr))}
+label{display:grid;gap:4px;font-size:13px;font-weight:500;min-width:0}
+label .hint{color:var(--muted);font-weight:400;font-size:12px}
+input,select,textarea{font:inherit;font-size:16px;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:9px 10px;width:100%;min-width:0}
+textarea{min-height:64px;resize:vertical}
+.inch{font-family:var(--f-mono);font-size:12px;color:var(--muted)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.btn{appearance:none;font:inherit;font-weight:700;border-radius:8px;padding:10px 16px;cursor:pointer;border:1px solid var(--accent);background:var(--accent);color:var(--surface)}
+.btn.ghost{background:transparent;color:var(--accent)}
+.btn.small{padding:6px 10px;font-size:13px;font-weight:500}
+.btn.danger{border-color:var(--danger);color:var(--danger);background:transparent}
+.btn:disabled{opacity:.5;cursor:default}
+.bar{position:sticky;bottom:0;background:var(--bg);padding-block:12px calc(12px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--line);display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.msg{font-size:13px;min-height:1.4em}
+.msg.err{color:var(--danger)} .msg.ok{color:var(--ok)}
+.item{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:grid;gap:6px}
+.list{display:grid;gap:10px}
+.item .top{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.code{font-family:var(--f-mono);font-size:14px}
+.item .name{font-weight:700;min-width:0;overflow-wrap:anywhere}
+.item .meta{color:var(--muted);font-size:13px;overflow-wrap:anywhere}
+.chip{font-size:12px;font-weight:700;border-radius:999px;padding:2px 10px}
+.chip.pending{background:var(--warn-soft);color:var(--warn)}
+.chip.done{background:var(--ok-soft);color:var(--ok)}
+.chip.revise{background:var(--accent-soft);color:var(--accent)}
+.empty{color:var(--muted);text-align:center;padding:28px 12px;border:1px dashed var(--line);border-radius:10px}
+.filters{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.filters button{font:inherit;font-size:13px;border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:999px;padding:4px 12px;cursor:pointer}
+.filters button[aria-pressed="true"]{background:var(--accent);color:var(--surface);border-color:var(--accent)}
+.confirm{display:flex;gap:6px;align-items:center;font-size:13px;color:var(--danger)}
+.note{font-size:13px;color:var(--muted)}
+.bulk{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin-bottom:10px}
+.chk{display:flex;gap:6px;align-items:center;font-size:13px;font-weight:500;cursor:pointer}
+.chk input{width:20px;height:20px;padding:0}
+.item .top .chk{margin-right:2px}
+.rphoto{width:72px;height:72px;border-radius:6px;object-fit:cover;background:var(--bg)}
+.strip{display:flex;gap:10px;overflow-x:auto;padding-bottom:4px;scroll-snap-type:x proximity}
+.pick{flex:0 0 112px;scroll-snap-align:start;appearance:none;font:inherit;text-align:left;background:var(--surface);border:2px solid transparent;border-radius:10px;padding:6px;cursor:pointer;color:var(--fg);display:grid;gap:4px}
+.pick[aria-pressed="true"]{border-color:var(--accent)}
+.pick span{font-size:12px;line-height:1.3;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.thumb{width:100%;aspect-ratio:1;border-radius:6px;background:var(--bg);object-fit:cover;display:grid;place-items:center;color:var(--muted);font-size:11px;overflow:hidden}
+.thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.mrow{display:grid;grid-template-columns:96px 1fr;gap:12px;align-items:start}
+.mrow .body{display:grid;gap:6px;min-width:0}
+.rename{display:flex;gap:6px;align-items:center;flex-wrap:nowrap}
+.rename input:not([type="checkbox"]){flex:1 1 auto;min-width:0;font-size:15px;padding:6px 8px}
+.rename .btn{flex:0 0 auto;white-space:nowrap}
+.rename .chk{flex:0 0 auto}
+
+html,body{margin:0}
+[hidden]{display:none!important}
+body{min-height:100vh;padding-top:env(safe-area-inset-top,0px)}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+.hdr{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.sync{font-size:12px;color:var(--muted);font-family:var(--f-mono)}
+.rhead{display:flex;gap:12px;align-items:flex-start}
+.rtext{display:grid;gap:4px;min-width:0;flex:1}
+.pprev img{max-width:160px;border-radius:8px;display:block}
+.lock{position:fixed;inset:0;z-index:50;background:var(--bg);display:grid;place-items:center;padding:24px}
+.lockbox{width:min(360px,100%);display:grid;gap:12px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:20px}
+.lockbox h2{margin:0;font-size:18px}
+.toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:999px;font-size:14px;z-index:60;max-width:90vw}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hdr"><h1>eBay出品依頼リスト</h1><span class="sync" id="sync"></span></div>
+  <p class="sub">バッグの採寸・状態を入力して保存すると、Claudeが下書きを作成します。</p>
+
+  <div class="tabs" role="tablist">
+    <button class="tab" role="tab" id="t-form" aria-selected="true">依頼を入力</button>
+    <button class="tab" role="tab" id="t-list" aria-selected="false">依頼一覧<span class="n" id="n-pending"></span></button>
+    <button class="tab" role="tab" id="t-models" aria-selected="false">登録商品<span class="n" id="n-models"></span></button>
+  </div>
+
+  <p class="msg err" id="dbmsg" hidden></p>
+
+  <!-- 入力 -->
+  <div id="v-form">
+    <form id="f" autocomplete="off">
+      <section class="card preset">
+        <h2>登録商品から選択</h2>
+        <div class="strip" id="presetStrip"></div>
+        <label>写真をタップするか一覧から選ぶと、素材・色・サイズなどがまとめて入ります
+          <select id="presetSel"><option value="">（選ばない）</option></select>
+        </label>
+      </section>
+
+      <section class="card">
+        <h2>基本情報</h2>
+        <div class="grid">
+          <label>管理番号<input id="code" required></label>
+          <label>ブランド<input id="brand" list="dl-brand"></label>
+          <label>バッグ形状<input id="shape" list="dl-shape"></label>
+          <label>モデル名<input id="model"></label>
+          <label>型番<input id="mpn"></label>
+          <label>シリアル番号<input id="serial"></label>
+          <label>製造国<input id="country" list="dl-country"></label>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>色・素材</h2>
+        <div class="grid">
+          <label>外側の色<input id="color"></label>
+          <label>外側の素材<input id="extMat" list="dl-mat"></label>
+          <label>メイン素材（生地）<input id="fabric" list="dl-mat"></label>
+          <label>表面の仕上げ<input id="finish" list="dl-finish"></label>
+          <label>商品形状<input id="form" list="dl-form"></label>
+          <label>ライン・柄<input id="pattern" list="dl-pattern"></label>
+          <label>持ち手・ストラップの素材<input id="handleMat" list="dl-mat"></label>
+          <label>持ち手・ストラップの色<input id="handleColor"></label>
+          <label>裏地の色<input id="liningColor"></label>
+          <label>裏地の素材<input id="liningMat"></label>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>金具・付属品</h2>
+        <div class="grid">
+          <label>金具の色<input id="hwColor" list="dl-hwcolor"></label>
+          <label>金具の素材<input id="hwMat" list="dl-hwmat"></label>
+          <label>留め具<input id="closure" list="dl-closure"></label>
+          <label>付属品<input id="acc" list="dl-acc"></label>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>サイズ（cm・数字のみ）</h2>
+        <div class="grid sizes">
+          <label>横<input id="w" inputmode="decimal"><span class="inch" data-for="w"></span></label>
+          <label>縦<input id="h" inputmode="decimal"><span class="inch" data-for="h"></span></label>
+          <label>マチ<input id="d" inputmode="decimal"><span class="inch" data-for="d"></span></label>
+          <label>持ち手高さ<input id="handleDrop" inputmode="decimal"><span class="inch" data-for="handleDrop"></span></label>
+          <label>ストラップ長さ<input id="strapDrop" inputmode="decimal"><span class="inch" data-for="strapDrop"></span></label>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>状態</h2>
+        <div class="grid">
+          <label>コンディション<select id="rank"><option>B</option><option>N</option><option>SA</option><option>A+</option><option>A</option><option>A-</option><option>AB</option><option>BC</option><option>C</option></select></label>
+          <label>商品の機能・仕様<input id="features" placeholder="内ポケット2箇所、ジップ開閉"></label>
+        </div>
+        <label>状態の追記<textarea id="note" placeholder="内側に小さなペン跡あり"></textarea></label>
+        <label>1枚目の写真<input id="photo" type="file" accept="image/*"></label>
+        <div class="pprev" id="photoPrev" hidden></div>
+      </section>
+
+      <div class="bar">
+        <p class="msg" id="formMsg" style="flex:1 1 200px;margin:0"></p>
+        <button type="submit" class="btn" id="saveReq">依頼を保存</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- 一覧 -->
+  <div id="v-list" hidden>
+    <div class="filters" id="filters">
+      <button data-f="pending" aria-pressed="true">未作成</button>
+      <button data-f="revise" aria-pressed="false">修正待ち</button>
+      <button data-f="done" aria-pressed="false">作成済み</button>
+      <button data-f="all" aria-pressed="false">すべて</button>
+    </div>
+    <div class="bulk" id="bulk">
+      <label class="chk"><input type="checkbox" id="selAll"> 表示中をすべて選択</label>
+      <span id="bulkAct" class="row"><button type="button" class="btn small danger" id="bulkDel" disabled>選択した依頼を削除</button></span>
+    </div>
+    <div class="list" id="reqList"><p class="empty">依頼はまだありません。「依頼を入力」から1件目を保存してください。</p></div>
+  </div>
+
+  <!-- モデル -->
+  <div id="v-models" hidden>
+    <p class="note">よく出す商品を登録しておくと、入力画面で選ぶだけで同じ内容が入ります。管理番号・シリアル・状態は登録されません。</p>
+    <div class="bulk">
+      <label class="chk"><input type="checkbox" id="selAllM"> すべて選択</label>
+      <span id="bulkActM" class="row"><button type="button" class="btn small danger" id="bulkDelM" disabled>選択したモデルを削除</button></span>
+    </div>
+    <div class="list" id="modelList"><p class="empty">登録商品はまだありません。依頼一覧の「モデルに登録」から追加できます。</p></div>
+  </div>
+</div>
+
+<datalist id="dl-brand"><option>LOUIS VUITTON</option><option>Christian Dior</option><option>BOTTEGA VENETA</option><option>FENDI</option><option>GUCCI</option><option>CHANEL</option><option>Chloé</option><option>GOYARD</option><option>BALENCIAGA</option><option>COACH</option><option>CELINE</option><option>PRADA</option><option>HERMES</option><option>LOEWE</option><option>MARC JACOBS</option></datalist>
+<datalist id="dl-shape"><option>トート</option><option>ショルダー</option><option>ハンド</option><option>ボストン</option><option>ホーボー</option><option>ポーチ</option><option>リュック</option><option>クラッチ</option><option>2WAY</option></datalist>
+<datalist id="dl-mat"><option>レザー</option><option>キャンバス</option><option>ナイロン</option><option>PVC</option><option>スエード</option><option>デニム</option><option>サテン</option></datalist>
+<datalist id="dl-finish"><option>なし</option><option>コーティング</option><option>キルティング</option><option>エンボス</option><option>パテント</option></datalist>
+<datalist id="dl-form"><option>長方形</option><option>正方形</option><option>台形</option><option>丸型</option><option>バケツ型</option></datalist>
+<datalist id="dl-pattern"><option>無地</option><option>モノグラム</option><option>ダミエ</option><option>GG</option><option>マカダム</option><option>イントレチャート</option><option>トロッター</option><option>ズッカ</option><option>ズッキーノ</option><option>ココマーク</option></datalist>
+<datalist id="dl-hwcolor"><option>ゴールド</option><option>シルバー</option><option>ガンメタル</option><option>真鍮</option></datalist>
+<datalist id="dl-hwmat"><option>真鍮</option><option>メタル</option><option>金メッキ</option><option>シルバー</option><option>ブロンズ</option></datalist>
+<datalist id="dl-closure"><option>ファスナー</option><option>マグネット</option><option>ボタン</option><option>ターンロック</option><option>なし</option></datalist>
+<datalist id="dl-acc"><option>なし</option><option>保存袋</option><option>箱</option><option>パドロック＆キー</option><option>ポーチ</option><option>ギャランティカード</option><option>ショルダーストラップ</option><option>チャーム</option></datalist>
+<datalist id="dl-country"><option>フランス</option><option>イタリア</option><option>スペイン</option><option>アメリカ</option><option>中国</option><option>インドネシア</option></datalist>
+
+
+<div class="lock" id="lock" hidden>
+  <form class="lockbox" id="lockForm" autocomplete="on">
+    <h2>eBay出品依頼リスト</h2>
+    <p class="note" id="lockMsg"></p>
+    <input id="passIn" type="password" inputmode="numeric" autocomplete="current-password" placeholder="暗証番号" aria-label="暗証番号">
+    <button class="btn" id="lockGo" type="submit">開く</button>
+  </form>
+</div>
+<script>
+/* ▼ Apps Script をデプロイしたときの「ウェブアプリのURL」 */
+const API_URL = "";
+const APP_VERSION = "2026-11-09-1";
+
+const FIELDS=["code","brand","shape","model","mpn","serial","country","color","extMat","fabric","finish","form","pattern","handleMat","handleColor","liningColor","liningMat","hwColor","hwMat","closure","acc","w","h","d","handleDrop","strapDrop","rank","features","note"];
+const MODEL_SKIP=new Set(["code","serial","rank","note","acc"]);
+const $=id=>document.getElementById(id);
+let pass="";try{pass=localStorage.getItem("rekil-irai-pass")||localStorage.getItem("rekil-pass")||"";}catch(e){}
+let requests=[], models=[], filter="pending", busy=false;
+const selected=new Set();let visibleIds=[];
+const selectedM=new Set();let visibleM=[];
+
+function el(tag,cls,text){const e=document.createElement(tag);if(cls)e.className=cls;if(text!=null)e.textContent=text;return e;}
+function toast(t){document.querySelectorAll(".toast").forEach(x=>x.remove());const d=el("div","toast",t);d.setAttribute("role","status");document.body.append(d);setTimeout(()=>d.remove(),2600);}
+function showErr(t){const m=$("dbmsg");m.hidden=!t;m.textContent=t||"";}
+
+/* ---------- データ側とのやりとり ---------- */
+class ApiError extends Error{constructor(c){super(c);this.code=c;}}
+async function api(action,params={}){
+  if(!API_URL)throw new ApiError("no_api");
+  let res;
+  try{res=await fetch(API_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({action,pass,...params})});}
+  catch(e){throw new ApiError("network");}
+  let j;try{j=await res.json();}catch(e){throw new ApiError("bad_response");}
+  if(!j.ok){if(j.error==="passcode"||j.error==="passcode_not_set")showLock(j.error);throw new ApiError(j.error||"error");}
+  requests=(j.requests||[]).map(r=>({id:r.id,data:r}));
+  models=(j.models||[]).map(m=>({id:m.id,data:m}));
+  showErr("");$("sync").textContent="同期 "+new Date().toLocaleTimeString("ja-JP",{hour:"2-digit",minute:"2-digit"});
+  render();return j.result;
+}
+const errText=e=>({network:"通信できませんでした。電波を確認してください。",no_code:"管理番号を入力してください。",not_found:"見つかりませんでした（ほかの端末で削除された可能性があります）。",no_api:"データ側の接続先がまだ設定されていません。"}[e&&e.code]||("エラー："+(e&&e.code||"不明")));
+
+/* ---------- タブ ---------- */
+const views={"t-form":"v-form","t-list":"v-list","t-models":"v-models"};
+function showTab(id){for(const t in views){$(t).setAttribute("aria-selected",t===id);$(views[t]).hidden=t!==id;}window.scrollTo({top:0});}
+for(const t in views)$(t).addEventListener("click",()=>showTab(t));
+
+/* ---------- インチ表示 ---------- */
+function inch(v){const n=parseFloat(String(v).replace(/[^\d.]/g,""));return isNaN(n)?"":(Math.round(n/2.54*10)/10)+" in";}
+document.querySelectorAll(".inch").forEach(s=>{const i=$(s.dataset.for);const u=()=>s.textContent=inch(i.value);i.addEventListener("input",u);u();});
+
+/* ---------- ブランド表記の統一 ---------- */
+const BRANDS=[
+ ["LOUIS VUITTON",["louisvuitton","vuitton","ヴィトン","ビトン","ヴゥイトン","lv"]],
+ ["Christian Dior",["christiandior","dior","ディオール","ディオーリ","ディオル"]],
+ ["BOTTEGA VENETA",["bottegaveneta","bottega","ボッテガ","ボテガ"]],
+ ["FENDI",["fendi","フェンディ","フェンデイ"]],
+ ["GUCCI",["gucci","グッチ"]],
+ ["CHANEL",["chanel","シャネル"]],
+ ["Chloé",["chloe","chloé","クロエ"]],
+ ["GOYARD",["goyard","ゴヤール"]],
+ ["BALENCIAGA",["balenciaga","バレンシアガ"]],
+ ["COACH",["coach","コーチ"]],
+ ["CELINE",["celine","céline","セリーヌ"]],
+ ["PRADA",["prada","プラダ"]],
+ ["HERMES",["hermes","hermès","エルメス"]],
+ ["LOEWE",["loewe","ロエベ"]],
+ ["MARC JACOBS",["marcjacobs","マークジェイコブス","ジェイコブス"]],
+ ["SAINT LAURENT",["saintlaurent","yvessaintlaurent","ysl","サンローラン","イヴサンローラン"]],
+ ["MIU MIU",["miumiu","ミュウミュウ"]],
+ ["BURBERRY",["burberry","burberrys","バーバリー"]],
+ ["Salvatore Ferragamo",["ferragamo","salvatoreferragamo","フェラガモ"]]
+];
+function bnorm(s){return String(s||"").normalize("NFKC").toLowerCase().replace(/[ぁ-ゖ]/g,c=>String.fromCharCode(c.charCodeAt(0)+0x60)).replace(/[\s・･\.\-_'’&]/g,"");}
+function normBrand(s){const t=String(s||"").trim();if(!t)return "";const n=bnorm(t);
+  for(const [name,al] of BRANDS){if(bnorm(name)===n||al.some(a=>bnorm(a)===n))return name;}
+  for(const [name,al] of BRANDS){if(al.some(a=>{const b=bnorm(a);return b.length>=3&&n.includes(b);}))return name;}
+  return t;}
+function readForm(){const o={};FIELDS.forEach(k=>o[k]=($(k).value||"").trim());o.brand=normBrand(o.brand);return o;}
+$("brand").addEventListener("change",e=>{const v=normBrand(e.target.value);if(v)e.target.value=v;});
+function fill(o,skipCode){FIELDS.forEach(k=>{if(skipCode&&MODEL_SKIP.has(k))return;if(o[k]!==undefined)$(k).value=o[k];});document.querySelectorAll(".inch").forEach(s=>s.textContent=inch($(s.dataset.for).value));}
+function msg(t,cls){const m=$("formMsg");m.textContent=t;m.className="msg "+(cls||"");}
+const safeId=s=>s.replace(/[^A-Za-z0-9_\-.~:@+]/g,"_").replace(/_+/g,"_").slice(0,120)||"x";
+const hash=s=>{let h=0;for(const c of s)h=(h*31+c.codePointAt(0))>>>0;return h.toString(36);};
+const modelId=s=>safeId(s).slice(0,60)+"-"+hash(s);
+
+/* ---------- 写真 ---------- */
+function thumb(url){const t=el("div","thumb");if(url){const i=new Image();i.alt="";i.loading="lazy";i.referrerPolicy="no-referrer";i.src=url;i.onerror=()=>{t.replaceChildren("写真なし");};t.append(i);}else t.textContent="写真なし";return t;}
+async function toDataUrl(file){
+  const url=URL.createObjectURL(file);
+  try{const img=await new Promise((ok,ng)=>{const i=new Image();i.onload=()=>ok(i);i.onerror=ng;i.src=url;});
+    const s=Math.min(1,1600/Math.max(img.width,img.height)),c=document.createElement("canvas");
+    c.width=Math.round(img.width*s);c.height=Math.round(img.height*s);c.getContext("2d").drawImage(img,0,0,c.width,c.height);
+    return c.toDataURL("image/jpeg",0.85);}
+  finally{URL.revokeObjectURL(url);}
+}
+$("photo").addEventListener("change",()=>{const f=$("photo").files[0];const p=$("photoPrev");p.replaceChildren();
+  if(f){const i=new Image();i.alt="";i.src=URL.createObjectURL(f);p.append(i);}p.hidden=!f;});
+
+/* ---------- 登録商品から選択 ---------- */
+function applyPreset(id){const m=models.find(x=>x.id===id);$("presetSel").value=m?id:"";
+  if(m){fill(m.data,true);msg("「"+m.data.label+"」の内容を入れました。管理番号と状態を入力してください。","ok");}
+  document.querySelectorAll(".pick").forEach(p=>p.setAttribute("aria-pressed",p.dataset.id===id));}
+$("presetSel").addEventListener("change",e=>applyPreset(e.target.value));
+
+/* ---------- 下書き（この端末だけ） ---------- */
+try{const d=JSON.parse(localStorage.getItem("irai-draft")||"null");if(d)fill(d);}catch(e){}
+$("f").addEventListener("input",()=>{try{localStorage.setItem("irai-draft",JSON.stringify(readForm()));}catch(e){}});
+
+/* ---------- 依頼を保存 ---------- */
+$("f").addEventListener("submit",async e=>{
+  e.preventDefault();
+  const o=readForm();
+  if(!o.code){msg("管理番号を入力してください。","err");$("code").focus();return;}
+  const id=safeId(o.code),prev=requests.find(r=>r.id===id),drafted=prev&&(prev.data.status==="done"||prev.data.status==="revise");
+  $("saveReq").disabled=true;msg("保存中…");
+  try{
+    const f=$("photo").files[0];const photoData=f?await toDataUrl(f):undefined;
+    await api("saveRequest",{rec:o,photoData});
+    msg(drafted?"「"+o.code+"」を修正待ちにしました。作成済みの下書きをこの内容で直します。":"「"+o.code+"」を保存しました。続けて次の商品を入力できます。","ok");
+    FIELDS.forEach(k=>$(k).value="");$("rank").value="B";$("presetSel").value="";$("photo").value="";$("photoPrev").hidden=true;
+    document.querySelectorAll(".inch").forEach(s=>s.textContent="");document.querySelectorAll(".pick").forEach(p=>p.setAttribute("aria-pressed","false"));
+    try{localStorage.removeItem("irai-draft");}catch(e){}
+    window.scrollTo({top:0});
+  }catch(err){msg("保存できませんでした。"+errText(err),"err");}
+  $("saveReq").disabled=false;
+});
+
+/* ---------- 一覧の表示 ---------- */
+function confirmDelete(holder,onYes){
+  holder.replaceChildren();const c=el("span","confirm","削除しますか？");
+  const y=el("button","btn small danger","削除");const n=el("button","btn small ghost","やめる");
+  y.type=n.type="button";y.onclick=onYes;n.onclick=()=>render();c.append(y,n);holder.append(c);
+}
+async function act(fn,out){try{await fn();}catch(e){if(out)out.textContent=errText(e);else showErr(errText(e));}}
+function render(){
+  const pend=requests.filter(r=>r.data.status!=="done").length;
+  const label={pending:"未作成",revise:"修正待ち",done:"作成済み"};
+  $("n-pending").textContent=pend?pend:"";$("n-models").textContent=models.length?models.length:"";
+  const L=$("reqList");L.replaceChildren();
+  const st=r=>r.data.status==="done"||r.data.status==="revise"?r.data.status:"pending";
+  const rows=requests.filter(r=>filter==="all"||st(r)===filter)
+    .sort((a,b)=>(b.data.createdAt||"").localeCompare(a.data.createdAt||""));
+  if(!rows.length)L.append(el("p","empty",filter==="all"?"依頼はまだありません。":(label[filter]+"の依頼はありません。")));
+  visibleIds=rows.map(r=>r.id);
+  [...selected].forEach(id=>{if(!visibleIds.includes(id))selected.delete(id);});
+  updateBulk();
+  rows.forEach(r=>{
+    const d=r.data,it=el("div","item"),top=el("div","top");
+    const cl=el("label","chk"),cb=document.createElement("input");cb.type="checkbox";cb.id="sel-"+r.id;cb.checked=selected.has(r.id);
+    cb.setAttribute("aria-label",d.code+"を選択");cb.onchange=()=>{cb.checked?selected.add(r.id):selected.delete(r.id);updateBulk();};cl.append(cb);
+    top.append(cl,el("span","chip "+st(r),label[st(r)]),el("span","code",d.code));
+    const head=el("div","rhead"),txt=el("div","rtext");
+    txt.append(top,el("div","name",[d.brand,d.model,d.shape].filter(Boolean).join(" ")||"（ブランド未入力）"));
+    txt.append(el("div","meta",[d.mpn&&("型番 "+d.mpn),d.color,d.w&&(`W${d.w}×H${d.h||"-"}×D${d.d||"-"}cm`),"ランク "+(d.rank||"B")].filter(Boolean).join("・")));
+    if(d.photo){const im=new Image();im.className="rphoto";im.alt="";im.loading="lazy";im.referrerPolicy="no-referrer";im.src=d.photo;im.onerror=()=>im.remove();head.append(im);}
+    head.append(txt);it.append(head);
+    if(d.note)it.append(el("div","meta","追記："+d.note));
+    if(d.title)it.append(el("div","meta","タイトル案："+d.title));
+    if(d.result)it.append(el("div","meta","Claude："+d.result));
+    const row=el("div","row"),out=el("div","meta");
+    const edit=el("button","btn small ghost","入力画面で直す");edit.type="button";
+    edit.onclick=()=>{fill(d);$("presetSel").value="";showTab("t-form");msg(d.status==="done"||d.status==="revise"?"「"+d.code+"」を読み込みました。保存すると修正待ちになり、作成済みの下書きをこの内容で直します。":"「"+d.code+"」を読み込みました。直して「依頼を保存」で上書きします。","ok");};
+    const fi=document.createElement("input");fi.type="file";fi.accept="image/*";fi.hidden=true;fi.id="rph-"+r.id;
+    const up=el("button","btn small ghost",d.photo?"写真を変える":"写真を入れる");up.type="button";up.onclick=()=>fi.click();
+    fi.onchange=()=>{const f=fi.files[0];if(!f)return;out.textContent="アップロード中…";act(async()=>{await api("requestPhoto",{id:r.id,photoData:await toDataUrl(f)});},out);};
+    const mlabel=[normBrand(d.brand),d.model,d.mpn].filter(Boolean).join(" ");
+    const has=mlabel&&models.some(m=>m.id===modelId(mlabel));
+    const reg=el("button","btn small ghost",has?"モデル登録済み":"モデルに登録");reg.type="button";reg.disabled=!!has;
+    reg.onclick=()=>{reg.disabled=true;reg.textContent="登録中…";act(async()=>{await api("saveModel",{rec:{...d,brand:normBrand(d.brand)}});toast("登録商品に追加しました");},out).finally(()=>render());};
+    const del=el("button","btn small danger","削除");del.type="button";
+    del.onclick=()=>confirmDelete(row,()=>act(()=>api("deleteRequests",{ids:[r.id]}),out));
+    row.append(edit,up,fi,reg,del);it.append(row,out);L.append(it);
+  });
+
+  const M=$("modelList");M.replaceChildren();
+  const sel=$("presetSel"),cur=sel.value;sel.replaceChildren(new Option("（選ばない）",""));
+  const col=new Intl.Collator("ja",{sensitivity:"base",numeric:true});
+  const bk=m=>normBrand(m.data.brand)||"（ブランドなし）";
+  const ms=[...models].sort((a,b)=>col.compare(bk(a),bk(b))||col.compare(a.data.label||"",b.data.label||""));
+  let og=null,last=null;
+  ms.forEach(m=>{const k=bk(m);if(!og||col.compare(k,last)!==0){og=document.createElement("optgroup");og.label=k;sel.append(og);last=k;}og.append(new Option(m.data.label,m.id));});
+  sel.value=models.some(m=>m.id===cur)?cur:"";
+  const S=$("presetStrip");S.replaceChildren();S.hidden=!ms.length;
+  ms.forEach(m=>{const b=el("button","pick");b.type="button";b.dataset.id=m.id;b.setAttribute("aria-pressed",m.id===sel.value);
+    b.append(thumb(m.data.photo),el("span",null,m.data.label));b.onclick=()=>applyPreset(m.id);S.append(b);});
+  if(!ms.length)M.append(el("p","empty","登録商品はまだありません。依頼一覧の「モデルに登録」から追加できます。"));
+  visibleM=ms.map(m=>m.id);[...selectedM].forEach(id=>{if(!visibleM.includes(id))selectedM.delete(id);});updateBulkM();
+  ms.forEach(m=>{
+    const d=m.data,it=el("div","item mrow"),body=el("div","body");
+    const rn=el("div","rename"),inp=document.createElement("input");inp.id="rn-"+m.id;inp.value=d.label||"";inp.setAttribute("aria-label","モデル名");
+    const mcl=el("label","chk"),mcb=document.createElement("input");mcb.type="checkbox";mcb.id="selm-"+m.id;mcb.checked=selectedM.has(m.id);
+    mcb.setAttribute("aria-label",(d.label||"")+"を選択");mcb.onchange=()=>{mcb.checked?selectedM.add(m.id):selectedM.delete(m.id);updateBulkM();};mcl.append(mcb);rn.append(mcl);
+    const sv=el("button","btn small ghost","名前を保存");sv.type="button";const out=el("div","meta");
+    sv.onclick=()=>{const v=inp.value.trim();if(!v){out.textContent="名前を入力してください。";return;}
+      act(async()=>{await api("renameModel",{id:m.id,label:v});toast("名前を変更しました");},out);};
+    rn.append(inp,sv);
+    body.append(rn,el("div","meta",[d.shape,d.color,d.extMat,d.pattern,d.w&&(`W${d.w}×H${d.h||"-"}×D${d.d||"-"}cm`)].filter(Boolean).join("・")));
+    const row=el("div","row"),del=el("button","btn small danger","削除");del.type="button";
+    const fi=document.createElement("input");fi.type="file";fi.accept="image/*";fi.hidden=true;fi.id="ph-"+m.id;
+    const up=el("button","btn small ghost",d.photo?"写真を変える":"写真を入れる");up.type="button";up.onclick=()=>fi.click();
+    fi.onchange=()=>{const f=fi.files[0];if(!f)return;out.textContent="アップロード中…";act(async()=>{await api("modelPhoto",{id:m.id,photoData:await toDataUrl(f)});},out);};
+    del.onclick=()=>confirmDelete(row,()=>act(()=>api("deleteModels",{ids:[m.id]}),out));
+    row.append(up,fi,del);body.append(row,out);it.append(thumb(d.photo),body);M.append(it);
+  });
+}
+
+/* ---------- まとめて削除 ---------- */
+function makeBulk(o){
+  const upd=()=>{const n=o.sel.size,all=$(o.all);
+    all.checked=n>0&&n===o.vis().length;all.indeterminate=n>0&&n<o.vis().length;all.disabled=!o.vis().length;
+    const A=$(o.box);if(A.dataset.confirm)return;
+    const b=$(o.btn);b.disabled=!n;b.textContent=n?"選択した"+n+"件を削除":o.idle;};
+  const reset=()=>{const A=$(o.box);delete A.dataset.confirm;const b=el("button","btn small danger","");b.id=o.btn;b.type="button";b.onclick=ask;A.replaceChildren(b);upd();};
+  const ask=()=>{const n=o.sel.size;if(!n)return;const A=$(o.box);A.dataset.confirm="1";
+    const y=el("button","btn small danger",n+"件を削除する"),c=el("button","btn small ghost","やめる");
+    y.type=c.type="button";c.onclick=reset;
+    y.onclick=async()=>{y.disabled=c.disabled=true;const ids=[...o.sel];
+      try{await api(o.action,{ids});o.sel.clear();toast(ids.length+"件を削除しました");}catch(e){showErr("削除できませんでした。"+errText(e));}
+      reset();};
+    A.replaceChildren(el("span","confirm",n+"件を削除しますか？"),y,c);};
+  $(o.all).addEventListener("change",e=>{o.sel.clear();if(e.target.checked)o.vis().forEach(id=>o.sel.add(id));render();});
+  $(o.btn).onclick=ask;
+  return upd;
+}
+const updateBulk=makeBulk({sel:selected,vis:()=>visibleIds,all:"selAll",box:"bulkAct",btn:"bulkDel",idle:"選択した依頼を削除",action:"deleteRequests"});
+const updateBulkM=makeBulk({sel:selectedM,vis:()=>visibleM,all:"selAllM",box:"bulkActM",btn:"bulkDelM",idle:"選択したモデルを削除",action:"deleteModels"});
+$("filters").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;filter=b.dataset.f;selected.clear();
+  $("filters").querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed",x===b));render();});
+
+/* ---------- 暗証番号 ---------- */
+function showLock(err){
+  $("lock").hidden=false;
+  $("lockMsg").textContent=err==="passcode_not_set"?"データ側で暗証番号がまだ設定されていません。Apps Scriptの PASSCODE を書き換えて、もう一度デプロイしてください。"
+    :err==="passcode"&&pass?"暗証番号が違います。もう一度入力してください。":"社内の暗証番号を入力してください。一度入力すると、この端末では次から入力不要です。";
+  setTimeout(()=>$("passIn").focus(),100);
+}
+$("lockForm").addEventListener("submit",async e=>{
+  e.preventDefault();pass=$("passIn").value.trim();if(!pass)return;
+  $("lockGo").disabled=true;$("lockGo").textContent="確認中…";
+  try{await api("list");try{localStorage.setItem("rekil-irai-pass",pass);}catch(_){}
+    $("lock").hidden=true;$("passIn").value="";toast("接続しました");}
+  catch(err){const c=err&&err.code||"";
+    if(c==="network")$("lockMsg").textContent="データ側（Apps Script）に接続できませんでした。電波を確認し、それでもだめならデプロイの「アクセスできるユーザー」が「全員」になっているか確認してください。";
+    else if(c!=="passcode"&&c!=="passcode_not_set")$("lockMsg").textContent="データ側でエラーが起きました。（エラー："+c+"）";}
+  $("lockGo").disabled=false;$("lockGo").textContent="開く";
+});
+
+/* ---------- 同期・更新 ---------- */
+async function refresh(){if(busy||!pass||!API_URL)return;const ae=document.activeElement;if(ae&&/^rn-/.test(ae.id||""))return;busy=true;try{await api("list");}catch(e){if(e.code==="network")showErr(errText(e));}busy=false;}
+setInterval(()=>{if(document.visibilityState==="visible")refresh();},30000);
+async function checkUpdate(){
+  try{const r=await fetch(location.pathname+"?v="+Date.now(),{cache:"no-store"});
+    const t=await r.text();const m=t.match(/const APP_VERSION = "([^"]+)"/);
+    if(m&&m[1]!==APP_VERSION){location.replace(location.pathname+"?v="+encodeURIComponent(m[1]));}}catch(_){}
+}
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"){checkUpdate();refresh();}});
+
+/* ---------- 起動 ---------- */
+render();
+if(!API_URL){showErr("データ側の接続先がまだ設定されていません。");}
+else if(!pass){showLock();}
+else{refresh();}
+</script>
+</body>
+</html>
