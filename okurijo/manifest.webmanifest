@@ -1,6 +1,6 @@
 {
-  "name": "ReKiL 送り状控え",
-  "short_name": "ReKiL 送り状",
+  "name": "ReKiL Shipping Label",
+  "short_name": "Shipping Label",
   "description": "eBay・ヤフオク・業販の送り状番号を控えて、コピー・登録済みチェックをするアプリ",
   "lang": "ja",
   "start_url": "./",
