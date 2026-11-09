@@ -180,7 +180,7 @@ ul.pv li.bad input.p{border-color:var(--danger)}
 <script>
 /* ▼ Apps Script をデプロイしたときの「ウェブアプリのURL」 */
 const API_URL = "https://script.google.com/macros/s/AKfycbwMrGyfC24OulRxZ5xkpKnA0rPlK1Fi0wWacCv17PgV7FsUF7CPBVEKj9O5TVpwHW6y/exec";
-const APP_VERSION = "2026-11-08-4";
+const APP_VERSION = "2026-11-09-1";
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -364,9 +364,10 @@ function parseLine(line){
 }
 
 // レシート・値札の文字から、商品名と金額の候補を拾う
-const SKIP = /(合計|小計|総計|計\s|お預|預り|預かり|お釣|釣銭|おつり|現金|クレジット|カード|ポイント|税|対象|点数|値引|割引|領収|ありがとう|電話|TEL|〒|登録番号|レジ|担当|No\.|NO\.|ご来店|残高|支払|交通系|QR|PayPay)/i;
+const SKIP = /(合計|小計|総計|計\s|お預|預り|預かり|お釣|釣銭|おつり|現金|クレジット|カード|ポイント|消費税|内税|外税|税額|税率|対象|点数|値引|割引|領収|ありがとう|電話|TEL|〒|登録番号|レジ|担当|No\.|NO\.|ご来店|残高|支払|交通系|QR|PayPay)/i;
 function parseReceipt(text){
-  const lines = text.split(/\r?\n/).map(s=>s.replace(/　/g," ").trim()).filter(Boolean);
+  // 値札によくある「税込」「(税込)」は金額の邪魔になるので消してから読む
+  const lines = text.split(/\r?\n/).map(s=>s.replace(/　/g," ").replace(/[（(]?\s*税込み?\s*[)）]?|tax\s*in/gi," ").replace(/\s+/g," ").trim()).filter(Boolean);
   const out = []; let pending = "";
   for(const ln of lines){
     if(SKIP.test(ln)){ pending = ""; continue; }
