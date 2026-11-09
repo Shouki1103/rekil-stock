@@ -6,12 +6,12 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="ReKiL 仕入ルート帳">
+<meta name="apple-mobile-web-app-title" content="ReKiL 仕入ルート">
 <meta name="theme-color" content="#0d1014">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="icon" href="icon-192.png">
-<title>ReKiL 仕入ルート帳</title>
+<title>ReKiL 仕入ルート</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=IBM+Plex+Mono:wght@500;700&display=swap">
 <style>
@@ -112,7 +112,7 @@ pre.fallback{white-space:pre-wrap;background:var(--bg);border:1px solid var(--li
 <body>
 <header>
   <div class="top">
-    <div class="brand"><i></i>ReKiL 仕入ルート帳</div>
+    <div class="brand"><i></i>ReKiL 仕入ルート</div>
     <div class="sync" id="sync">接続中…</div>
   </div>
   <div class="picker">
@@ -174,7 +174,7 @@ pre.fallback{white-space:pre-wrap;background:var(--bg);border:1px solid var(--li
 
 <div id="lock" hidden>
   <form id="lockForm">
-    <div class="brand"><i></i>ReKiL 仕入ルート帳</div>
+    <div class="brand"><i></i>ReKiL 仕入ルート</div>
     <h2>暗証番号</h2>
     <p class="note" id="lockMsg"></p>
     <input id="passIn" type="password" inputmode="numeric" autocomplete="current-password" placeholder="暗証番号" aria-label="暗証番号">
@@ -185,7 +185,7 @@ pre.fallback{white-space:pre-wrap;background:var(--bg);border:1px solid var(--li
 <script>
 /* ▼ Apps Script をデプロイしたときの「ウェブアプリのURL」 */
 const API_URL = "https://script.google.com/macros/s/AKfycbxPSHfn__gZMtY4xf0QqRYaeYO5aRb2OIg3S9x7pB01vA_WwSmfq3XgqvEJxUIKuhYw/exec";
-const APP_VERSION = "2026-11-09-2";
+const APP_VERSION = "2026-11-09-3";
 
 const $ = s => document.querySelector(s);
 const ls = {
