@@ -6,12 +6,12 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="ReKiL 返品・出品">
+<meta name="apple-mobile-web-app-title" content="ReKiL 出品・返品・外注管理">
 <meta name="theme-color" content="#0d1014">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="icon" href="icon-192.png">
-<title>ReKiL 返品・出品</title>
+<title>ReKiL 出品・返品・外注管理</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=IBM+Plex+Mono:wght@500;700&display=swap">
 <style>
@@ -103,7 +103,7 @@ textarea{min-height:70px;resize:vertical}
 <body>
 <header>
   <div class="top">
-    <div class="brand"><i></i>ReKiL 返品・出品</div>
+    <div class="brand"><i></i>ReKiL 出品・返品・外注管理</div>
     <div class="sync" id="sync">接続中…</div>
   </div>
   <div class="tabs" role="tablist" aria-label="種類">
@@ -135,7 +135,7 @@ textarea{min-height:70px;resize:vertical}
 
 <div id="lock" hidden>
   <form id="lockForm">
-    <div class="brand"><i></i>ReKiL 返品・出品</div>
+    <div class="brand"><i></i>ReKiL 出品・返品・外注管理</div>
     <h2>暗証番号</h2>
     <p class="note" id="lockMsg"></p>
     <input id="passIn" type="password" inputmode="numeric" autocomplete="current-password" placeholder="暗証番号" aria-label="暗証番号">
@@ -146,7 +146,7 @@ textarea{min-height:70px;resize:vertical}
 <script>
 /* ▼ Apps Script をデプロイしたときの「ウェブアプリのURL」 */
 const API_URL = "https://script.google.com/macros/s/AKfycbzuakHA841y3KMQTn32E6L6UOebKO9LZGEqX1IHAAQ3Xkb5Y2tvp4ZlIOVnr1u9T5KD/exec";
-const APP_VERSION = "2026-11-09-2";
+const APP_VERSION = "2026-11-09-3";
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
