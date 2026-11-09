@@ -5,9 +5,9 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="eBay出品依頼">
-<meta name="theme-color" content="#f3f4f6">
+<meta name="theme-color" content="#0d1014">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="icon" href="icon-192.png">
@@ -17,11 +17,12 @@
 <style>
 /* Layout: one narrow working column; tabs on top, grouped form sections like a 検品カード */
 :root{
-  --bg:#f3f4f6; --surface:#ffffff; --fg:#1d2330; --muted:#636b7a; --line:#d9dde4;
-  --accent:#1f4f8f; --accent-soft:#e4ecf7; --ok:#1d7a4d; --ok-soft:#e1f2e8; --warn:#9a5b00; --warn-soft:#fbefd9; --danger:#b3261e;
+  --bg:#14181d; --surface:#1d232a; --fg:#e8ebee; --muted:#9aa4af; --line:#2f3740;
+  --accent:#6aa8ff; --accent-soft:#1c2c42; --ok:#5fd39a; --ok-soft:#17301f; --warn:#f5c026; --warn-soft:#352b10; --danger:#ff7a6b;
+  --steel:#0d1014;
   --f-body:"Zen Kaku Gothic New","Hiragino Sans","Yu Gothic",system-ui,sans-serif;
   --f-mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
-  color-scheme:light;
+  color-scheme:dark;
 }
 *{box-sizing:border-box}
 body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.6}
@@ -90,7 +91,7 @@ textarea{min-height:64px;resize:vertical}
 html,body{margin:0}
 [hidden]{display:none!important}
 body{min-height:100vh;padding-top:env(safe-area-inset-top,0px)}
-body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--steel)}
 .hdr{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap}
 .sync{font-size:12px;color:var(--muted);font-family:var(--f-mono)}
 .rhead{display:flex;gap:12px;align-items:flex-start}
@@ -244,7 +245,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 <script>
 /* ▼ Apps Script をデプロイしたときの「ウェブアプリのURL」 */
 const API_URL = "https://script.google.com/macros/s/AKfycbyt_sbyLWtGgD8TODNx7kvs2gEOlisN6X8XWqFYGyVQVHkmqvrIRTo6RWZXgYSPjRCB/exec";
-const APP_VERSION = "2026-11-09-3";
+const APP_VERSION = "2026-11-09-4";
 
 const FIELDS=["code","brand","shape","model","mpn","serial","country","color","extMat","fabric","finish","form","pattern","handleMat","handleColor","liningColor","liningMat","hwColor","hwMat","closure","acc","w","h","d","handleDrop","strapDrop","rank","features","note"];
 const MODEL_SKIP=new Set(["code","serial","rank","note","acc"]);
