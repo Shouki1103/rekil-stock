@@ -1,6 +1,6 @@
 {
-  "name": "ReKiL 管理ポータル",
-  "short_name": "ReKiL ポータル",
+  "name": "ReKiL ポータルサイト",
+  "short_name": "ReKiL ポータルサイト",
   "description": "ReKiLのアプリ・ツール・スプレッドシートを用途別にまとめた入口",
   "lang": "ja",
   "start_url": "./",
