@@ -1,0 +1,443 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ReKiL 仕入ルート帳">
+<meta name="theme-color" content="#0d1014">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-192.png">
+<title>ReKiL 仕入ルート帳</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=IBM+Plex+Mono:wght@500;700&display=swap">
+<style>
+/* ReKiL の他アプリと同じ濃色の業務アプリ調。ルート帳はアクセントを道路標識の琥珀色に */
+:root{
+  --bg:#14181d; --surface:#1d232a; --line:#2f3740; --fg:#e8ebee; --muted:#9aa4af;
+  --accent:#f2a541; --accent-ink:#241603; --steel:#0d1014; --danger:#ff7a6b; --ok:#3fd18b; --warn:#ffb547;
+  --hotel:#b79ceb; --hotel-bg:#262039;
+  --font-body:"Zen Kaku Gothic New","Hiragino Sans","Yu Gothic",system-ui,sans-serif;
+  --font-code:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--fg)}
+body{font-family:var(--font-body);font-size:15px;line-height:1.6;padding-bottom:env(safe-area-inset-bottom,0px)}
+[hidden]{display:none!important}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--steel)}
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--steel);
+  padding:12px max(16px,env(safe-area-inset-right,0px)) 12px max(16px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:10px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:900;font-size:17px;letter-spacing:.04em}
+.brand i{display:inline-block;width:12px;height:22px;background:repeating-linear-gradient(-45deg,var(--accent) 0 5px,#1d2228 5px 10px);border-radius:2px}
+.sync{font-size:12px;color:#c9d1d9;text-align:right}
+.picker{display:grid;grid-template-columns:minmax(0,8.5rem) minmax(0,1fr) auto;gap:8px}
+.chips{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
+.chips::-webkit-scrollbar{display:none}
+.chips button{flex:0 0 auto;min-height:36px;padding:4px 13px;font-size:14px;border-radius:999px;background:var(--bg)}
+.chips button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.chips .n{font-family:var(--font-code);font-size:11px;opacity:.75;margin-left:2px}
+.chips .p{font-size:11px;opacity:.75;font-weight:500;margin-right:2px}
+main{max-width:640px;margin:0 auto;padding:12px max(16px,env(safe-area-inset-right,0px)) 40px max(16px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:12px}
+.rhead{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.rtop{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.rname{font-weight:900;font-size:20px;line-height:1.3;overflow-wrap:anywhere}
+.lbl{font-size:12px;color:var(--muted);letter-spacing:.06em}
+.dep{display:flex;align-items:baseline;gap:10px}
+.dep b{font-family:var(--font-code);font-size:22px;color:var(--accent)}
+.bar{display:flex;flex-wrap:wrap;gap:8px}
+.bar button{flex:1 1 auto}
+.moves{display:flex;gap:4px;align-items:center;flex:0 0 auto}
+.icon{min-height:36px;min-width:36px;padding:0;font-size:15px;color:var(--muted)}
+button{font:inherit;font-weight:700;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--fg);padding:10px 14px;cursor:pointer;min-height:44px;display:inline-flex;align-items:center;justify-content:center;gap:6px}
+button.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+button.big{min-height:52px;font-size:16px;width:100%}
+button.outline{background:transparent;border-color:var(--accent);color:var(--accent)}
+button.ghost{background:transparent;border-color:transparent;color:var(--muted)}
+button.danger{color:var(--danger);border-color:#5a2f2b;background:transparent}
+button:disabled{opacity:.35;cursor:default}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+input,select,textarea{font:inherit;font-size:16px;width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--fg);min-height:44px;min-width:0}
+textarea{min-height:60px;resize:vertical;font-size:15px}
+select.pos{width:auto;min-height:36px;padding:2px 6px;font-size:13px}
+.list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.stop{display:grid;grid-template-columns:38px 1fr;gap:10px;position:relative}
+.stop::before{content:"";position:absolute;left:18px;top:0;bottom:0;width:2px;background:var(--line)}
+.stop:first-child::before{top:24px}.stop:last-child::before{bottom:calc(100% - 24px)}
+.num{position:relative;z-index:1;width:38px;height:38px;border-radius:50%;background:var(--bg);border:2px solid var(--accent);color:var(--accent);
+  font-family:var(--font-code);font-weight:700;display:grid;place-items:center;margin-top:6px}
+.stop.hotel .num{border-color:var(--hotel);color:var(--hotel);background:var(--hotel-bg);font-family:var(--font-body);font-size:13px}
+.stop.note .num{border-style:dashed;color:var(--muted);border-color:var(--muted);font-family:var(--font-body)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:10px;min-width:0;display:flex;flex-direction:column;gap:8px}
+.stop.hotel .card{background:var(--hotel-bg);border-color:#4a3d6e}
+.stop.note .card{background:transparent;border-style:dashed;padding:8px 12px}
+.stop.skip .name{color:var(--muted)}
+.ctop{display:flex;gap:8px;justify-content:space-between;align-items:flex-start}
+.cfoot{display:flex;gap:8px;justify-content:space-between;align-items:center;flex-wrap:wrap}
+.chips .n{margin-left:6px}
+.tag{display:inline-block;font-size:11px;font-weight:700;padding:0 8px;border-radius:999px;border:1px solid var(--line);color:var(--muted);margin-bottom:2px}
+.stop.hotel .tag{border-color:var(--hotel);color:var(--hotel)}
+.name{font-weight:700;font-size:16px;line-height:1.4;overflow-wrap:anywhere}
+.facts{display:grid;grid-template-columns:72px 1fr;gap:3px 8px;font-size:14px}
+.facts dt{color:var(--muted);font-size:12px;padding-top:2px}
+.facts dd{margin:0;min-width:0;overflow-wrap:anywhere}
+.pill{display:inline-block;font-size:12px;font-weight:700;padding:0 8px;border-radius:999px;background:#3a2c12;color:var(--warn)}
+.stars{display:flex;gap:0}
+.star{background:none;border:0;min-height:34px;min-width:34px;padding:0;font-size:22px;color:#3a434d}
+.star.on{color:var(--accent)}
+.empty{color:var(--muted);font-size:14px;text-align:center;line-height:1.8;padding:16px;border:1px dashed var(--line);border-radius:10px}
+.addbox{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.addbox h2{font-size:15px;margin:0}
+.seg{display:flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.seg button{flex:1;border:0;border-radius:0;background:transparent;color:var(--muted);min-height:40px;font-size:14px}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+pre.fallback{white-space:pre-wrap;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px;font-size:13px;user-select:all;-webkit-user-select:all;margin:0}
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:#f2f4f6;color:#111;padding:10px 16px;border-radius:8px;font-weight:700;z-index:60;max-width:calc(100% - 32px);box-shadow:0 6px 24px #0008}
+.sheet{position:fixed;inset:0;z-index:30;background:#000a;display:flex;align-items:flex-end;justify-content:center}
+.sheet form{background:var(--surface);width:100%;max-width:640px;max-height:92vh;overflow:auto;border-radius:14px 14px 0 0;padding:16px max(16px,env(safe-area-inset-right,0px)) calc(16px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:12px}
+.sheet h3{margin:0;font-size:18px;display:flex;justify-content:space-between;align-items:center}
+.f{display:flex;flex-direction:column;gap:5px}
+#lock{position:fixed;inset:0;z-index:50;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:24px}
+#lock form{width:100%;max-width:360px;display:flex;flex-direction:column;gap:12px}
+#lock h2{margin:0;font-size:20px}
+.note{font-size:13px;color:var(--muted);margin:0}
+@media (max-width:480px){.picker{grid-template-columns:1fr auto}.picker .q{grid-column:1/-1;grid-row:2}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<header>
+  <div class="top">
+    <div class="brand"><i></i>ReKiL 仕入ルート帳</div>
+    <div class="sync" id="sync">接続中…</div>
+  </div>
+  <div class="picker">
+    <select id="pref" aria-label="県を選ぶ"></select>
+    <input class="q" id="q" type="search" placeholder="ルート名で検索（全県）" aria-label="ルート名で検索">
+    <button class="outline" id="newRoute" type="button">＋ルート</button>
+  </div>
+  <div class="chips" id="routes" aria-label="ルート"></div>
+</header>
+
+<main>
+  <section class="rhead" id="rhead" hidden>
+    <div class="rtop">
+      <div>
+        <div class="lbl" id="rpref"></div>
+        <div class="rname" id="rname"></div>
+        <div class="dep"><span class="lbl">朝の出発</span><b id="rdep"></b></div>
+      </div>
+      <div class="moves" aria-label="ルートの並び順">
+        <button class="icon" id="rUp" type="button" aria-label="ルートを前へ">←</button>
+        <button class="icon" id="rDown" type="button" aria-label="ルートを後ろへ">→</button>
+      </div>
+    </div>
+    <div class="bar">
+      <button class="primary" id="copyNames" type="button">店名だけコピー</button>
+      <button class="outline" id="copyFull" type="button">詳細つきでコピー</button>
+    </div>
+    <div class="bar">
+      <button id="rEdit" type="button">名前・県・出発時刻</button>
+      <button class="danger" id="rDel" type="button">ルートを削除</button>
+    </div>
+    <pre class="fallback" id="fallback" hidden></pre>
+  </section>
+
+  <ol class="list" id="list"></ol>
+  <p class="empty" id="empty" hidden></p>
+
+  <form class="addbox" id="addForm" hidden autocomplete="off">
+    <h2>このルートに追加（最後尾に入ります）</h2>
+    <div class="seg" role="group" aria-label="種類">
+      <button type="button" data-t="store" aria-pressed="true">店舗</button>
+      <button type="button" data-t="hotel" aria-pressed="false">ホテル</button>
+      <button type="button" data-t="note" aria-pressed="false">メモ行</button>
+    </div>
+    <input id="addName" type="text" placeholder="例：トレファクスタイル〇〇店" aria-label="名前">
+    <button class="primary big" type="submit">追加する</button>
+    <p class="note">新しい店舗の営業時間・駐車場は、チャットで「仕入ルート帳に〇〇を追加」と送ってもらえれば調べて入れます。</p>
+  </form>
+</main>
+
+<div class="sheet" id="sheet" hidden>
+  <form id="form" autocomplete="off" novalidate>
+    <h3><span id="formT"></span><button type="button" class="ghost" id="close" aria-label="閉じる">✕</button></h3>
+    <div id="fields" style="display:flex;flex-direction:column;gap:10px"></div>
+    <button class="primary big" type="submit">保存する</button>
+    <button type="button" class="danger" id="fDel" hidden>削除</button>
+  </form>
+</div>
+
+<div id="lock" hidden>
+  <form id="lockForm">
+    <div class="brand"><i></i>ReKiL 仕入ルート帳</div>
+    <h2>暗証番号</h2>
+    <p class="note" id="lockMsg"></p>
+    <input id="passIn" type="password" inputmode="numeric" autocomplete="current-password" placeholder="暗証番号" aria-label="暗証番号">
+    <button class="primary big" id="lockGo" type="submit">開く</button>
+  </form>
+</div>
+
+<script>
+/* ▼ Apps Script をデプロイしたときの「ウェブアプリのURL」 */
+const API_URL = "";
+const APP_VERSION = "2026-11-09-1";
+
+const $ = s => document.querySelector(s);
+const ls = {
+  get(k, d){ try{ const v = localStorage.getItem(k); return v==null ? d : JSON.parse(v); }catch(_){ return d; } },
+  set(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(_){} }
+};
+const el = (tag, cls, text) => { const e = document.createElement(tag); if(cls) e.className = cls; if(text!=null) e.textContent = text; return e; };
+const unknown = v => !v || v === "要確認";
+
+let pass = "";
+try{ pass = localStorage.getItem("rekil-route-pass") || localStorage.getItem("rekil-pass") || localStorage.getItem("rekil-henpin-pass") || localStorage.getItem("rekil-shiire-pass") || ""; }catch(_){}
+let data = ls.get("route-data", {routes:[], stores:[]});
+let cur = ls.get("route-cur", null), pref = ls.get("route-pref", null), addType = "store";
+let online = false, busy = 0, armRoute = false;
+
+class ApiError extends Error{ constructor(c){ super(c); this.code = c; } }
+async function api(action, params={}){
+  if(!API_URL) throw new ApiError("no_api");
+  busy++; status();
+  try{
+    let res;
+    try{ res = await fetch(API_URL, {method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"}, body: JSON.stringify({action, pass, ...params})}); }
+    catch(_){ throw new ApiError("network"); }
+    let j; try{ j = await res.json(); }catch(_){ throw new ApiError("bad_response"); }
+    if(!j.ok){ if(j.error==="passcode") showLock(); throw new ApiError(j.error||"error"); }
+    if(j.data){ data = j.data; ls.set("route-data", data); }
+    online = true;
+    return j.result;
+  }finally{ busy--; render(); }
+}
+function toast(msg){
+  document.querySelectorAll(".toast").forEach(t=>t.remove());
+  const t = el("div","toast",msg); t.setAttribute("role","status");
+  document.body.appendChild(t); setTimeout(()=>t.remove(), 2400);
+}
+function status(){ $("#sync").textContent = !API_URL ? "未設定" : busy ? "同期中…" : online ? "接続済み" : "未接続"; }
+const fail = err => toast(err.code==="network" ? "通信できませんでした。電波の良い場所でもう一度お試しください" : err.code==="no_api" ? "データ側がまだ設定されていません" : `保存できませんでした（${err.code}）`);
+
+/* ---------- データの見方 ---------- */
+const prefOf = r => r.pref || "未分類";
+const routesSorted = () => data.routes.slice().sort((a,b)=>a.order-b.order);
+const prefs = () => { const p = []; routesSorted().forEach(r=>{ if(!p.includes(prefOf(r))) p.push(prefOf(r)); }); return p; };
+const routesIn = p => routesSorted().filter(r=>prefOf(r)===p);
+const stopsOf = id => data.stores.filter(s=>s.routeId===id).sort((a,b)=>a.order-b.order);
+const route = () => data.routes.find(r=>r.id===cur);
+function pick(id){ cur = id; const r = route(); if(r) pref = prefOf(r); ls.set("route-cur",cur); ls.set("route-pref",pref); armRoute = false; $("#fallback").hidden = true; render(); window.scrollTo(0,0); }
+
+/* ---------- 表示 ---------- */
+function render(){
+  status();
+  const ps = prefs(); if(!ps.includes(pref)) pref = ps[0] || null;
+  const sel = $("#pref");
+  sel.replaceChildren(...ps.map(p=>{ const o = el("option",null,`${p}（${routesIn(p).length}）`); o.value = p; return o; }));
+  if(pref) sel.value = pref;
+  const q = $("#q").value.trim();
+  const shown = q ? routesSorted().filter(r=>r.name.includes(q)) : routesIn(pref);
+  if(!q && !shown.find(r=>r.id===cur)) cur = shown[0]?.id || null;
+  $("#routes").replaceChildren(...shown.map(r=>{
+    const b = el("button"); b.type = "button"; b.setAttribute("aria-pressed", r.id===cur);
+    if(q) b.append(el("span","p",prefOf(r)));
+    b.append(r.name, el("span","n",stopsOf(r.id).filter(s=>s.type!=="note").length));
+    b.onclick = () => pick(r.id); return b;
+  }));
+  if(q && !shown.length) $("#routes").append(el("span","note",`「${q}」に一致するルートはありません`));
+
+  const r = route();
+  $("#rhead").hidden = !r; $("#addForm").hidden = !r;
+  if(r){
+    $("#rpref").textContent = prefOf(r); $("#rname").textContent = r.name; $("#rdep").textContent = r.depart || "未設定";
+    const sib = routesIn(prefOf(r)), k = sib.findIndex(x=>x.id===r.id);
+    $("#rUp").disabled = k<=0; $("#rDown").disabled = k<0 || k>=sib.length-1;
+    $("#rDel").textContent = armRoute ? `もう一度押すと削除（${stopsOf(r.id).length}件も消えます）` : "ルートを削除";
+  }
+  const list = r ? stopsOf(r.id) : []; let no = 0;
+  $("#list").replaceChildren(...list.map((s,i)=>card(s,i,list,(s.type==="store") ? ++no : 0)));
+  const em = $("#empty");
+  if(!data.routes.length){ em.hidden = false; em.textContent = API_URL ? "ルートがまだありません。「＋ルート」から作成してください。" : "データ側（Apps Script）の設定待ちです。設定が終わるとここに表示されます。"; }
+  else if(r && !list.length){ em.hidden = false; em.textContent = "このルートにはまだ店舗がありません。下から追加してください。"; }
+  else em.hidden = true;
+}
+
+function card(s, i, list, no){
+  const hotel = s.type==="hotel", note = s.type==="note";
+  const li = el("li", "stop" + (hotel?" hotel":"") + (note?" note":"") + (s.name.includes("🙅")?" skip":""));
+  li.append(el("div","num", hotel ? "宿" : note ? "→" : no));
+  const c = el("div","card"); li.append(c);
+  const top = el("div","ctop"), nm = el("div");
+  nm.append(el("span","tag", hotel ? "宿泊" : note ? "メモ" : (s.chain || "店舗")), el("div","name",s.name));
+  const mv = el("div","moves");
+  const up = el("button","icon","↑"); up.type="button"; up.setAttribute("aria-label","1つ前へ"); up.disabled = i===0; up.onclick = () => moveTo(list,i,i-1);
+  const dn = el("button","icon","↓"); dn.type="button"; dn.setAttribute("aria-label","1つ後ろへ"); dn.disabled = i===list.length-1; dn.onclick = () => moveTo(list,i,i+1);
+  const pos = el("select","pos"); pos.setAttribute("aria-label","何番目に移すか");
+  list.forEach((_,k)=>{ const o = el("option",null,`${k+1}番目`); o.value = k; if(k===i) o.selected = true; pos.append(o); });
+  pos.onchange = () => moveTo(list,i,+pos.value);
+  mv.append(up,dn,pos); top.append(nm); c.append(top);
+  if(!note){
+    const dl = el("dl","facts");
+    const fact = (label, val) => { const dd = el("dd"); if(unknown(val)) dd.append(el("span","pill","要確認")); else dd.textContent = val; dl.append(el("dt",null,label), dd); };
+    fact(hotel ? "チェックイン" : "営業時間", s.hours); fact("駐車場", s.parking);
+    if(!hotel){
+      const st = el("div","stars");
+      for(let k=1;k<=5;k++){ const b = el("button","star"+(k<=(s.rating||0)?" on":""),"★"); b.type="button"; b.setAttribute("aria-label",`評価${k}`);
+        b.onclick = () => saveStop({id:s.id, rating: s.rating===k ? 0 : k}, "評価を保存しました"); st.append(b); }
+      const dd = el("dd"); dd.append(st); dl.append(el("dt",null,"評価"), dd);
+    }
+    c.append(dl);
+    const ta = el("textarea"); ta.rows = 2; ta.value = s.memo || "";
+    ta.placeholder = hotel ? "ホテルのメモ（予約名・朝食・駐車料金など）" : "特徴・仕入メモ（強いジャンル・価格帯・混む時間など）";
+    ta.onchange = () => saveStop({id:s.id, memo:ta.value}, "メモを保存しました");
+    c.append(ta);
+  }
+  const ed = el("button","ghost", note ? "メモ行を編集" : hotel ? "ホテル名・時間・駐車場を編集" : "店名・時間・駐車場を編集");
+  ed.type = "button"; ed.style.padding = "4px 0"; ed.onclick = () => openStop(s);
+  const foot = el("div","cfoot"); foot.append(ed, mv); c.append(foot);
+  return li;
+}
+
+/* ---------- 保存 ---------- */
+async function saveStop(stop, msg){ try{ await api("saveStop",{stop}); if(msg) toast(msg); }catch(e){ fail(e); } }
+async function moveTo(list, from, to){
+  if(busy || to<0 || to>=list.length || from===to) return;
+  const arr = list.slice(); const [it] = arr.splice(from,1); arr.splice(to,0,it);
+  const orders = {}; arr.forEach((s,k)=>orders[s.id]=k+1);
+  try{ await api("setOrder",{table:"stores", orders}); toast(`${to+1}番目に移しました`); }catch(e){ fail(e); }
+}
+async function moveRoute(dir){
+  const r = route(); if(!r || busy) return;
+  const sib = routesIn(prefOf(r)), k = sib.findIndex(x=>x.id===r.id), j = k+dir; if(j<0 || j>=sib.length) return;
+  const slots = sib.map(x=>x.order).sort((a,b)=>a-b);
+  const arr = sib.slice(); const [it] = arr.splice(k,1); arr.splice(j,0,it);
+  const orders = {}; arr.forEach((x,n)=>orders[x.id]=slots[n]===slots[n-1] ? slots[n]+n*0.001 : slots[n]);
+  try{ await api("setOrder",{table:"routes", orders}); }catch(e){ fail(e); }
+}
+$("#rUp").onclick = () => moveRoute(-1); $("#rDown").onclick = () => moveRoute(1);
+
+/* ---------- 入力シート ---------- */
+let onSubmit = null, onDelete = null;
+function field(label, name, value, type="text"){
+  const f = el("label","f"); f.append(el("span","lbl",label));
+  const i = el("input"); i.type = type; i.name = name; i.value = value || ""; f.append(i); return f;
+}
+function openSheet(title, nodes, submit, del){
+  $("#formT").textContent = title; $("#fields").replaceChildren(...nodes);
+  onSubmit = submit; onDelete = del; const d = $("#fDel"); d.hidden = !del; d.textContent = "削除"; delete d.dataset.arm;
+  $("#sheet").hidden = false;
+}
+const closeSheet = () => { $("#sheet").hidden = true; };
+$("#close").onclick = closeSheet;
+$("#sheet").addEventListener("click", e=>{ if(e.target.id==="sheet") closeSheet(); });
+$("#form").addEventListener("submit", async e=>{ e.preventDefault(); if(onSubmit) await onSubmit(new FormData($("#form"))); });
+$("#fDel").onclick = async () => { const d = $("#fDel"); if(!d.dataset.arm){ d.dataset.arm = "1"; d.textContent = "もう一度押すと削除"; return; } if(onDelete) await onDelete(); };
+
+function openStop(s){
+  const hotel = s.type==="hotel", note = s.type==="note";
+  const nodes = [field(note ? "メモ行" : hotel ? "ホテル名" : "店舗名", "name", s.name)];
+  if(!hotel && !note) nodes.push(field("チェーン","chain",s.chain));
+  if(!note) nodes.push(field(hotel ? "チェックイン" : "営業時間","hours",s.hours), field("駐車場","parking",s.parking));
+  const f = el("label","f"); f.append(el("span","lbl","ルート（別のルートへ移す）"));
+  const sel = el("select"); sel.name = "routeId";
+  routesSorted().forEach(r=>{ const o = el("option",null,`${prefOf(r)}：${r.name}`); o.value = r.id; if(r.id===s.routeId) o.selected = true; sel.append(o); });
+  f.append(sel); nodes.push(f);
+  openSheet(note ? "メモ行を編集" : hotel ? "ホテルを編集" : "店舗を編集", nodes, async fd=>{
+    const v = Object.fromEntries(fd.entries()); Object.keys(v).forEach(k=>v[k]=String(v[k]).trim());
+    if(!v.name){ toast("名前を入れてください"); return; }
+    try{ await api("saveStop",{stop:{id:s.id, ...v}}); closeSheet(); toast("保存しました"); }catch(e){ fail(e); }
+  }, async ()=>{ try{ await api("removeStop",{id:s.id}); closeSheet(); toast("削除しました"); }catch(e){ fail(e); } });
+}
+function openRoute(r){
+  const dl = el("datalist"); dl.id = "prefList"; prefs().forEach(p=>{ const o = el("option"); o.value = p; dl.append(o); });
+  const pf = field("県（新しい県名も入力できます）","pref", r ? prefOf(r) : (pref || "")); pf.querySelector("input").setAttribute("list","prefList");
+  openSheet(r ? "ルートを編集" : "新しいルート", [field("ルート名","name", r ? r.name : ""), pf, dl, field("朝の出発時刻","depart", r ? r.depart : "", "time")], async fd=>{
+    const v = Object.fromEntries(fd.entries()); Object.keys(v).forEach(k=>v[k]=String(v[k]).trim());
+    if(!v.name || !v.pref){ toast("ルート名と県を入れてください"); return; }
+    try{ const id = await api("saveRoute",{route:{id: r ? r.id : undefined, ...v}}); closeSheet(); $("#q").value = ""; pick(id); toast("ルートを保存しました"); }catch(e){ fail(e); }
+  }, null);
+}
+$("#rEdit").onclick = () => openRoute(route());
+$("#newRoute").onclick = () => openRoute(null);
+$("#rDel").onclick = async () => {
+  const r = route(); if(!r) return;
+  if(!armRoute){ armRoute = true; render(); setTimeout(()=>{ armRoute = false; render(); }, 5000); return; }
+  armRoute = false;
+  try{ await api("removeRoute",{id:r.id}); cur = null; toast(`「${r.name}」を削除しました`); }catch(e){ fail(e); }
+};
+$("#pref").onchange = () => { pref = $("#pref").value; $("#q").value = ""; cur = routesIn(pref)[0]?.id || null; ls.set("route-pref",pref); ls.set("route-cur",cur); render(); };
+$("#q").oninput = () => { const q = $("#q").value.trim(); const m = q ? routesSorted().filter(r=>r.name.includes(q)) : []; if(m.length && !m.find(r=>r.id===cur)) pick(m[0].id); else render(); };
+
+/* ---------- 追加 ---------- */
+document.querySelectorAll(".seg button").forEach(b=>b.onclick = () => {
+  addType = b.dataset.t; document.querySelectorAll(".seg button").forEach(x=>x.setAttribute("aria-pressed", x===b));
+  $("#addName").placeholder = addType==="hotel" ? "例：東横INN〇〇駅前" : addType==="note" ? "例：高速使う" : "例：トレファクスタイル〇〇店";
+});
+$("#addForm").addEventListener("submit", async e=>{
+  e.preventDefault(); const name = $("#addName").value.trim(); if(!name || !cur){ toast("名前を入れてください"); return; }
+  try{ await api("saveStop",{stop:{routeId:cur, type:addType, name, hours: addType==="note" ? "" : "要確認", parking: addType==="note" ? "" : "要確認"}}); $("#addName").value = ""; toast("追加しました"); }catch(err){ fail(err); }
+});
+
+/* ---------- コピー ---------- */
+function text(full){
+  const r = route(); if(!r) return ""; const list = stopsOf(r.id); if(!list.length) return "";
+  const head = r.name + (r.depart ? `（出発 ${r.depart}）` : "");
+  if(!full) return head + "\n" + list.map(s=>(s.type==="hotel" ? "【宿泊】" : "") + s.name).join("\n");
+  let no = 0;
+  return head + "\n" + list.map(s=>{
+    if(s.type==="note") return "— " + s.name;
+    const h = s.type==="hotel"; const l = [h ? "【宿泊】" + s.name : `${++no}. ${s.name}`];
+    l.push(`　${h ? "チェックイン" : "営業時間"}：${s.hours || "要確認"}`, `　駐車場：${s.parking || "要確認"}`);
+    if(!h && s.rating) l.push("　評価：" + "★".repeat(s.rating) + "☆".repeat(5-s.rating));
+    if(s.memo) l.push("　メモ：" + s.memo.replace(/\n/g," / "));
+    return l.join("\n");
+  }).join("\n");
+}
+function copy(full){
+  const t = text(full); if(!t){ toast("コピーする店舗がありません"); return; }
+  const fb = $("#fallback");
+  const show = () => { fb.textContent = t; fb.hidden = false; const rg = document.createRange(); rg.selectNodeContents(fb); const sl = getSelection(); sl.removeAllRanges(); sl.addRange(rg); toast("選択しました。長押しでコピーしてください"); };
+  if(navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(()=>{ fb.hidden = true; toast(`${route().name}をコピーしました`); }).catch(show); else show();
+}
+$("#copyNames").onclick = () => copy(false); $("#copyFull").onclick = () => copy(true);
+
+/* ---------- 暗証番号 ---------- */
+function showLock(){
+  online = false; $("#lock").hidden = false;
+  $("#lockMsg").textContent = pass ? "暗証番号が違います。もう一度入力してください。" : "社内の暗証番号を入力してください（ReKiL Stockと同じ番号）。一度入力すると、このスマホでは次から入力不要です。";
+  setTimeout(()=>$("#passIn").focus(), 100);
+}
+$("#lockForm").addEventListener("submit", async e=>{
+  e.preventDefault(); pass = $("#passIn").value.trim(); if(!pass) return;
+  $("#lockGo").disabled = true; $("#lockGo").textContent = "確認中…";
+  try{ await api("list"); try{ localStorage.setItem("rekil-route-pass", pass); }catch(_){} $("#lock").hidden = true; $("#passIn").value = ""; toast("接続しました"); }
+  catch(err){
+    if(err.code==="network") $("#lockMsg").textContent = "データ側に接続できませんでした。電波を確認してください。";
+    else if(err.code==="no_sheet") $("#lockMsg").textContent = "Apps Scriptで「setup」がまだ実行されていません。";
+    else if(err.code!=="passcode") $("#lockMsg").textContent = `データ側でエラーが起きました（${err.code}）`;
+  }
+  $("#lockGo").disabled = false; $("#lockGo").textContent = "開く";
+});
+
+/* ---------- 同期・更新 ---------- */
+async function refresh(){ if(!pass || busy || !API_URL) return; try{ await api("list"); }catch(err){ if(err.code==="network"){ online = false; status(); } } }
+async function checkUpdate(){
+  try{
+    const r = await fetch(location.pathname + "?v=" + Date.now(), {cache:"no-store"});
+    const t = await r.text(); const m = t.match(/const APP_VERSION = "([^"]+)"/);
+    if(m && m[1] !== APP_VERSION && !busy) location.replace(location.pathname + "?v=" + encodeURIComponent(m[1]));
+  }catch(_){}
+}
+document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState==="visible"){ checkUpdate(); refresh(); } });
+setInterval(()=>{ if(document.visibilityState==="visible" && $("#sheet").hidden && document.activeElement?.tagName!=="TEXTAREA") refresh(); }, 60000);
+
+render();
+if(API_URL){ if(!pass) showLock(); else { checkUpdate(); refresh(); } }
+</script>
+</body>
+</html>

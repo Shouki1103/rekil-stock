@@ -1,0 +1,16 @@
+{
+  "name": "ReKiL 仕入ルート帳",
+  "short_name": "仕入ルート",
+  "description": "店舗仕入ルートを県ごとに管理し、出発時刻・回る順・営業時間・駐車場・評価を確認してコピーできるアプリ",
+  "lang": "ja",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#14181d",
+  "theme_color": "#0d1014",
+  "icons": [
+    {"src": "icon-192.png", "sizes": "192x192", "type": "image/png"},
+    {"src": "icon-512.png", "sizes": "512x512", "type": "image/png"},
+    {"src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+  ]
+}
