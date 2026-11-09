@@ -1,0 +1,438 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ReKiL 返品・出品">
+<meta name="theme-color" content="#0d1014">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-192.png">
+<title>ReKiL 返品・出品</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=IBM+Plex+Mono:wght@500;700&display=swap">
+<style>
+/* ReKiL Stock・仕入記帳・送り状控えと同じ濃色の業務アプリ調。返品・出品はアクセントを青緑（荷札・タグのイメージ） */
+:root{
+  --bg:#14181d; --surface:#1d232a; --line:#2f3740; --fg:#e8ebee; --muted:#9aa4af;
+  --accent:#3ccfbf; --accent-ink:#06201d; --steel:#0d1014; --danger:#ff7a6b; --ok:#3fd18b; --warn:#ffb547;
+  --font-body:"Zen Kaku Gothic New","Hiragino Sans","Yu Gothic",system-ui,sans-serif;
+  --font-code:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--fg)}
+body{font-family:var(--font-body);font-size:15px;line-height:1.6;padding-bottom:calc(88px + env(safe-area-inset-bottom,0px))}
+[hidden]{display:none!important}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--steel)}
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--steel);
+  padding:12px max(16px,env(safe-area-inset-right,0px)) 0 max(16px,env(safe-area-inset-left,0px))}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:900;font-size:17px;letter-spacing:.04em}
+.brand i{display:inline-block;width:12px;height:22px;background:repeating-linear-gradient(-45deg,var(--accent) 0 5px,#1d2228 5px 10px);border-radius:2px}
+.sync{font-size:12px;color:#c9d1d9;text-align:right}
+.tabs{display:grid;grid-template-columns:repeat(4,1fr);margin-top:10px}
+.tabs button{font:inherit;font-weight:700;font-size:13px;background:none;border:0;color:var(--muted);padding:8px 2px 10px;min-height:52px;cursor:pointer;border-bottom:3px solid transparent;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;line-height:1.25}
+.tabs button[aria-selected="true"]{color:var(--fg);border-bottom-color:var(--accent)}
+.badge{font-family:var(--font-code);font-size:11px;min-width:20px;padding:0 6px;border-radius:999px;background:var(--accent);color:var(--accent-ink);line-height:17px}
+.badge:empty{visibility:hidden}
+main{max-width:640px;margin:0 auto;padding:12px max(16px,env(safe-area-inset-right,0px)) 32px max(16px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:12px}
+.alerts{display:flex;flex-direction:column;gap:6px}
+.alert{display:flex;gap:10px;align-items:baseline;background:#3a2c12;border-radius:8px;padding:8px 12px;font-size:13px}
+.alert.bad{background:#40201e}
+.alert b{color:var(--warn);white-space:nowrap;font-family:var(--font-code)}.alert.bad b{color:var(--danger)}
+.chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chips button{flex:0 0 auto;min-height:34px;padding:4px 12px;font-size:13px;font-weight:500;border-radius:999px;background:var(--bg)}
+.chips button[aria-pressed="true"]{border-color:var(--accent);color:var(--accent)}
+.summary{font-size:13px;color:var(--muted)}
+.day{background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.day h2{margin:0;padding:9px 14px;font-size:15px;font-weight:900;display:flex;justify-content:space-between;align-items:baseline;border-bottom:1px solid var(--line);background:#20272f}
+.day h2 small{font-weight:500;color:var(--muted);font-size:12px}
+.sun{color:#ff8f8f}.sat{color:#8fb8ff}
+.card{display:grid;gap:4px;padding:12px 14px;border-top:1px solid var(--line);cursor:pointer;background:none;border-left:0;border-right:0;border-bottom:0;width:100%;text-align:left;color:inherit;font:inherit;border-radius:0;min-height:0}
+.day .card:first-of-type{border-top:0}
+.list>.card{background:var(--surface);border:1px solid var(--line);border-radius:10px}
+.card .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.card .nm{font-weight:700;flex:1 1 160px;min-width:0;overflow-wrap:anywhere}
+.tag{font-size:12px;font-weight:700;padding:1px 9px;border-radius:999px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+.tag.go{border-color:var(--accent);color:var(--accent)}
+.tag.warn{border-color:var(--warn);color:var(--warn)}
+.tag.bad{border-color:var(--danger);color:var(--danger)}
+.tag.ok{border-color:var(--ok);color:var(--ok)}
+.meta{display:flex;flex-wrap:wrap;gap:2px 14px;font-size:13px;color:var(--muted)}
+.meta b{color:var(--fg);font-weight:500;font-family:var(--font-code)}
+.steps{display:flex;gap:3px;margin:2px 0}
+.steps i{flex:1;height:4px;border-radius:2px;background:var(--line)}
+.steps i.on{background:var(--accent)}
+.thumbs{display:flex;gap:6px;flex-wrap:wrap}
+.thumb{position:relative;width:64px;height:64px;border-radius:8px;overflow:hidden;border:1px solid var(--line);background:var(--bg)}
+.thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.thumb .x{position:absolute;top:2px;right:2px;min-height:0;padding:0 7px;font-size:12px;line-height:20px;border-radius:999px}
+.quick{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
+.quick button{min-height:36px;padding:4px 12px;font-size:13px;border-color:var(--accent);color:var(--accent);background:transparent}
+button{font:inherit;font-weight:700;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--fg);padding:10px 14px;cursor:pointer;min-height:44px;display:inline-flex;align-items:center;justify-content:center;gap:6px}
+button.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);min-height:56px;font-size:17px;width:100%}
+button.ghost{background:transparent;border-color:transparent;color:var(--muted)}
+button.danger{color:var(--danger)}
+button:disabled{opacity:.45;cursor:default}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,.card:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.fab{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:8;width:min(600px,calc(100% - 32px));box-shadow:0 8px 28px #000a}
+.empty{color:var(--muted);font-size:14px;margin:8px 0;text-align:center;line-height:1.8}
+.toast{position:fixed;left:50%;bottom:calc(92px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:#f2f4f6;color:#111;padding:10px 16px;border-radius:8px;font-weight:700;z-index:60;max-width:calc(100% - 32px);box-shadow:0 6px 24px #0008}
+.sheet{position:fixed;inset:0;z-index:30;background:#000a;display:flex;align-items:flex-end;justify-content:center}
+.sheet form{background:var(--surface);width:100%;max-width:640px;max-height:92vh;overflow:auto;border-radius:14px 14px 0 0;padding:16px max(16px,env(safe-area-inset-right,0px)) calc(16px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:12px}
+.sheet h3{margin:0;font-size:18px;display:flex;justify-content:space-between;align-items:center}
+.fields{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.f{display:flex;flex-direction:column;gap:5px;min-width:0}.f.full{grid-column:1/-1}
+.label{font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.06em}
+input,select,textarea{font:inherit;font-size:16px;width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--fg);min-height:48px}
+textarea{min-height:70px;resize:vertical}
+.photoBtn{border-style:dashed;width:max-content;min-height:44px}
+.note{font-size:13px;color:var(--muted);margin:0}
+@media (max-width:420px){.fields{grid-template-columns:1fr}}
+#lock{position:fixed;inset:0;z-index:50;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:24px}
+#lock form{width:100%;max-width:360px;display:flex;flex-direction:column;gap:12px}
+#lock h2{margin:0;font-size:20px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<header>
+  <div class="top">
+    <div class="brand"><i></i>ReKiL 返品・出品</div>
+    <div class="sync" id="sync">接続中…</div>
+  </div>
+  <div class="tabs" role="tablist" aria-label="種類">
+    <button type="button" role="tab" data-t="shuppin">業者出品<span class="badge" id="b-shuppin"></span></button>
+    <button type="button" role="tab" data-t="shiire">仕入返品<span class="badge" id="b-shiire"></span></button>
+    <button type="button" role="tab" data-t="frima">フリマ返品<span class="badge" id="b-frima"></span></button>
+    <button type="button" role="tab" data-t="repair">リペア<span class="badge" id="b-repair"></span></button>
+  </div>
+</header>
+
+<main>
+  <div class="alerts" id="alerts"></div>
+  <div class="chips" id="chips" aria-label="絞り込み"></div>
+  <span class="summary" id="summary"></span>
+  <div class="list" id="list" style="display:flex;flex-direction:column;gap:10px"></div>
+  <p class="empty" id="empty" hidden></p>
+</main>
+
+<button class="primary fab" id="addBtn" type="button">＋ 追加</button>
+
+<div class="sheet" id="sheet" hidden>
+  <form id="form" autocomplete="off" novalidate>
+    <h3><span id="formT">追加</span><button type="button" class="ghost" id="close" aria-label="閉じる">✕</button></h3>
+    <div class="fields" id="fields"></div>
+    <button class="primary" id="save" type="submit">保存する</button>
+    <button type="button" class="ghost danger" id="del" hidden>削除</button>
+  </form>
+</div>
+
+<div id="lock" hidden>
+  <form id="lockForm">
+    <div class="brand"><i></i>ReKiL 返品・出品</div>
+    <h2>暗証番号</h2>
+    <p class="note" id="lockMsg"></p>
+    <input id="passIn" type="password" inputmode="numeric" autocomplete="current-password" placeholder="暗証番号" aria-label="暗証番号">
+    <button class="primary" id="lockGo" type="submit">開く</button>
+  </form>
+</div>
+
+<script>
+/* ▼ Apps Script をデプロイしたときの「ウェブアプリのURL」 */
+const API_URL = "";
+const APP_VERSION = "2026-11-09-1";
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const ls = {
+  get(k, d){ try{ const v = localStorage.getItem(k); return v==null ? d : JSON.parse(v); }catch(_){ return d; } },
+  set(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(_){} }
+};
+const today = () => new Date(Date.now() + 9*3600e3).toISOString().slice(0,10); // 日本時間
+const WD = ["日","月","火","水","木","金","土"];
+const wd = d => WD[new Date(d+"T12:00:00Z").getUTCDay()];
+const md = d => d ? `${+d.slice(5,7)}/${+d.slice(8,10)}(${wd(d)})` : "";
+const days = d => d ? Math.round((Date.parse(d+"T00:00:00Z") - Date.parse(today()+"T00:00:00Z"))/864e5) : null;
+const yen = v => v===""||v==null ? "" : "¥" + Number(String(v).replace(/[^\d.-]/g,"")||0).toLocaleString("ja-JP");
+const photoUrl = id => `https://drive.google.com/thumbnail?id=${encodeURIComponent(id)}&sz=w400`;
+const photoOpen = id => `https://drive.google.com/file/d/${encodeURIComponent(id)}/view`;
+
+const AUCTIONS = ["オークネット","エコリング","JDS","JBA","コメ兵オークション","モノバンク","プライムオークション","浜屋オークション","大吉オークション","JWAオークション","トレファクオークション","ペンギンオークション","アプレ","リバオク"];
+const VENDORS = [...AUCTIONS,"トレファクオンライン","セカンドストリートオンライン","RAGTAGオンライン","その他"];
+
+/* 各タブの項目。[キー, 表示名, 種類, 全幅, 候補, 必須, 初期値] */
+const T = {
+  shuppin:{name:"業者出品", add:"＋ 出品日を追加",
+    flow:["出品予定","出品中","保留処理待ち","保留処理済み"], closed:["保留処理済み","保留なし"], extra:["保留なし"],
+    fields:[["kaisai","出品日（開催日）","date",0,null,1,"today"],["auction","オークション","select",0,AUCTIONS,1],
+      ["count","出品点数","num"],["horyuCount","保留の点数","num"],
+      ["item","出品内容","textarea",1],["memo","保留の処理メモ（承諾・拒否・再出品など）","textarea",1]]},
+  shiire:{name:"業者仕入の返品", add:"＋ 仕入返品を追加",
+    flow:["返品申請","業者回答待ち","返送済み","返金待ち","返金済み"], closed:["返金済み","返品不可"], extra:["返品不可"],
+    fields:[["item","商品名","text",1,null,1],["vendor","仕入先","select",0,VENDORS],["kanri","管理番号","text"],
+      ["shiireDate","仕入日","date"],["shiireAmt","仕入額(円)","num"],["reason","不備内容","textarea",1],
+      ["applyDate","申請日","date",0,null,0,"today"],["deadline","次の対応期限","date"],
+      ["tracking","返送の追跡番号","text"],["refund","返金額(円)","num"],["memo","メモ","textarea",1]]},
+  frima:{name:"フリマの返品", add:"＋ フリマ返品を追加",
+    flow:["返品依頼","協議中","返送待ち","受取・検品","返金完了"], closed:["返金完了","返品不可"], extra:["返品不可"],
+    fields:[["item","商品名","text",1,null,1],["site","販路","select",0,["メルカリ","ヤフオク","ラクマ","その他"]],["orderId","取引ID","text"],
+      ["buyer","購入者","text"],["price","販売額(円)","num"],["reason","返品理由","textarea",1],
+      ["applyDate","依頼日","date",0,null,0,"today"],["deadline","次の対応期限","date"],
+      ["tracking","返送の追跡番号","text"],["memo","メモ","textarea",1]]},
+  repair:{name:"リペア外注", add:"＋ リペア依頼を追加",
+    flow:["依頼中","受取済み"], closed:["受取済み"], extra:[],
+    fields:[["item","商品名","text",1,null,1],["kanri","管理番号","text"],["supplier","仕入先","select",0,VENDORS],
+      ["gaichu","外注先","text",0,null,1,"彩洗工房松井"],["price","料金(円・税込)","num"],["paid","支払","select",0,["未払い","支払済み"],0,"未払い"],
+      ["sent","依頼日","date",0,null,0,"today"],["due","受取予定日","date"],["recv","受取日","date"],
+      ["work","外注内容","textarea",1],["photos","写真（依頼前・受取後の照らし合わせ用）","photos",1],["memo","メモ","textarea",1]]}
+};
+const TABS = Object.keys(T);
+
+let pass = "";
+try{ pass = localStorage.getItem("rekil-henpin-pass") || localStorage.getItem("rekil-pass") || localStorage.getItem("rekil-shiire-pass") || ""; }catch(_){}
+let data = ls.get("henpin-data", {shuppin:[],shiire:[],frima:[],repair:[]});
+let tab = ls.get("henpin-tab", "shuppin"); if(!T[tab]) tab = "shuppin";
+let filter = "対応中", online = false, busy = 0;
+
+class ApiError extends Error{ constructor(c){ super(c); this.code = c; } }
+async function api(action, params={}){
+  if(!API_URL) throw new ApiError("no_api");
+  busy++; status();
+  try{
+    let res;
+    try{ res = await fetch(API_URL, {method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"}, body: JSON.stringify({action, pass, ...params})}); }
+    catch(_){ throw new ApiError("network"); }
+    let j; try{ j = await res.json(); }catch(_){ throw new ApiError("bad_response"); }
+    if(!j.ok){ if(j.error==="passcode") showLock(); throw new ApiError(j.error||"error"); }
+    if(j.data){ data = j.data; ls.set("henpin-data", data); }
+    online = true;
+    return j.result;
+  }finally{ busy--; render(); }
+}
+function toast(msg){
+  document.querySelectorAll(".toast").forEach(t=>t.remove());
+  const t = document.createElement("div"); t.className = "toast"; t.textContent = msg; t.setAttribute("role","status");
+  document.body.appendChild(t); setTimeout(()=>t.remove(), 2400);
+}
+function status(){ $("#sync").textContent = !API_URL ? "未設定" : busy ? "同期中…" : online ? "接続済み" : "未接続"; }
+const errMsg = c => c==="network" ? "通信できませんでした。電波の良い場所でもう一度お試しください" : c==="no_api" ? "データ側がまだ設定されていません" : `保存できませんでした（${c}）`;
+
+/* ---------- 期限 ---------- */
+function due(t, r){
+  if(T[t].closed.includes(r.status)) return null;
+  if(t==="repair") return r.due ? {date:r.due, what:"受取予定日"} : null;
+  if(t!=="shuppin") return r.deadline ? {date:r.deadline, what:"対応期限"} : null;
+  if(!r.kaisai) return null;
+  const n = days(r.kaisai);
+  if(r.status==="保留処理待ち" || n<0) return {date:r.kaisai, what:"保留の処理"};
+  if(n===0) return {date:r.kaisai, what:"本日出品・夕方に保留処理"};
+  return {date:r.kaisai, what:"出品日"};
+}
+const level = d => { if(!d) return ""; const n = days(d.date); return n<0 ? "bad" : n<=1 ? "warn" : ""; };
+const dueTxt = d => { const n = days(d.date); return n<0 ? `${-n}日超過` : n===0 ? "今日" : n===1 ? "明日" : `あと${n}日`; };
+
+/* ---------- 表示 ---------- */
+function render(){
+  document.querySelectorAll(".tabs [data-t]").forEach(b=>b.setAttribute("aria-selected", b.dataset.t===tab));
+  TABS.forEach(t=>{ const n = (data[t]||[]).filter(r=>!T[t].closed.includes(r.status)).length; $("#b-"+t).textContent = n || ""; });
+  $("#addBtn").textContent = T[tab].add;
+
+  // 期限が近いもの（全タブ）
+  const al = [];
+  TABS.forEach(t=>(data[t]||[]).forEach(r=>{ const d = due(t,r), l = level(d); if(l) al.push({t,r,d,l}); }));
+  al.sort((a,b)=>a.d.date.localeCompare(b.d.date));
+  $("#alerts").innerHTML = al.slice(0,5).map(a=>`<div class="alert ${a.l==="bad"?"bad":""}"><b>${dueTxt(a.d)}</b><span>${esc(T[a.t].name)}｜${esc(a.t==="shuppin"?a.r.auction:a.r.item)}：${esc(a.d.what)}</span></div>`).join("");
+
+  const D = T[tab], all = data[tab] || [];
+  const opts = ["対応中","すべて",...D.flow,...D.extra];
+  if(!opts.includes(filter)) filter = "対応中";
+  const cnt = s => s==="対応中" ? all.filter(r=>!D.closed.includes(r.status)).length : s==="すべて" ? all.length : all.filter(r=>r.status===s).length;
+  $("#chips").innerHTML = opts.map(o=>`<button type="button" data-f="${esc(o)}" aria-pressed="${o===filter}">${esc(o)}<small style="font-family:var(--font-code);color:var(--muted);margin-left:4px">${cnt(o)}</small></button>`).join("");
+
+  let rows = all.filter(r=> filter==="対応中" ? !D.closed.includes(r.status) : filter==="すべて" ? true : r.status===filter);
+  $("#summary").textContent = `${D.name}：${rows.length}件`;
+  $("#empty").hidden = rows.length>0;
+  $("#empty").innerHTML = all.length ? "この条件のものはありません。" : `まだありません。<br>下の「${esc(D.add)}」から登録するか、チャットに送れば登録します。`;
+
+  if(tab==="shuppin"){
+    // 出品日ごとにまとめる（近い日が上、終わった日は下）
+    const by = {}; rows.forEach(r=>{ (by[r.kaisai] = by[r.kaisai] || []).push(r); });
+    const ds = Object.keys(by).sort((a,b)=>{ const na = days(a), nb = days(b); if((na<0)!==(nb<0)) return na<0 ? 1 : -1; return na<0 ? b.localeCompare(a) : a.localeCompare(b); });
+    $("#list").innerHTML = ds.map(d=>{
+      const w = new Date(d+"T12:00:00Z").getUTCDay(), n = days(d);
+      return `<section class="day"><h2><span class="${w===0?"sun":w===6?"sat":""}">${+d.slice(5,7)}月${+d.slice(8,10)}日（${WD[w]}）</span><small>${n===0?"今日":n===1?"明日":n>1?`あと${n}日`:""}　${by[d].length}件</small></h2>` +
+        by[d].sort((a,b)=>a.auction.localeCompare(b.auction,"ja")).map(r=>cardHtml(r)).join("") + `</section>`;
+    }).join("");
+  }else{
+    rows.sort((a,b)=>{ const da = due(tab,a)?.date || "9999", db = due(tab,b)?.date || "9999"; return da.localeCompare(db) || String(b.created||"").localeCompare(String(a.created||"")); });
+    $("#list").innerHTML = rows.map(r=>cardHtml(r)).join("");
+  }
+  status();
+}
+function cardHtml(r){
+  const D = T[tab], d = due(tab,r), l = level(d), i = D.flow.indexOf(r.status);
+  const st = D.closed.includes(r.status) ? (["返品不可","保留なし"].includes(r.status) ? "" : "ok") : "go";
+  const title = tab==="shuppin" ? r.auction : r.item;
+  const meta = {
+    shuppin:[["出品",r.count&&r.count+"点"],["保留",r.horyuCount&&r.horyuCount+"点"]],
+    shiire:[["仕入先",r.vendor],["仕入額",yen(r.shiireAmt)],["申請日",md(r.applyDate)],["返金",yen(r.refund)]],
+    frima:[["販路",r.site],["販売額",yen(r.price)],["依頼日",md(r.applyDate)],["購入者",r.buyer]],
+    repair:[["外注先",r.gaichu],["料金",yen(r.price)],["依頼日",md(r.sent)],["支払",r.paid],["仕入先",r.supplier],["受取日",md(r.recv)]]
+  }[tab].filter(m=>m[1]);
+  const ph = tab==="repair" ? String(r.photos||"").split(",").filter(Boolean) : [];
+  const quick = tab==="shuppin" && !D.closed.includes(r.status) && days(r.kaisai)<=0
+      ? `<div class="quick"><button type="button" data-q="保留処理済み" data-id="${esc(r.id)}">保留処理済みにする</button><button type="button" data-q="保留なし" data-id="${esc(r.id)}">保留なし</button></div>`
+    : tab==="repair" && r.status!=="受取済み" ? `<div class="quick"><button type="button" data-q="受取済み" data-id="${esc(r.id)}">受取済みにする</button></div>` : "";
+  return `<div class="card" role="button" tabindex="0" data-id="${esc(r.id)}">
+    <div class="row"><span class="nm">${esc(title||"（名前なし）")}</span><span class="tag ${st}">${esc(r.status)}</span>${d&&tab!=="shuppin"?`<span class="tag ${l}">${esc(d.what)} ${md(d.date)}・${dueTxt(d)}</span>`:""}</div>
+    ${i>=0&&D.flow.length>2?`<div class="steps">${D.flow.map((_,j)=>`<i class="${j<=i?"on":""}"></i>`).join("")}</div>`:""}
+    ${meta.length?`<div class="meta">${meta.map(m=>`<span>${m[0]} <b>${esc(m[1])}</b></span>`).join("")}</div>`:""}
+    ${r.reason||r.work?`<div class="meta">${esc(r.reason||r.work)}</div>`:""}
+    ${tab==="shuppin"&&r.item?`<div class="meta">${esc(r.item)}</div>`:""}
+    ${r.memo?`<div class="meta">メモ：${esc(r.memo)}</div>`:""}
+    ${ph.length?`<div class="thumbs">${ph.map(p=>`<a class="thumb" href="${photoOpen(p)}" target="_blank" rel="noopener"><img src="${photoUrl(p)}" alt="写真" loading="lazy"></a>`).join("")}</div>`:""}
+    ${quick}
+  </div>`;
+}
+
+$(".tabs").addEventListener("click", e=>{ const b = e.target.closest("[data-t]"); if(!b) return; tab = b.dataset.t; filter = "対応中"; ls.set("henpin-tab", tab); render(); window.scrollTo({top:0}); });
+$("#chips").addEventListener("click", e=>{ const b = e.target.closest("[data-f]"); if(!b) return; filter = b.dataset.f; render(); });
+$("#list").addEventListener("click", async e=>{
+  if(e.target.closest("a")) return;
+  const q = e.target.closest("[data-q]");
+  if(q){
+    e.stopPropagation();
+    const r = (data[tab]||[]).find(x=>x.id===q.dataset.id); if(!r) return;
+    const item = {id:r.id, status:q.dataset.q}; if(q.dataset.q==="受取済み" && !r.recv) item.recv = today();
+    try{ await api("save", {table:tab, item}); toast(`${q.dataset.q}にしました`); }catch(err){ toast(errMsg(err.code)); }
+    return;
+  }
+  const c = e.target.closest(".card"); if(c) openForm((data[tab]||[]).find(x=>x.id===c.dataset.id));
+});
+$("#list").addEventListener("keydown", e=>{ if((e.key==="Enter"||e.key===" ") && e.target.classList.contains("card")){ e.preventDefault(); e.target.click(); } });
+
+/* ---------- 追加・編集 ---------- */
+let editing = null, photos = [];
+function openForm(r){
+  const D = T[tab]; editing = r || null; photos = r ? String(r.photos||"").split(",").filter(Boolean) : [];
+  $("#formT").textContent = (r ? "編集" : "追加") + "｜" + D.name;
+  const stOpts = [...D.flow, ...D.extra];
+  let h = `<label class="f full"><span class="label">状況</span><select id="f_status">${stOpts.map(s=>`<option ${(r?.status||D.flow[0])===s?"selected":""}>${esc(s)}</option>`).join("")}</select></label>`;
+  for(const [k,lab,type,full,opts,req,def] of D.fields){
+    const raw = r ? (r[k] ?? "") : def==="today" ? today() : (def||"");
+    const v = esc(raw);
+    let input;
+    if(type==="photos") input = `<div class="thumbs" id="fThumbs"></div><button type="button" class="photoBtn" id="photoBtn">＋ 写真を追加</button><input type="file" id="photoIn" accept="image/*" multiple hidden>`;
+    else if(type==="textarea") input = `<textarea id="f_${k}">${v}</textarea>`;
+    else if(type==="select"){ const list = raw && !opts.includes(raw) ? [raw,...opts] : opts; input = `<select id="f_${k}"><option value="">選んでください</option>${list.map(o=>`<option ${o===raw?"selected":""}>${esc(o)}</option>`).join("")}</select>`; }
+    else input = `<input id="f_${k}" type="${type==="num"?"text":type}" ${type==="num"?'inputmode="numeric"':""} value="${v}">`;
+    h += `<div class="f ${full?"full":""}"><span class="label">${esc(lab)}${req?"（必須）":""}</span>${input}</div>`;
+  }
+  $("#fields").innerHTML = h;
+  drawThumbs();
+  $("#del").hidden = !r; $("#save").textContent = r ? "変更を保存" : "登録する";
+  $("#sheet").hidden = false;
+}
+function closeForm(){ $("#sheet").hidden = true; editing = null; }
+function drawThumbs(){ const t = $("#fThumbs"); if(!t) return;
+  t.innerHTML = photos.map((p,i)=>`<span class="thumb"><img src="${photoUrl(p)}" alt="写真${i+1}"><button type="button" class="x" data-x="${i}" aria-label="写真を外す">×</button></span>`).join(""); }
+$("#addBtn").addEventListener("click", ()=>openForm(null));
+$("#close").addEventListener("click", closeForm);
+$("#sheet").addEventListener("click", e=>{ if(e.target.id==="sheet") closeForm(); });
+$("#fields").addEventListener("click", e=>{
+  const x = e.target.closest("[data-x]"); if(x){ photos.splice(+x.dataset.x,1); drawThumbs(); return; }
+  if(e.target.closest("#photoBtn")) $("#photoIn").click();
+});
+$("#fields").addEventListener("change", async e=>{
+  if(e.target.id!=="photoIn") return;
+  const files = [...e.target.files]; e.target.value = ""; if(!files.length) return;
+  const btn = $("#photoBtn"); btn.disabled = true; $("#save").disabled = true;
+  try{
+    for(let i=0;i<files.length;i++){
+      btn.textContent = `アップロード中…（${i+1}/${files.length}）`;
+      const image = await shrink(files[i], 1600);
+      const r = await api("photo", {image}); photos.push(r.id); drawThumbs();
+    }
+  }catch(err){ toast(err.code==="network" ? "写真を送れませんでした。電波を確認してください" : `写真を保存できませんでした（${err.code}）`); }
+  btn.disabled = false; btn.textContent = "＋ 写真を追加"; $("#save").disabled = false;
+});
+function shrink(file, max){
+  return new Promise((ok, ng)=>{
+    const img = new Image(), url = URL.createObjectURL(file);
+    img.onload = ()=>{ const s = Math.min(1, max/Math.max(img.width, img.height));
+      const c = document.createElement("canvas"); c.width = Math.round(img.width*s); c.height = Math.round(img.height*s);
+      c.getContext("2d").drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(url); ok(c.toDataURL("image/jpeg", .85).split(",")[1]); };
+    img.onerror = ()=>{ URL.revokeObjectURL(url); ng(new ApiError("image")); };
+    img.src = url;
+  });
+}
+$("#form").addEventListener("submit", async e=>{
+  e.preventDefault();
+  const D = T[tab], item = {status: $("#f_status").value};
+  if(editing) item.id = editing.id;
+  for(const [k,lab,type,,,req] of D.fields){
+    if(type==="photos"){ item.photos = photos.join(","); continue; }
+    let v = $("#f_"+k).value.trim(); if(type==="num") v = v.replace(/[,，円¥\s]/g,"");
+    if(req && !v){ toast(`${lab}を入れてください`); $("#f_"+k).focus(); return; }
+    item[k] = v;
+  }
+  if(tab==="repair" && item.status==="受取済み" && !item.recv) item.recv = today();
+  const btn = $("#save"); btn.disabled = true;
+  try{ await api("save", {table:tab, item}); toast(editing ? "保存しました" : "登録しました"); closeForm(); }
+  catch(err){ toast(errMsg(err.code)); }
+  btn.disabled = false;
+});
+$("#del").addEventListener("click", async ()=>{
+  if(!editing) return;
+  const nm = tab==="shuppin" ? `${md(editing.kaisai)} ${editing.auction}` : editing.item;
+  if(!confirm(`「${nm}」を削除します。よろしいですか？`)) return;
+  try{ await api("remove", {table:tab, id:editing.id}); toast("削除しました"); closeForm(); }
+  catch(err){ toast(`削除できませんでした（${err.code}）`); }
+});
+
+/* ---------- 暗証番号 ---------- */
+function showLock(){
+  online = false; $("#lock").hidden = false;
+  $("#lockMsg").textContent = pass ? "暗証番号が違います。もう一度入力してください。" : "社内の暗証番号を入力してください（ReKiL Stockと同じ番号）。一度入力すると、このスマホでは次から入力不要です。";
+  setTimeout(()=>$("#passIn").focus(), 100);
+}
+$("#lockForm").addEventListener("submit", async e=>{
+  e.preventDefault();
+  pass = $("#passIn").value.trim(); if(!pass) return;
+  $("#lockGo").disabled = true; $("#lockGo").textContent = "確認中…";
+  try{
+    await api("list");
+    try{ localStorage.setItem("rekil-henpin-pass", pass); }catch(_){}
+    $("#lock").hidden = true; $("#passIn").value = ""; toast("接続しました");
+  }catch(err){
+    if(err.code==="network") $("#lockMsg").textContent = "データ側に接続できませんでした。電波を確認してください。";
+    else if(err.code==="no_api") $("#lockMsg").textContent = "データ側（Apps Script）がまだ設定されていません。";
+    else if(err.code!=="passcode") $("#lockMsg").textContent = `データ側でエラーが起きました（${err.code}）`;
+  }
+  $("#lockGo").disabled = false; $("#lockGo").textContent = "開く";
+});
+
+/* ---------- 同期・更新 ---------- */
+async function refresh(){ if(!pass || busy || !API_URL) return; try{ await api("list"); }catch(err){ if(err.code==="network"){ online = false; status(); } } }
+async function checkUpdate(){
+  try{
+    const r = await fetch(location.pathname + "?v=" + Date.now(), {cache:"no-store"});
+    const t = await r.text(); const m = t.match(/const APP_VERSION = "([^"]+)"/);
+    if(m && m[1] !== APP_VERSION && !busy){ location.replace(location.pathname + "?v=" + encodeURIComponent(m[1])); }
+  }catch(_){}
+}
+document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState==="visible"){ checkUpdate(); refresh(); } });
+setInterval(()=>{ if(document.visibilityState==="visible" && $("#sheet").hidden) refresh(); }, 60000);
+
+render();
+if(!API_URL){ $("#empty").hidden = false; $("#empty").innerHTML = "データ側（Apps Script）の設定待ちです。<br>設定が終わるとここに表示されます。"; }
+else if(!pass) showLock(); else { checkUpdate(); refresh(); }
+</script>
+</body>
+</html>
