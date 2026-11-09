@@ -1,6 +1,6 @@
 {
-  "name": "ReKiL eBay返信",
-  "short_name": "eBay返信",
+  "name": "ReKiL 翻訳",
+  "short_name": "ReKiL 翻訳",
   "description": "eBayのメッセージを自然な日本語に訳し、日本語の返信を英語にする",
   "lang": "ja",
   "start_url": "./",
