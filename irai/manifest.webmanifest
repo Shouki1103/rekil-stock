@@ -1,6 +1,6 @@
 {
-  "name": "eBay出品依頼リスト",
-  "short_name": "eBay依頼",
+  "name": "eBay出品依頼",
+  "short_name": "eBay出品依頼",
   "description": "eBay出品の下書き依頼（採寸・状態・登録商品）をスマホ・PCから入力",
   "lang": "ja",
   "start_url": "./",

@@ -6,13 +6,12 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="eBay依頼">
-<meta name="theme-color" content="#f3f4f6" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#14171d" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-title" content="eBay出品依頼">
+<meta name="theme-color" content="#f3f4f6">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="icon" href="icon-192.png">
-<title>eBay出品依頼リスト</title>
+<title>eBay出品依頼</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700&family=IBM+Plex+Mono:wght@500&display=swap">
 <style>
@@ -22,13 +21,8 @@
   --accent:#1f4f8f; --accent-soft:#e4ecf7; --ok:#1d7a4d; --ok-soft:#e1f2e8; --warn:#9a5b00; --warn-soft:#fbefd9; --danger:#b3261e;
   --f-body:"Zen Kaku Gothic New","Hiragino Sans","Yu Gothic",system-ui,sans-serif;
   --f-mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+  color-scheme:light;
 }
-@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
-  --bg:#14171d; --surface:#1c2028; --fg:#e7eaf0; --muted:#9aa2b1; --line:#2e3440;
-  --accent:#8db4ec; --accent-soft:#22324a; --ok:#6fcf9b; --ok-soft:#1b3326; --warn:#e8b45c; --warn-soft:#3a2d14; --danger:#f08c84; color-scheme:dark}}
-:root[data-theme="dark"]{
-  --bg:#14171d; --surface:#1c2028; --fg:#e7eaf0; --muted:#9aa2b1; --line:#2e3440;
-  --accent:#8db4ec; --accent-soft:#22324a; --ok:#6fcf9b; --ok-soft:#1b3326; --warn:#e8b45c; --warn-soft:#3a2d14; --danger:#f08c84; color-scheme:dark}
 *{box-sizing:border-box}
 body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.6}
 .wrap{max-width:760px;margin:0 auto;padding-block:20px 80px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
@@ -110,7 +104,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 </head>
 <body>
 <div class="wrap">
-  <div class="hdr"><h1>eBay出品依頼リスト</h1><span class="sync" id="sync"></span></div>
+  <div class="hdr"><h1>eBay出品依頼</h1><span class="sync" id="sync"></span></div>
   <p class="sub">バッグの採寸・状態を入力して保存すると、Claudeが下書きを作成します。</p>
 
   <div class="tabs" role="tablist">
@@ -241,7 +235,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 
 <div class="lock" id="lock" hidden>
   <form class="lockbox" id="lockForm" autocomplete="on">
-    <h2>eBay出品依頼リスト</h2>
+    <h2>eBay出品依頼</h2>
     <p class="note" id="lockMsg"></p>
     <input id="passIn" type="password" inputmode="numeric" autocomplete="current-password" placeholder="暗証番号" aria-label="暗証番号">
     <button class="btn" id="lockGo" type="submit">開く</button>
@@ -250,7 +244,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 <script>
 /* ▼ Apps Script をデプロイしたときの「ウェブアプリのURL」 */
 const API_URL = "https://script.google.com/macros/s/AKfycbyt_sbyLWtGgD8TODNx7kvs2gEOlisN6X8XWqFYGyVQVHkmqvrIRTo6RWZXgYSPjRCB/exec";
-const APP_VERSION = "2026-11-09-2";
+const APP_VERSION = "2026-11-09-3";
 
 const FIELDS=["code","brand","shape","model","mpn","serial","country","color","extMat","fabric","finish","form","pattern","handleMat","handleColor","liningColor","liningMat","hwColor","hwMat","closure","acc","w","h","d","handleDrop","strapDrop","rank","features","note"];
 const MODEL_SKIP=new Set(["code","serial","rank","note","acc"]);
