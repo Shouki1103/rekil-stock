@@ -1,0 +1,431 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ReKiL eBay返信">
+<meta name="theme-color" content="#0d1014">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-192.png">
+<title>ReKiL eBay返信</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap">
+<style>
+/* ReKiL Stock・仕入記帳と同じ濃色の業務アプリ調。アクセントは青（海外とのやりとり） */
+:root{
+  --bg:#14181d; --surface:#1d232a; --line:#2f3740; --fg:#e8ebee; --muted:#9aa4af;
+  --accent:#5aa9ff; --accent-ink:#0b1626; --accent-soft:#1a2b42; --steel:#0d1014; --danger:#ff7a6b; --warn:#f5c026; --warn-soft:#2e2812;
+  --font-body:"Zen Kaku Gothic New","Hiragino Sans","Yu Gothic",system-ui,sans-serif;
+  --font-en:"Source Serif 4",Georgia,"Times New Roman",serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--fg)}
+body{font-family:var(--font-body);font-size:15px;line-height:1.6;padding-bottom:calc(24px + env(safe-area-inset-bottom,0px))}
+[hidden]{display:none!important}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--steel)}
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--steel);border-bottom:1px solid var(--line);
+  padding:10px max(16px,env(safe-area-inset-right,0px)) 10px max(16px,env(safe-area-inset-left,0px));display:flex;align-items:center;justify-content:space-between;gap:10px}
+.brand{display:flex;align-items:center;gap:8px;font-weight:900;letter-spacing:.02em;font-size:17px}
+.brand i{width:10px;height:22px;background:var(--accent);border-radius:2px;display:inline-block}
+.engine{font-size:12px;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:2px 10px;white-space:nowrap}
+.engine.claude{color:var(--accent);border-color:var(--accent)}
+main{max-width:1100px;margin:0 auto;padding:14px max(16px,env(safe-area-inset-right,0px)) 0 max(16px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:14px}
+.grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;align-items:start}
+@media (max-width:820px){.grid{grid-template-columns:minmax(0,1fr)}}
+section{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:10px;min-width:0}
+h2{font-size:15px;margin:0;font-weight:700;display:flex;align-items:center;gap:8px}
+h2 b{font-size:12px;color:var(--accent);border:1.5px solid var(--accent);border-radius:999px;width:22px;height:22px;display:grid;place-items:center;flex:none}
+label.lb{font-size:12.5px;color:var(--muted);display:block;margin-bottom:4px}
+textarea,input,select{width:100%;font:inherit;font-size:16px;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+textarea{resize:vertical}
+textarea.en{font-family:var(--font-en);line-height:1.55}
+textarea:focus,input:focus,select:focus,button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+textarea.flash{border-color:var(--accent);background:var(--accent-soft);transition:background .6s}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+button{font:inherit;cursor:pointer;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--fg);padding:9px 14px;min-height:42px}
+button.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:700}
+button.ghost{border-color:transparent;background:transparent;color:var(--accent)}
+button.small{min-height:34px;padding:4px 10px;font-size:13px}
+button:disabled{opacity:.5;cursor:default}
+.status{font-size:13px;color:var(--muted);min-height:1.3em;margin:0}
+.status.err{color:var(--danger)}
+.out{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:12px 14px;white-space:pre-wrap;word-break:break-word;min-height:96px}
+.out.en{font-family:var(--font-en);font-size:16px;line-height:1.6}
+.out.jp{font-size:15.5px;line-height:1.75}
+.out.empty{font-family:var(--font-body);color:var(--muted);font-size:14px}
+.pick{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.5fr);gap:8px;background:var(--accent-soft);border-radius:10px;padding:10px}
+@media (max-width:400px){.pick{grid-template-columns:minmax(0,1fr)}}
+.pick .lb{color:var(--accent)}
+.added{font-size:13px;color:var(--accent);font-weight:700;min-height:1.2em;margin:0}
+.back{font-size:13.5px;color:var(--muted);white-space:pre-wrap;border-left:3px solid var(--line);padding-left:12px}
+.notes{background:var(--warn-soft);color:var(--warn);border-radius:10px;padding:10px 12px;font-size:13.5px}
+details>summary{cursor:pointer;font-weight:700;list-style-position:inside}
+.mg{display:flex;flex-direction:column;gap:14px;margin-top:12px}
+.catname{font-size:12px;font-weight:700;color:var(--accent);letter-spacing:.06em;margin:0 0 6px}
+.tlist{display:flex;flex-direction:column;gap:6px}
+.titem{border:1px solid var(--line);border-radius:10px;padding:8px 12px;display:flex;flex-direction:column;gap:4px;min-width:0}
+.thead{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.thead .t{font-weight:700;font-size:14px}
+.titem .b{font-size:13.5px;color:var(--muted);white-space:pre-wrap;word-break:break-word}
+.form{border-top:1px solid var(--line);padding-top:12px;display:flex;flex-direction:column;gap:10px}
+.form2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px}
+@media (max-width:400px){.form2{grid-template-columns:minmax(0,1fr)}}
+.empty-note{color:var(--muted);font-size:13.5px;margin:0}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:8px 16px;border-radius:999px;font-size:14px;z-index:30;max-width:calc(100% - 32px)}
+#lock{position:fixed;inset:0;z-index:40;background:var(--bg);display:grid;place-items:center;padding:24px}
+#lock form{width:min(360px,100%);display:flex;flex-direction:column;gap:12px}
+#lock h2{font-size:20px}
+.note{font-size:13.5px;color:var(--muted);margin:0}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand"><i></i>ReKiL eBay返信</div>
+  <span class="engine" id="engine">接続中…</span>
+</header>
+
+<main>
+  <div class="grid">
+    <section>
+      <h2><b>1</b>届いたメッセージを日本語に</h2>
+      <div>
+        <label class="lb" for="tIn">eBayのメッセージ（英文）を貼り付け</label>
+        <textarea id="tIn" class="en" rows="6" placeholder="Hi, is this bag still available? Could you do $250?"></textarea>
+      </div>
+      <div class="row">
+        <button class="primary" id="tJaBtn">日本語に訳す</button>
+        <button class="ghost" id="tInClear">クリア</button>
+      </div>
+      <p class="status" id="tJaStatus"></p>
+      <div class="out jp empty" id="tJaOut">貼り付けると、ここに日本語訳が出ます。</div>
+    </section>
+
+    <section>
+      <h2><b>2</b>日本語で返信を書く</h2>
+      <div class="pick">
+        <div>
+          <label class="lb" for="catSel">テンプレートの項目</label>
+          <select id="catSel"></select>
+        </div>
+        <div>
+          <label class="lb" for="tplSel">テンプレート（選ぶと下に追加）</label>
+          <select id="tplSel"></select>
+        </div>
+      </div>
+      <p class="added" id="addedMsg"></p>
+      <div>
+        <label class="lb" for="tJaIn">返信内容（日本語）　【 】は書き換えてください</label>
+        <textarea id="tJaIn" rows="7" placeholder="例：ご連絡ありがとうございます。この商品はまだ在庫があります。"></textarea>
+      </div>
+      <div class="row">
+        <button class="primary" id="tEnBtn">英語にする</button>
+        <button class="ghost" id="tJaClear">クリア</button>
+      </div>
+      <p class="status" id="tEnStatus"></p>
+      <div class="out en empty" id="tEnOut">書き終えると、ここに英文が出ます。</div>
+      <div class="row"><button class="primary" id="tCopyBtn" disabled>英文をコピー</button></div>
+      <div class="notes" id="tNotes" hidden></div>
+      <div class="back" id="tBack" hidden></div>
+    </section>
+  </div>
+
+  <section>
+    <details>
+      <summary>テンプレートの管理（追加・編集・削除）</summary>
+      <div class="mg">
+        <div id="mgList"><p class="empty-note">読み込み中…</p></div>
+        <div class="form">
+          <p class="catname" id="formTitle">テンプレートを追加</p>
+          <div class="form2">
+            <div>
+              <label class="lb" for="fCat">項目</label>
+              <select id="fCat"></select>
+            </div>
+            <div id="fNewCatBox" hidden>
+              <label class="lb" for="fNewCat">新しい項目名</label>
+              <input type="text" id="fNewCat" placeholder="例：まとめ買い">
+            </div>
+          </div>
+          <div>
+            <label class="lb" for="fLabel">テンプレート名</label>
+            <input type="text" id="fLabel" placeholder="例：値下げお断り">
+          </div>
+          <div>
+            <label class="lb" for="fBody">本文（日本語）</label>
+            <textarea id="fBody" rows="4" placeholder="例：申し訳ありませんが、これ以上の値下げは難しいです。"></textarea>
+          </div>
+          <div class="row">
+            <button class="primary" id="fSave">保存</button>
+            <button class="ghost" id="fCancel" hidden>編集をやめる</button>
+            <span class="status" id="fStatus"></span>
+          </div>
+        </div>
+      </div>
+    </details>
+  </section>
+</main>
+
+<div id="lock" hidden>
+  <form id="lockForm">
+    <div class="brand"><i></i>ReKiL eBay返信</div>
+    <h2>暗証番号</h2>
+    <p class="note" id="lockMsg"></p>
+    <input id="passIn" type="password" inputmode="numeric" autocomplete="current-password" placeholder="暗証番号" aria-label="暗証番号">
+    <button class="primary" id="lockGo" type="submit">開く</button>
+  </form>
+</div>
+
+<script>
+/* ▼ Apps Script をデプロイしたときの「ウェブアプリのURL」 */
+const API_URL = "";
+const APP_VERSION = "2026-11-09-1";
+
+const $ = s => document.querySelector(s);
+const ls = {
+  get(k, d){ try{ const v = localStorage.getItem(k); return v==null ? d : JSON.parse(v); }catch(_){ return d; } },
+  set(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(_){} }
+};
+const CAT_ORDER = ["お礼・あいさつ","値下げ・オファー","発送・配送","関税・送料","真贋","状態・採寸・写真","返品・お詫び","締めのひとこと"];
+
+let pass = "";
+try{ pass = localStorage.getItem("rekil-ebay-pass") || localStorage.getItem("rekil-shiire-pass") || localStorage.getItem("rekil-pass") || ""; }catch(_){}
+let templates = ls.get("ebay-templates", []);
+let tEn = null, editingId = null;
+
+class ApiError extends Error{ constructor(c){ super(c); this.code = c; } }
+async function api(action, params={}, signal){
+  if(!API_URL) throw new ApiError("no_api");
+  let res;
+  try{
+    res = await fetch(API_URL, {method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"},
+      body: JSON.stringify({action, pass, ...params}), signal});
+  }catch(e){ if(e && e.name==="AbortError") throw new ApiError("cancelled"); throw new ApiError("network"); }
+  let j; try{ j = await res.json(); }catch(_){ throw new ApiError("bad_response"); }
+  if(!j.ok){ if(j.error==="passcode"||j.error==="passcode_not_set") showLock(j.error); throw new ApiError(j.error||"error"); }
+  if(j.templates){ templates = j.templates; ls.set("ebay-templates", templates); renderPicker(); renderManager(); }
+  if(j.engine) showEngine(j.engine);
+  return j.result;
+}
+function showEngine(e){
+  const el = $("#engine");
+  el.className = "engine" + (e==="claude" ? " claude" : "");
+  el.textContent = e==="claude" ? "翻訳：Claude" : "翻訳：Google（簡易）";
+}
+function errText(err){
+  const c = err && err.code || "";
+  if(c==="network") return "接続できませんでした。電波を確認してもう一度お試しください。";
+  if(c==="no_api") return "データの接続先がまだ設定されていません。";
+  if(/^claude_401/.test(c)) return "ClaudeのAPIキーが正しくありません。Apps Scriptの設定を確認してください。";
+  if(/^claude_(429|529)/.test(c)) return "翻訳が混み合っています。少し待ってからもう一度お試しください。";
+  if(/^claude_/.test(c)) return "翻訳でエラーが起きました。もう一度お試しください。";
+  return `翻訳できませんでした。もう一度お試しください。（エラー：${c}）`;
+}
+function toast(msg){
+  document.querySelectorAll(".toast").forEach(t=>t.remove());
+  const t = document.createElement("div"); t.className = "toast"; t.textContent = msg; t.setAttribute("role","status");
+  document.body.appendChild(t); setTimeout(()=>t.remove(), 2400);
+}
+async function copyText(t, el){
+  try{ await navigator.clipboard.writeText(t); toast("コピーしました"); }
+  catch(_){ const r=document.createRange(); r.selectNodeContents(el); const s=getSelection(); s.removeAllRanges(); s.addRange(r); toast("選択しました。長押しでコピーしてください"); }
+}
+
+/* ---------- 下書きを端末に保存 ---------- */
+["tIn","tJaIn"].forEach(id=>{ const v = ls.get("ebay-draft-"+id, ""); if(v) $("#"+id).value = v;
+  $("#"+id).addEventListener("input", ()=>ls.set("ebay-draft-"+id, $("#"+id).value)); });
+
+/* ---------- 1. 英語 → 日本語 ---------- */
+let jaCtl = null, lastJaSrc = "", jaTimer = null;
+async function runJa(auto){
+  const src = $("#tIn").value.trim(), st = $("#tJaStatus"), out = $("#tJaOut");
+  if(!src){ if(!auto){ st.className="status err"; st.textContent="メッセージを貼り付けてください。"; } return; }
+  if(auto && src===lastJaSrc) return;
+  if(jaCtl) jaCtl.abort(); const ctl = new AbortController(); jaCtl = ctl; lastJaSrc = src;
+  st.className = "status"; st.textContent = "訳しています…";
+  try{
+    const r = await api("to_ja", {text:src}, ctl.signal);
+    if(jaCtl!==ctl) return;
+    out.classList.remove("empty"); out.textContent = String(r && r.ja || "").trim(); st.textContent = "";
+  }catch(err){
+    if(err.code==="cancelled" || jaCtl!==ctl) return;
+    lastJaSrc = ""; st.className = "status err"; st.textContent = errText(err);
+  }
+}
+$("#tJaBtn").addEventListener("click", ()=>runJa(false));
+$("#tIn").addEventListener("input", ()=>{ clearTimeout(jaTimer); jaTimer = setTimeout(()=>runJa(true), 1200); });
+$("#tIn").addEventListener("paste", ()=>{ clearTimeout(jaTimer); jaTimer = setTimeout(()=>runJa(true), 300); });
+$("#tInClear").addEventListener("click", ()=>{ clearTimeout(jaTimer); if(jaCtl) jaCtl.abort(); jaCtl=null; lastJaSrc="";
+  $("#tIn").value=""; ls.set("ebay-draft-tIn",""); $("#tJaStatus").textContent="";
+  const o=$("#tJaOut"); o.classList.add("empty"); o.textContent="貼り付けると、ここに日本語訳が出ます。"; });
+
+/* ---------- 2. 日本語 → 英語 ---------- */
+let enCtl = null, lastEnKey = "", enTimer = null;
+async function runEn(auto){
+  const ja = $("#tJaIn").value.trim(), st = $("#tEnStatus"), out = $("#tEnOut");
+  if(!ja){ if(!auto){ st.className="status err"; st.textContent="返信内容を日本語で書いてください。"; } return; }
+  if(auto && /【[^】]*】/.test(ja)){ st.className="status"; st.textContent="【 】の部分を書き換えると、自動で英語にします。"; return; }
+  const ctx = $("#tIn").value.trim(), key = ja + "\u0000" + ctx;
+  if(auto && key===lastEnKey) return;
+  if(enCtl) enCtl.abort(); const ctl = new AbortController(); enCtl = ctl; lastEnKey = key;
+  st.className = "status"; st.textContent = "英語にしています…";
+  try{
+    const r = await api("to_en", {text:ja, context:ctx}, ctl.signal);
+    if(enCtl!==ctl) return;
+    tEn = String(r && r.en || "").trim();
+    out.classList.remove("empty"); out.textContent = tEn;
+    const back = String(r && r.back || "").trim(), notes = String(r && r.notes || "").trim();
+    $("#tBack").hidden = !back; $("#tBack").textContent = back ? "確認用の日本語訳\n" + back : "";
+    $("#tNotes").hidden = !notes; $("#tNotes").textContent = notes ? "確認してください：" + notes : "";
+    $("#tCopyBtn").disabled = !tEn; st.textContent = "";
+  }catch(err){
+    if(err.code==="cancelled" || enCtl!==ctl) return;
+    lastEnKey = ""; st.className = "status err"; st.textContent = errText(err);
+  }
+}
+function schedEn(ms){ clearTimeout(enTimer); enTimer = setTimeout(()=>runEn(true), ms); }
+$("#tEnBtn").addEventListener("click", ()=>runEn(false));
+$("#tJaIn").addEventListener("input", ()=>schedEn(1800));
+$("#tCopyBtn").addEventListener("click", ()=>{ if(tEn) copyText(tEn, $("#tEnOut")); });
+$("#tJaClear").addEventListener("click", ()=>{ clearTimeout(enTimer); if(enCtl) enCtl.abort(); enCtl=null; lastEnKey=""; tEn=null;
+  $("#tJaIn").value=""; ls.set("ebay-draft-tJaIn",""); $("#tEnStatus").textContent=""; $("#addedMsg").textContent="";
+  const o=$("#tEnOut"); o.classList.add("empty"); o.textContent="書き終えると、ここに英文が出ます。";
+  $("#tBack").hidden=true; $("#tNotes").hidden=true; $("#tCopyBtn").disabled=true; });
+
+/* ---------- テンプレート選択 ---------- */
+function cats(){
+  const set = new Set(templates.map(t=>t.cat));
+  const list = CAT_ORDER.filter(c=>set.has(c));
+  [...set].filter(c=>!CAT_ORDER.includes(c)).sort().forEach(c=>list.push(c));
+  return list;
+}
+function opt(v, t){ const o=document.createElement("option"); o.value=v; o.textContent=t; return o; }
+function renderPicker(){
+  const cs = cats(), cur = $("#catSel").value, s = $("#catSel"); s.innerHTML = "";
+  if(!cs.length) s.appendChild(opt("", "（テンプレートがありません）"));
+  else cs.forEach(c=>s.appendChild(opt(c, c)));
+  const saved = ls.get("ebay-cat", "");
+  if(cs.includes(cur)) s.value = cur; else if(cs.includes(saved)) s.value = saved;
+  renderTplSel();
+}
+function renderTplSel(){
+  const c = $("#catSel").value, s = $("#tplSel"); s.innerHTML = "";
+  s.appendChild(opt("", "選んでください"));
+  templates.filter(t=>t.cat===c).forEach(t=>s.appendChild(opt(t.id, t.label)));
+}
+$("#catSel").addEventListener("change", ()=>{ ls.set("ebay-cat", $("#catSel").value); renderTplSel(); });
+let lastIns = {id:"", at:0};
+function insertTpl(){
+  const id = $("#tplSel").value, t = templates.find(x=>x.id===id); if(!t) return;
+  const now = Date.now(); if(lastIns.id===id && now-lastIns.at<800) return; lastIns = {id, at:now};
+  const ta = $("#tJaIn"), v = ta.value.replace(/\s+$/, "");
+  ta.value = v ? v + "\n" + t.ja : t.ja; ls.set("ebay-draft-tJaIn", ta.value);
+  $("#addedMsg").textContent = "✓ 「" + t.label + "」を返信内容に追加しました";
+  ta.classList.add("flash"); setTimeout(()=>ta.classList.remove("flash"), 900);
+  try{ ta.scrollIntoView({block:"nearest", behavior:"smooth"}); }catch(_){}
+  setTimeout(()=>{ $("#tplSel").value = ""; }, 400);
+  schedEn(1200);
+}
+$("#tplSel").addEventListener("change", insertTpl);
+$("#tplSel").addEventListener("input", insertTpl);
+
+/* ---------- テンプレート管理 ---------- */
+function renderManager(){
+  const box = $("#mgList"); box.innerHTML = "";
+  const cs = cats();
+  if(!cs.length){ const p=document.createElement("p"); p.className="empty-note"; p.textContent="まだテンプレートがありません。下のフォームから追加してください。"; box.appendChild(p); }
+  cs.forEach(c=>{
+    const wrap = document.createElement("div");
+    const h = document.createElement("p"); h.className="catname"; h.textContent=c; wrap.appendChild(h);
+    const list = document.createElement("div"); list.className="tlist";
+    templates.filter(t=>t.cat===c).forEach(t=>{
+      const it=document.createElement("div"); it.className="titem";
+      const hd=document.createElement("div"); hd.className="thead";
+      const nm=document.createElement("span"); nm.className="t"; nm.textContent=t.label;
+      const bs=document.createElement("div"); bs.className="row";
+      const ed=document.createElement("button"); ed.className="small"; ed.textContent="編集"; ed.addEventListener("click", ()=>startEdit(t));
+      const del=document.createElement("button"); del.className="small ghost"; del.textContent="削除";
+      let armed=false;
+      del.addEventListener("click", async ()=>{
+        if(!armed){ armed=true; del.textContent="もう一度押すと削除"; setTimeout(()=>{armed=false; del.textContent="削除";}, 3000); return; }
+        try{ await api("delete", {id:t.id}); toast("削除しました"); }catch(err){ toast("削除できませんでした"); }
+      });
+      bs.append(ed, del); hd.append(nm, bs);
+      const bd=document.createElement("div"); bd.className="b"; bd.textContent=t.ja;
+      it.append(hd, bd); list.appendChild(it);
+    });
+    wrap.appendChild(list); box.appendChild(wrap);
+  });
+  const f = $("#fCat"), cur = f.value; f.innerHTML = "";
+  const all = [...CAT_ORDER]; cs.forEach(c=>{ if(!all.includes(c)) all.push(c); });
+  all.forEach(c=>f.appendChild(opt(c, c)));
+  f.appendChild(opt("__new", "＋ 新しい項目を作る"));
+  if(cur) f.value = cur;
+  $("#fNewCatBox").hidden = f.value!=="__new";
+}
+$("#fCat").addEventListener("change", ()=>{ $("#fNewCatBox").hidden = $("#fCat").value!=="__new"; });
+function startEdit(t){
+  editingId = t.id; $("#formTitle").textContent = "テンプレートを編集";
+  $("#fCat").value = t.cat; $("#fNewCatBox").hidden = true;
+  $("#fLabel").value = t.label; $("#fBody").value = t.ja; $("#fCancel").hidden = false; $("#fStatus").textContent = "";
+  $("#fLabel").focus();
+}
+function resetForm(){ editingId=null; $("#formTitle").textContent="テンプレートを追加"; $("#fLabel").value=""; $("#fBody").value=""; $("#fNewCat").value=""; $("#fCancel").hidden=true; }
+$("#fCancel").addEventListener("click", resetForm);
+$("#fSave").addEventListener("click", async ()=>{
+  let cat = $("#fCat").value; if(cat==="__new") cat = $("#fNewCat").value.trim();
+  const label = $("#fLabel").value.trim(), ja = $("#fBody").value.trim();
+  if(!cat || !label || !ja){ $("#fStatus").className="status err"; $("#fStatus").textContent="項目・テンプレート名・本文をすべて入れてください。"; return; }
+  $("#fStatus").className="status"; $("#fStatus").textContent="保存しています…"; $("#fSave").disabled = true;
+  try{
+    await api("save", {tpl:{id:editingId||"", cat, label, ja}});
+    $("#fStatus").textContent = "保存しました"; resetForm(); $("#fCat").value = cat;
+  }catch(err){ $("#fStatus").className="status err"; $("#fStatus").textContent="保存できませんでした。もう一度お試しください。"; }
+  $("#fSave").disabled = false;
+});
+
+/* ---------- 暗証番号 ---------- */
+function showLock(err){
+  $("#lock").hidden = false;
+  $("#lockMsg").textContent = err==="passcode_not_set" ? "データ側で暗証番号がまだ設定されていません。Apps Scriptの PASSCODE を書き換えて、もう一度デプロイしてください。"
+    : err==="passcode" && pass ? "暗証番号が違います。もう一度入力してください。" : "社内の暗証番号を入力してください。一度入力すると、この端末では次から入力不要です。";
+  setTimeout(()=>$("#passIn").focus(), 100);
+}
+$("#lockForm").addEventListener("submit", async e=>{
+  e.preventDefault();
+  pass = $("#passIn").value.trim(); if(!pass) return;
+  $("#lockGo").disabled = true; $("#lockGo").textContent = "確認中…";
+  try{
+    await api("list");
+    try{ localStorage.setItem("rekil-ebay-pass", pass); }catch(_){}
+    $("#lock").hidden = true; $("#passIn").value = ""; toast("接続しました");
+  }catch(err){
+    const c = err && err.code || "";
+    if(c==="network") $("#lockMsg").textContent = "データ側（Apps Script）に接続できませんでした。電波を確認し、それでもだめならデプロイの「アクセスできるユーザー」が「全員」になっているか確認してください。";
+    else if(c!=="passcode" && c!=="passcode_not_set") $("#lockMsg").textContent = `データ側でエラーが起きました。（エラー：${c}）`;
+  }
+  $("#lockGo").disabled = false; $("#lockGo").textContent = "開く";
+});
+
+/* ---------- 新しい版の自動反映 ---------- */
+async function checkUpdate(){
+  try{
+    const r = await fetch(location.pathname + "?v=" + Date.now(), {cache:"no-store"});
+    const t = await r.text(); const m = t.match(/const APP_VERSION = "([^"]+)"/);
+    if(m && m[1] !== APP_VERSION){ location.replace(location.pathname + "?v=" + encodeURIComponent(m[1])); }
+  }catch(_){}
+}
+document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState==="visible"){ checkUpdate(); if(pass && API_URL) api("list").catch(()=>{}); } });
+
+/* ---------- 起動 ---------- */
+renderPicker(); renderManager();
+if(!API_URL){ $("#engine").textContent = "未設定"; $("#mgList").innerHTML = '<p class="empty-note">データの接続先がまだ設定されていません。</p>'; }
+else if(!pass) showLock();
+else { checkUpdate(); api("list").catch(err=>{ if(err.code==="network"){ $("#engine").textContent = "オフライン"; } }); }
+</script>
+</body>
+</html>
