@@ -1,0 +1,480 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ReKiL 送り状">
+<meta name="theme-color" content="#0d1014">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-192.png">
+<title>ReKiL 送り状控え</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=IBM+Plex+Mono:wght@500;700&display=swap">
+<style>
+/* ReKiL Stock・仕入記帳と同じ濃色の業務アプリ調。送り状控えはアクセントを橙（伝票・配送ラベルのイメージ） */
+:root{
+  --bg:#14181d; --surface:#1d232a; --line:#2f3740; --fg:#e8ebee; --muted:#9aa4af;
+  --accent:#ff9f43; --accent-ink:#1d1206; --steel:#0d1014; --danger:#ff7a6b; --ok:#3fd18b;
+  --ebay:#6aa9ff; --yahoo:#ff6b8a; --gyohan:#c7a6ff;
+  --font-body:"Zen Kaku Gothic New","Hiragino Sans","Yu Gothic",system-ui,sans-serif;
+  --font-code:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--fg)}
+body{font-family:var(--font-body);font-size:15px;line-height:1.6;padding-bottom:calc(88px + env(safe-area-inset-bottom,0px))}
+[hidden]{display:none!important}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--steel)}
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--steel);
+  padding:12px max(16px,env(safe-area-inset-right,0px)) 0 max(16px,env(safe-area-inset-left,0px))}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:900;font-size:17px;letter-spacing:.04em}
+.brand i{display:inline-block;width:12px;height:22px;background:repeating-linear-gradient(-45deg,var(--accent) 0 5px,#1d2228 5px 10px);border-radius:2px}
+.sync{font-size:12px;color:#c9d1d9;text-align:right}
+.tabs{display:grid;grid-template-columns:repeat(3,1fr);margin-top:10px}
+.tabs button{font:inherit;font-weight:700;background:none;border:0;color:var(--muted);padding:10px 4px 12px;min-height:48px;cursor:pointer;border-bottom:3px solid transparent;display:flex;align-items:center;justify-content:center;gap:6px}
+.tabs button[aria-selected="true"]{color:var(--fg);border-bottom-color:var(--accent)}
+.badge{font-family:var(--font-code);font-size:11px;min-width:20px;padding:0 6px;border-radius:999px;background:var(--accent);color:var(--accent-ink);line-height:18px}
+.badge:empty{display:none}
+main{max-width:600px;margin:0 auto;padding:12px max(16px,env(safe-area-inset-right,0px)) 32px max(16px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:12px}
+.bar{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none;flex:1 1 100%}
+.chips::-webkit-scrollbar{display:none}
+.chips button{flex:0 0 auto;min-height:34px;padding:4px 12px;font-size:13px;font-weight:500;border-radius:999px;background:var(--bg)}
+.chips button[aria-pressed="true"]{border-color:var(--accent);color:var(--accent)}
+.chips small{font-family:var(--font-code);color:var(--muted);margin-left:4px}
+.toggle{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);cursor:pointer;user-select:none}
+.toggle input{width:20px;height:20px;min-height:0;accent-color:var(--accent)}
+.summary{font-size:13px;color:var(--muted)}
+.day{background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.day h2{margin:0;padding:10px 14px;font-size:15px;font-weight:900;display:flex;justify-content:space-between;align-items:baseline;border-bottom:1px solid var(--line);background:#20272f}
+.day h2 small{font-weight:500;color:var(--muted);font-size:12px}
+.day h2 .sun{color:#ff8f8f}.day h2 .sat{color:#8fb8ff}
+ul{list-style:none;margin:0;padding:0}
+li.item{display:grid;grid-template-columns:44px 1fr auto;gap:2px 8px;padding:10px 12px 10px 4px;border-top:1px solid var(--line);align-items:center}
+li.item:first-child{border-top:0}
+.chk{display:flex;align-items:center;justify-content:center;min-height:44px;cursor:pointer}
+.chk input{width:24px;height:24px;accent-color:var(--ok);cursor:pointer}
+.who{min-width:0}
+.nm{font-weight:700;overflow-wrap:anywhere;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.nm .no{font-family:var(--font-code);color:var(--muted);font-size:12px}
+.vtag{font-size:11px;font-weight:700;padding:0 7px;border-radius:999px;border:1px solid var(--gyohan);color:var(--gyohan)}
+.trk{font-family:var(--font-code);font-weight:700;font-size:17px;letter-spacing:.04em}
+.ev{font-family:var(--font-code);font-size:13px;color:var(--muted)}
+.ev b{color:var(--fg);font-weight:700}
+.acts{display:flex;flex-direction:column;gap:6px;align-items:stretch}
+li.item.done .nm,li.item.done .trk{text-decoration:line-through;color:var(--muted)}
+button{font:inherit;font-weight:700;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--fg);padding:10px 14px;cursor:pointer;min-height:44px;display:inline-flex;align-items:center;justify-content:center;gap:6px}
+button.copy{min-height:40px;padding:4px 12px;font-size:13px;border-color:var(--accent);color:var(--accent);background:transparent}
+button.copy.ok{border-color:var(--ok);color:var(--ok)}
+button.more{min-height:30px;padding:0 10px;font-size:12px;color:var(--muted);background:transparent;border-color:transparent}
+button.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);min-height:56px;font-size:17px;width:100%}
+button.ghost{background:transparent;border-color:transparent;color:var(--muted)}
+button.danger{color:var(--danger)}
+button:disabled{opacity:.45;cursor:default}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.fab{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:8;width:min(560px,calc(100% - 32px));box-shadow:0 8px 28px #000a}
+.empty{color:var(--muted);font-size:14px;margin:8px 0;text-align:center}
+.toast{position:fixed;left:50%;bottom:calc(92px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:#f2f4f6;color:#111;padding:10px 16px;border-radius:8px;font-weight:700;z-index:60;max-width:calc(100% - 32px);box-shadow:0 6px 24px #0008}
+/* 追加・編集シート */
+.sheet{position:fixed;inset:0;z-index:30;background:#000a;display:flex;align-items:flex-end;justify-content:center}
+.sheet form{background:var(--surface);width:100%;max-width:600px;max-height:92vh;overflow:auto;border-radius:14px 14px 0 0;padding:16px max(16px,env(safe-area-inset-right,0px)) calc(16px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:12px}
+.sheet h3{margin:0;font-size:18px;display:flex;justify-content:space-between;align-items:center}
+label.f{display:flex;flex-direction:column;gap:6px}
+.label{font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.06em}
+input,select{font:inherit;width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--fg);min-height:48px}
+input.code{font-family:var(--font-code);font-size:20px;font-weight:700;letter-spacing:.04em}
+.seg{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:4px}
+.seg button{min-height:40px;border:0;background:transparent;color:var(--muted);font-size:14px}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--fg);box-shadow:inset 0 -3px 0 var(--accent)}
+button.photo{min-height:64px;font-size:16px;width:100%;border-style:dashed}
+.cands{display:flex;flex-wrap:wrap;gap:6px}
+.cands button{min-height:34px;padding:4px 10px;font-size:13px;font-family:var(--font-code);background:var(--bg)}
+.note{font-size:13px;color:var(--muted);margin:0}
+.warn{font-size:13px;color:var(--accent);margin:0;font-weight:700}
+pre{white-space:pre-wrap;font-size:12px;color:var(--muted);background:var(--bg);border-radius:8px;padding:10px;margin:8px 0 0;max-height:200px;overflow:auto}
+details summary{cursor:pointer;color:var(--muted);font-size:13px;font-weight:700}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+#lock{position:fixed;inset:0;z-index:50;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:24px}
+#lock form{width:100%;max-width:360px;display:flex;flex-direction:column;gap:12px}
+#lock h2{margin:0;font-size:20px}
+</style>
+</head>
+<body>
+<header>
+  <div class="top">
+    <div class="brand"><i></i>ReKiL 送り状控え</div>
+    <div class="sync" id="sync">接続中…</div>
+  </div>
+  <div class="tabs" role="tablist" aria-label="販路">
+    <button type="button" role="tab" data-ch="ebay" aria-selected="true">eBay <span class="badge" id="b-ebay"></span></button>
+    <button type="button" role="tab" data-ch="yahoo" aria-selected="false">ヤフオク <span class="badge" id="b-yahoo"></span></button>
+    <button type="button" role="tab" data-ch="gyohan" aria-selected="false">業販 <span class="badge" id="b-gyohan"></span></button>
+  </div>
+</header>
+
+<main>
+  <div class="chips" id="vendorChips" aria-label="業者で絞り込み" hidden></div>
+  <div class="bar">
+    <span class="summary" id="summary"></span>
+    <label class="toggle"><input type="checkbox" id="onlyTodo">未登録だけ表示</label>
+  </div>
+  <div id="days"></div>
+  <p class="empty" id="empty" hidden>まだありません。下の「＋ 送り状を追加」から登録できます。</p>
+</main>
+
+<button class="primary fab" id="addBtn" type="button">＋ 送り状を追加</button>
+
+<!-- 追加・編集 -->
+<div class="sheet" id="sheet" hidden>
+  <form id="form" autocomplete="off" novalidate>
+    <h3><span id="formT">送り状を追加</span><button type="button" class="ghost" id="close" aria-label="閉じる">✕</button></h3>
+    <div id="photoBox">
+      <button type="button" id="photoBtn" class="photo"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>送り状を撮る・選ぶ</button>
+      <input type="file" id="photoIn" accept="image/*" hidden>
+      <p class="note" style="margin-top:6px">送り状番号・お届け先・evtnを読み取って下に入れます。登録前に必ず確認してください。</p>
+    </div>
+    <div>
+      <span class="label">販路</span>
+      <div class="seg" id="chSeg">
+        <button type="button" data-ch="ebay" aria-pressed="true">eBay</button>
+        <button type="button" data-ch="yahoo" aria-pressed="false">ヤフオク</button>
+        <button type="button" data-ch="gyohan" aria-pressed="false">業販</button>
+      </div>
+    </div>
+    <label class="f"><span class="label">送り状番号</span>
+      <input id="fTrk" class="code" inputmode="numeric" placeholder="391234567890">
+    </label>
+    <div class="cands" id="trkCands"></div>
+    <label class="f"><span class="label">お届け先の名前</span>
+      <input id="fName" placeholder="例：Kimaya Singh">
+    </label>
+    <div class="cands" id="nameCands"></div>
+    <div id="vendorBox" hidden>
+      <label class="f"><span class="label">業者名</span>
+        <input id="fVendor" list="vendorList" placeholder="例：オークネット">
+        <datalist id="vendorList"></datalist>
+      </label>
+      <div class="cands" id="vendorPick"></div>
+      <p class="warn" id="vendorWarn" hidden></p>
+    </div>
+    <div class="row2">
+      <label class="f" id="evBox"><span class="label">evtn（鑑定機関あて）</span>
+        <input id="fEv" placeholder="例：g2xk8cm" autocapitalize="off">
+      </label>
+      <label class="f"><span class="label">発送日</span>
+        <input id="fDate" type="date">
+      </label>
+    </div>
+    <details id="ocrRaw" hidden><summary>読み取った文字をすべて見る</summary><pre id="ocrText"></pre></details>
+    <button class="primary" id="save" type="submit">登録する</button>
+    <button type="button" class="ghost danger" id="del" hidden>この送り状を削除</button>
+  </form>
+</div>
+
+<div id="lock" hidden>
+  <form id="lockForm">
+    <div class="brand"><i></i>ReKiL 送り状控え</div>
+    <h2>暗証番号</h2>
+    <p class="note" id="lockMsg"></p>
+    <input id="passIn" type="password" inputmode="numeric" autocomplete="current-password" placeholder="暗証番号" aria-label="暗証番号">
+    <button class="primary" id="lockGo" type="submit">開く</button>
+  </form>
+</div>
+
+<script>
+/* ▼ Apps Script をデプロイしたときの「ウェブアプリのURL」 */
+const API_URL = "https://script.google.com/macros/s/AKfycbwa-V3TqAAmz3S1-zreAI3Jkp0d4f0aGikswIQnTdmxsgFpggUxE0bjl1-sR0DZumSwsQ/exec";
+const APP_VERSION = "2026-11-09-1";
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const ls = {
+  get(k, d){ try{ const v = localStorage.getItem(k); return v==null ? d : JSON.parse(v); }catch(_){ return d; } },
+  set(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(_){} }
+};
+const today = () => new Date(Date.now() + 9*3600e3).toISOString().slice(0,10); // 日本時間 YYYY-MM-DD
+const WD = ["日","月","火","水","木","金","土"];
+const CH_NAME = {ebay:"eBay", yahoo:"ヤフオク", gyohan:"業販"};
+
+let pass = "";
+try{ pass = localStorage.getItem("rekil-okuri-pass") || localStorage.getItem("rekil-pass") || localStorage.getItem("rekil-shiire-pass") || ""; }catch(_){}
+let rows = ls.get("okuri-rows", []), vendors = ls.get("okuri-vendors", []);
+let ch = ls.get("okuri-tab", "ebay"), vendorFilter = "", onlyTodo = ls.get("okuri-onlytodo", false), online = false, busy = 0;
+
+class ApiError extends Error{ constructor(c){ super(c); this.code = c; } }
+async function api(action, params={}){
+  busy++; status();
+  try{
+    let res;
+    try{
+      res = await fetch(API_URL, {method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"}, body: JSON.stringify({action, pass, ...params})});
+    }catch(_){ throw new ApiError("network"); }
+    let j; try{ j = await res.json(); }catch(_){ throw new ApiError("bad_response"); }
+    if(!j.ok){ if(j.error==="passcode") showLock(); throw new ApiError(j.error||"error"); }
+    if(j.rows){ rows = j.rows; ls.set("okuri-rows", rows); }
+    if(j.vendors){ vendors = j.vendors; ls.set("okuri-vendors", vendors); }
+    online = true;
+    return j.result;
+  }finally{ busy--; render(); }
+}
+
+function toast(msg){
+  document.querySelectorAll(".toast").forEach(t=>t.remove());
+  const t = document.createElement("div"); t.className = "toast"; t.textContent = msg; t.setAttribute("role","status");
+  document.body.appendChild(t); setTimeout(()=>t.remove(), 2400);
+}
+function status(){ $("#sync").textContent = busy ? "同期中…" : online ? "接続済み" : "未接続"; }
+
+/* ---------- 表示 ---------- */
+function render(){
+  document.querySelectorAll(".tabs [data-ch]").forEach(b=>b.setAttribute("aria-selected", b.dataset.ch===ch));
+  ["ebay","yahoo","gyohan"].forEach(c=>{ const n = rows.filter(r=>r.channel===c && !r.done).length; $("#b-"+c).textContent = n || ""; });
+  $("#onlyTodo").checked = onlyTodo;
+
+  // 業者の絞り込み（業販のみ）
+  const gy = rows.filter(r=>r.channel==="gyohan");
+  $("#vendorChips").hidden = ch!=="gyohan" || !gy.length;
+  if(ch==="gyohan"){
+    const cnt = {}; gy.forEach(r=>{ const v = r.vendor || "（業者未設定）"; cnt[v] = (cnt[v]||0)+1; });
+    if(vendorFilter && !cnt[vendorFilter]) vendorFilter = "";
+    $("#vendorChips").innerHTML = `<button type="button" data-v="" aria-pressed="${!vendorFilter}">すべて<small>${gy.length}</small></button>` +
+      Object.keys(cnt).sort((a,b)=>cnt[b]-cnt[a]).map(v=>`<button type="button" data-v="${esc(v)}" aria-pressed="${v===vendorFilter}">${esc(v)}<small>${cnt[v]}</small></button>`).join("");
+  }
+
+  let list = rows.filter(r=>r.channel===ch);
+  if(ch==="gyohan" && vendorFilter) list = list.filter(r=>(r.vendor||"（業者未設定）")===vendorFilter);
+  const total = list.length, todo = list.filter(r=>!r.done).length;
+  if(onlyTodo) list = list.filter(r=>!r.done);
+  $("#summary").textContent = `${CH_NAME[ch]}：${total}件（未登録 ${todo}件）`;
+
+  const byDate = {};
+  list.forEach(r=>{ (byDate[r.date] = byDate[r.date] || []).push(r); });
+  const dates = Object.keys(byDate).sort().reverse();
+  $("#empty").hidden = dates.length>0;
+  $("#empty").textContent = onlyTodo && total ? "未登録の送り状はありません。" : "まだありません。下の「＋ 送り状を追加」から登録できます。";
+  $("#days").innerHTML = dates.map(d=>{
+    const dt = new Date(d+"T00:00:00+09:00"), w = dt.getUTCDay ? new Date(d+"T12:00:00Z").getUTCDay() : 0;
+    const [y,m,dd] = d.split("-").map(Number);
+    const items = byDate[d].sort((a,b)=>(a.seq||0)-(b.seq||0));
+    const left = items.filter(r=>!r.done).length;
+    return `<section class="day"><h2><span class="${w===0?"sun":w===6?"sat":""}">${y}年${m}月${dd}日（${WD[w]}）</span><small>${items.length}件${left?`・未登録${left}`:"・すべて登録済み"}</small></h2><ul>` +
+      items.map((r,i)=>`
+      <li class="item${r.done?" done":""}">
+        <label class="chk"><input type="checkbox" data-done="${esc(r.tracking)}" ${r.done?"checked":""} aria-label="登録済み"></label>
+        <div class="who">
+          <div class="nm"><span class="no">${i+1}.</span>${esc(r.name||"（名前なし）")}${r.channel==="gyohan"&&r.vendor?`<span class="vtag">${esc(r.vendor)}</span>`:""}</div>
+          <div class="trk">${esc(r.tracking)}</div>
+          ${r.evtn?`<div class="ev">evtn <b>${esc(r.evtn)}</b></div>`:""}
+        </div>
+        <div class="acts">
+          <button type="button" class="copy" data-copy="${esc(r.tracking)}">番号コピー</button>
+          ${r.evtn?`<button type="button" class="copy" data-copy="${esc(r.evtn)}">evtnコピー</button>`:""}
+          <button type="button" class="more" data-edit="${esc(r.tracking)}">編集</button>
+        </div>
+      </li>`).join("") + `</ul></section>`;
+  }).join("");
+  status();
+}
+
+$(".tabs").addEventListener("click", e=>{ const b = e.target.closest("[data-ch]"); if(!b) return; ch = b.dataset.ch; vendorFilter = ""; ls.set("okuri-tab", ch); render(); window.scrollTo({top:0}); });
+$("#vendorChips").addEventListener("click", e=>{ const b = e.target.closest("[data-v]"); if(!b) return; vendorFilter = b.dataset.v; render(); });
+$("#onlyTodo").addEventListener("change", ()=>{ onlyTodo = $("#onlyTodo").checked; ls.set("okuri-onlytodo", onlyTodo); render(); });
+
+$("#days").addEventListener("click", async e=>{
+  const c = e.target.closest("[data-copy]");
+  if(c){
+    const v = c.dataset.copy;
+    try{ await navigator.clipboard.writeText(v); }
+    catch(_){ const t = document.createElement("textarea"); t.value = v; document.body.appendChild(t); t.select(); document.execCommand("copy"); t.remove(); }
+    const old = c.textContent; c.textContent = "コピー済み"; c.classList.add("ok"); setTimeout(()=>{ c.textContent = old; c.classList.remove("ok"); }, 1500);
+    return;
+  }
+  const ed = e.target.closest("[data-edit]");
+  if(ed){ openForm(rows.find(r=>r.tracking===ed.dataset.edit)); }
+});
+$("#days").addEventListener("change", async e=>{
+  const cb = e.target.closest("[data-done]"); if(!cb) return;
+  const t = cb.dataset.done, done = cb.checked;
+  const r = rows.find(x=>x.tracking===t); if(r){ r.done = done; render(); }
+  try{ await api("setDone", {tracking:t, done}); }
+  catch(err){ if(r){ r.done = !done; render(); } toast(err.code==="network" ? "通信できませんでした。もう一度押してください" : `保存できませんでした（${err.code}）`); }
+});
+
+/* ---------- 追加・編集 ---------- */
+let editing = null, fch = "ebay";
+function setFch(c){
+  fch = c;
+  document.querySelectorAll("#chSeg [data-ch]").forEach(b=>b.setAttribute("aria-pressed", b.dataset.ch===c));
+  $("#vendorBox").hidden = c!=="gyohan";
+  $("#evBox").style.visibility = c==="ebay" ? "visible" : "hidden";
+  vendorCheck();
+}
+function openForm(r){
+  editing = r || null;
+  $("#formT").textContent = r ? "送り状を編集" : "送り状を追加";
+  $("#save").textContent = r ? "変更を保存" : "登録する";
+  $("#del").hidden = !r; $("#photoBox").hidden = !!r;
+  $("#fTrk").value = r ? r.tracking : ""; $("#fTrk").readOnly = !!r;
+  $("#fName").value = r ? r.name : ""; $("#fEv").value = r ? r.evtn : "";
+  $("#fVendor").value = r ? r.vendor : ""; $("#fDate").value = r ? r.date : today();
+  $("#trkCands").innerHTML = ""; $("#nameCands").innerHTML = ""; $("#ocrRaw").hidden = true;
+  $("#vendorList").innerHTML = vendors.map(v=>`<option value="${esc(v)}">`).join("");
+  $("#vendorPick").innerHTML = vendors.map(v=>`<button type="button" data-pickv="${esc(v)}">${esc(v)}</button>`).join("");
+  setFch(r ? r.channel : ch);
+  $("#sheet").hidden = false;
+  if(!r) setTimeout(()=>$("#fTrk").focus(), 50);
+}
+function closeForm(){ $("#sheet").hidden = true; editing = null; }
+$("#addBtn").addEventListener("click", ()=>openForm(null));
+$("#close").addEventListener("click", closeForm);
+$("#sheet").addEventListener("click", e=>{ if(e.target.id==="sheet") closeForm(); });
+$("#chSeg").addEventListener("click", e=>{ const b = e.target.closest("[data-ch]"); if(b) setFch(b.dataset.ch); });
+$("#vendorPick").addEventListener("click", e=>{ const b = e.target.closest("[data-pickv]"); if(!b) return; $("#fVendor").value = b.dataset.pickv; vendorCheck(); });
+$("#fVendor").addEventListener("input", vendorCheck);
+function vendorCheck(){
+  const v = $("#fVendor").value.trim();
+  const isNew = fch==="gyohan" && v && !vendors.includes(v);
+  $("#vendorWarn").hidden = !isNew;
+  $("#vendorWarn").textContent = isNew ? `「${v}」は新しい業者名です。略し方が既存の業者と同じか確認してから登録してください。` : "";
+}
+$("#fTrk").addEventListener("input", ()=>{ $("#fTrk").value = $("#fTrk").value.replace(/[^\d]/g,""); });
+$("#trkCands").addEventListener("click", e=>{ const b = e.target.closest("[data-t]"); if(b) $("#fTrk").value = b.dataset.t; });
+$("#nameCands").addEventListener("click", e=>{ const b = e.target.closest("[data-n]"); if(b) $("#fName").value = b.dataset.n; });
+
+$("#form").addEventListener("submit", async e=>{
+  e.preventDefault();
+  const tracking = $("#fTrk").value.replace(/[^\d]/g,""), name = $("#fName").value.trim();
+  const vendor = $("#fVendor").value.trim(), evtn = fch==="ebay" ? $("#fEv").value.trim() : "", date = $("#fDate").value || today();
+  if(tracking.length<10){ toast("送り状番号を入れてください（数字10桁以上）"); $("#fTrk").focus(); return; }
+  if(!name){ toast("お届け先の名前を入れてください"); $("#fName").focus(); return; }
+  if(fch==="gyohan" && !vendor){ toast("業者名を入れてください"); $("#fVendor").focus(); return; }
+  if(fch==="gyohan" && !vendors.includes(vendor) && !confirm(`業者名「${vendor}」を新しく追加して登録します。よろしいですか？`)) return;
+  const btn = $("#save"); btn.disabled = true;
+  try{
+    if(editing){
+      await api("update", {tracking, fields:{name, evtn, date, channel:fch, vendor: fch==="gyohan"?vendor:""}});
+      toast("保存しました");
+    }else{
+      if(rows.some(r=>r.tracking===tracking)){ toast("この送り状番号はもう登録されています"); btn.disabled = false; return; }
+      const r = await api("add", {item:{tracking, name, evtn, date, channel:fch, vendor}});
+      toast(r && r.dup ? "この送り状番号はもう登録されています" : `${CH_NAME[fch]}に登録しました`);
+      if(ch!==fch){ ch = fch; ls.set("okuri-tab", ch); render(); }
+    }
+    closeForm();
+  }catch(err){
+    toast(err.code==="network" ? "通信できませんでした。電波の良い場所でもう一度お試しください" : `保存できませんでした（${err.code}）`);
+  }
+  btn.disabled = false;
+});
+$("#del").addEventListener("click", async ()=>{
+  if(!editing) return;
+  if(!confirm(`${editing.name}（${editing.tracking}）を削除します。よろしいですか？`)) return;
+  try{ await api("remove", {tracking: editing.tracking}); toast("削除しました"); closeForm(); }
+  catch(err){ toast(`削除できませんでした（${err.code}）`); }
+});
+
+/* ---------- 写真から読み取り ---------- */
+$("#photoBtn").addEventListener("click", ()=>$("#photoIn").click());
+$("#photoIn").addEventListener("change", async ()=>{
+  const f = $("#photoIn").files[0]; $("#photoIn").value = ""; if(!f) return;
+  const btn = $("#photoBtn"), label = btn.innerHTML;
+  btn.disabled = true; btn.textContent = "読み取り中…（10〜20秒）";
+  try{
+    const image = await shrink(f, 2000);
+    const r = await api("ocr", {image});
+    const text = (r && r.text) || "";
+    $("#ocrText").textContent = text || "（文字が見つかりませんでした）"; $("#ocrRaw").hidden = false;
+    applyOcr(text);
+  }catch(err){
+    const c = err && err.code || "";
+    toast(c==="network" ? "通信できませんでした。電波の良い場所でもう一度お試しください" : `読み取りできませんでした（${c}）`);
+  }
+  btn.disabled = false; btn.innerHTML = label;
+});
+function applyOcr(text){
+  const flat = text.replace(/[‐－―ー−—–]/g,"-").replace(/[０-９]/g, d=>String.fromCharCode(d.charCodeAt(0)-0xFEE0));
+  // 送り状番号：4-4-4 の形を優先、なければ12桁の数字
+  const set = new Set();
+  (flat.match(/\b\d{4}\s*-\s*\d{4}\s*-\s*\d{4}\b/g)||[]).forEach(s=>set.add(s.replace(/\D/g,"")));
+  (flat.match(/(?<!\d)\d{12}(?!\d)/g)||[]).forEach(s=>set.add(s));
+  const trks = [...set].filter(t=>!rows.some(r=>r.tracking===t));
+  const allT = [...set];
+  if(allT.length){ $("#fTrk").value = trks[0] || allT[0]; }
+  $("#trkCands").innerHTML = allT.length>1 ? allT.map(t=>`<button type="button" data-t="${t}">${t}${rows.some(r=>r.tracking===t)?"（登録済み）":""}</button>`).join("") : "";
+  // evtn
+  const ev = flat.match(/evtn\s*[:：#]?\s*([a-z0-9]{6,8})/i);
+  if(ev) $("#fEv").value = ev[1].toLowerCase();
+  // 名前の候補：「様」の前、英字の氏名らしい行
+  const lines = flat.split(/\r?\n/).map(s=>s.replace(/\s+/g," ").trim()).filter(Boolean);
+  const names = [];
+  lines.forEach(l=>{
+    const m = l.match(/^(.{2,40}?)\s*様/); if(m && !/ReKiL|櫻井|依頼主|ご依頼/.test(m[1])) names.push(m[1].trim());
+  });
+  lines.forEach(l=>{ if(/^[A-Za-z][A-Za-z.'\-]+( [A-Za-z][A-Za-z.'\-]+){1,3}$/.test(l) && !/(Japan|JAPAN|Yamato|YAMATO|Street|Road|Ave|Suite|Apt|Inc|LLC|Shizuoka|Shimada|ReKiL)/.test(l)) names.push(l); });
+  const uniq = [...new Set(names)].slice(0,6);
+  if(uniq.length && !$("#fName").value) $("#fName").value = uniq[0];
+  $("#nameCands").innerHTML = uniq.length>1 ? uniq.map(n=>`<button type="button" data-n="${esc(n)}">${esc(n)}</button>`).join("") : "";
+  // 販路の推定：依頼主がReならヤフオク、evtnがあればeBay、業者名が入っていれば業販
+  const hitV = vendors.find(v=>v.length>=2 && flat.includes(v));
+  if(hitV){ setFch("gyohan"); $("#fVendor").value = hitV; vendorCheck(); }
+  else if(ev) setFch("ebay");
+  else if(/(^|\n)\s*Re\s*($|\n|様)/.test(flat)) setFch("yahoo");
+  toast(allT.length ? "読み取りました。内容を確認してください" : "送り状番号を見つけられませんでした。手で入れてください");
+}
+function shrink(file, max){
+  return new Promise((ok, ng)=>{
+    const img = new Image(), url = URL.createObjectURL(file);
+    img.onload = ()=>{
+      const s = Math.min(1, max/Math.max(img.width, img.height));
+      const c = document.createElement("canvas"); c.width = Math.round(img.width*s); c.height = Math.round(img.height*s);
+      c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(url); ok(c.toDataURL("image/jpeg", 0.88).split(",")[1]);
+    };
+    img.onerror = ()=>{ URL.revokeObjectURL(url); ng(new ApiError("image")); };
+    img.src = url;
+  });
+}
+
+/* ---------- 暗証番号 ---------- */
+function showLock(){
+  online = false; $("#lock").hidden = false;
+  $("#lockMsg").textContent = pass ? "暗証番号が違います。もう一度入力してください。" : "社内の暗証番号を入力してください（ReKiL Stockと同じ番号）。一度入力すると、このスマホでは次から入力不要です。";
+  setTimeout(()=>$("#passIn").focus(), 100);
+}
+$("#lockForm").addEventListener("submit", async e=>{
+  e.preventDefault();
+  pass = $("#passIn").value.trim(); if(!pass) return;
+  $("#lockGo").disabled = true; $("#lockGo").textContent = "確認中…";
+  try{
+    await api("list");
+    try{ localStorage.setItem("rekil-okuri-pass", pass); }catch(_){}
+    $("#lock").hidden = true; $("#passIn").value = ""; toast("接続しました");
+  }catch(err){
+    if(err.code==="network") $("#lockMsg").textContent = "データ側に接続できませんでした。電波を確認してください。";
+    else if(err.code!=="passcode") $("#lockMsg").textContent = `データ側でエラーが起きました（${err.code}）`;
+  }
+  $("#lockGo").disabled = false; $("#lockGo").textContent = "開く";
+});
+
+/* ---------- 同期・更新 ---------- */
+async function refresh(){ if(!pass || busy) return; try{ await api("list"); }catch(err){ if(err.code==="network"){ online = false; status(); } } }
+async function checkUpdate(){
+  try{
+    const r = await fetch(location.pathname + "?v=" + Date.now(), {cache:"no-store"});
+    const t = await r.text(); const m = t.match(/const APP_VERSION = "([^"]+)"/);
+    if(m && m[1] !== APP_VERSION && !busy){ location.replace(location.pathname + "?v=" + encodeURIComponent(m[1])); }
+  }catch(_){}
+}
+document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState==="visible"){ checkUpdate(); refresh(); } });
+setInterval(()=>{ if(document.visibilityState==="visible" && $("#sheet").hidden) refresh(); }, 60000);
+
+render();
+if(!pass) showLock(); else { checkUpdate(); refresh(); }
+</script>
+</body>
+</html>
