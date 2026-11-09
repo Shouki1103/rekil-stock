@@ -245,7 +245,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 <script>
 /* ▼ Apps Script をデプロイしたときの「ウェブアプリのURL」 */
 const API_URL = "https://script.google.com/macros/s/AKfycbyt_sbyLWtGgD8TODNx7kvs2gEOlisN6X8XWqFYGyVQVHkmqvrIRTo6RWZXgYSPjRCB/exec";
-const APP_VERSION = "2026-11-09-4";
+const APP_VERSION = "2026-11-09-5";
 
 const FIELDS=["code","brand","shape","model","mpn","serial","country","color","extMat","fabric","finish","form","pattern","handleMat","handleColor","liningColor","liningMat","hwColor","hwMat","closure","acc","w","h","d","handleDrop","strapDrop","rank","features","note"];
 const MODEL_SKIP=new Set(["code","serial","rank","note","acc"]);
@@ -492,6 +492,7 @@ async function checkUpdate(){
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"){checkUpdate();refresh();}});
 
 /* ---------- 起動 ---------- */
+checkUpdate();
 render();
 if(!API_URL){showErr("データ側の接続先がまだ設定されていません。");}
 else if(!pass){showLock();}
