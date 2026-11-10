@@ -1,0 +1,367 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ReKiL ラウンジ">
+<meta name="theme-color" content="#0d1014">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-192.png">
+<title>ReKiL ラウンジ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700;900&display=swap">
+<style>
+/* ReKiL系アプリと同じ濃色。アクセントはラウンジの金色 */
+:root{
+  --bg:#14181d; --surface:#1d232a; --surface2:#232a33; --line:#2f3740; --fg:#e8ebee; --muted:#9aa4af;
+  --accent:#d4b06a; --accent-ink:#1a1408; --accent-soft:#2e2818; --steel:#0d1014;
+  --ok:#4cc38a; --ok-soft:#173226; --ng:#ff7a6b; --ng-soft:#3a1d1a; --warn:#f5c026; --warn-soft:#2e2812; --info:#6fb3ff;
+  --font:"Zen Kaku Gothic New","Hiragino Sans","Yu Gothic",system-ui,sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--fg)}
+body{font-family:var(--font);font-size:15px;line-height:1.6;padding-bottom:calc(32px + env(safe-area-inset-bottom,0px))}
+[hidden]{display:none!important}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--steel)}
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--steel);border-bottom:1px solid var(--line);
+  padding:10px max(16px,env(safe-area-inset-right,0px)) 0 max(16px,env(safe-area-inset-left,0px))}
+.hrow{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.brand{display:flex;align-items:center;gap:8px;font-weight:900;font-size:17px;letter-spacing:.02em;white-space:nowrap}
+.brand i{width:10px;height:22px;background:var(--accent);border-radius:2px;display:inline-block}
+.cardbtn{font:inherit;font-size:12.5px;background:var(--surface);color:var(--fg);border:1px solid var(--line);border-radius:999px;padding:5px 12px;max-width:48vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}
+.cardbtn b{color:var(--accent)}
+.search{margin:10px 0 0;position:relative}
+.search input{width:100%;font:inherit;font-size:16px;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px 10px 36px}
+.search svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);width:17px;height:17px;stroke:var(--muted)}
+.tabs{display:flex;gap:2px;margin-top:8px}
+.tab{flex:1;font:inherit;font-weight:700;font-size:14px;background:transparent;color:var(--muted);border:0;border-bottom:3px solid transparent;padding:9px 4px;cursor:pointer}
+.tab[aria-selected="true"]{color:var(--accent);border-bottom-color:var(--accent)}
+main{max-width:860px;margin:0 auto;padding:14px max(16px,env(safe-area-inset-right,0px)) 0 max(16px,env(safe-area-inset-left,0px))}
+button{font:inherit;cursor:pointer}
+button:focus-visible,input:focus,select:focus{outline:2px solid var(--accent);outline-offset:1px}
+.group{font-size:12px;color:var(--muted);font-weight:700;letter-spacing:.08em;margin:16px 0 6px}
+.group:first-child{margin-top:0}
+.aplist{display:flex;flex-direction:column;gap:8px}
+.ap{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;color:var(--fg)}
+.ap .code{font-weight:900;font-size:13px;color:var(--accent-ink);background:var(--accent);border-radius:6px;padding:3px 7px;letter-spacing:.04em;flex:none}
+.ap .nm{flex:1;min-width:0}
+.ap .nm b{display:block;font-size:15px}
+.ap .nm span{font-size:12.5px;color:var(--muted)}
+.ap .n{font-size:12px;color:var(--muted);flex:none;text-align:right}
+.ap .n b{display:block;font-size:17px;color:var(--fg)}
+.back{display:inline-flex;align-items:center;gap:4px;background:none;border:0;color:var(--accent);padding:4px 0;font-weight:700}
+.aptitle{font-size:19px;font-weight:900;margin:4px 0 2px}
+.apsub{color:var(--muted);font-size:13px;margin:0 0 10px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 12px}
+.chip{background:var(--surface);color:var(--fg);border:1px solid var(--line);border-radius:999px;padding:5px 12px;font-size:13px}
+.chip[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent);font-weight:700}
+.flist{display:flex;flex-direction:column;gap:8px}
+.fac{width:100%;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;color:var(--fg);display:flex;flex-direction:column;gap:6px}
+.fac .top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.fac .name{font-weight:700;font-size:15px;min-width:0}
+.meta{display:flex;flex-wrap:wrap;gap:4px 10px;font-size:12.5px;color:var(--muted)}
+.tags{display:flex;flex-wrap:wrap;gap:5px}
+.t{font-size:11.5px;border-radius:6px;padding:1px 7px;white-space:nowrap;border:1px solid var(--line);color:var(--muted)}
+.t.cat-ラウンジ{color:var(--info);border-color:#244a6b}
+.t.cat-レストラン{color:#ff9f6b;border-color:#5a3220}
+.t.cat-other{color:#a8d36b;border-color:#3b4a22}
+.t.ok{background:var(--ok-soft);color:var(--ok);border-color:transparent}
+.t.ng{background:var(--ng-soft);color:var(--ng);border-color:transparent}
+.t.warn{background:var(--warn-soft);color:var(--warn);border-color:transparent}
+.t.dom{color:var(--accent);border-color:#5a4a28}
+.empty{color:var(--muted);font-size:14px;padding:16px 0}
+/* 詳細 */
+.sheet{position:fixed;inset:0;z-index:30;background:rgba(0,0,0,.55);display:flex;align-items:flex-end;justify-content:center}
+.panel{background:var(--bg);border-top:1px solid var(--line);border-radius:16px 16px 0 0;width:100%;max-width:760px;max-height:92vh;overflow:auto;
+  padding:16px max(16px,env(safe-area-inset-right,0px)) calc(24px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.ptop{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.ptop h2{margin:0;font-size:18px;line-height:1.4}
+.x{background:var(--surface);border:1px solid var(--line);color:var(--fg);border-radius:999px;width:36px;height:36px;flex:none;font-size:18px}
+.sec{margin-top:14px}
+.sec h3{font-size:13px;color:var(--accent);margin:0 0 6px;letter-spacing:.04em}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:14px}
+.kv dt{color:var(--muted)}
+.kv dd{margin:0}
+ol,ul{margin:0;padding-left:20px}
+li{margin:0 0 5px}
+.alert{border-radius:10px;padding:10px 12px;font-size:13.5px;margin-top:10px}
+.alert.ng{background:var(--ng-soft);color:#ffc2ba}
+.alert.warn{background:var(--warn-soft);color:#ffe08a}
+.alert.ok{background:var(--ok-soft);color:#b5f0d2}
+.small{font-size:12.5px;color:var(--muted)}
+/* ルール */
+.box{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:12px}
+.box h3{margin:0 0 8px;font-size:15px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+.tw{overflow-x:auto}
+th,td{border-bottom:1px solid var(--line);padding:7px 6px;text-align:left;vertical-align:top}
+th{color:var(--muted);font-weight:500;white-space:nowrap}
+/* カード選択 */
+.opts{display:flex;flex-direction:column;gap:6px;margin-top:10px}
+.opt{text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px;color:var(--fg)}
+.opt[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
+.opt small{display:block;color:var(--muted);font-size:12px}
+</style>
+</head>
+<body>
+<header>
+  <div class="hrow">
+    <div class="brand"><i></i>ReKiL ラウンジ</div>
+    <button class="cardbtn" id="cardBtn" type="button">カード：<b id="cardName">未選択</b></button>
+  </div>
+  <div class="search">
+    <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+    <input id="q" type="search" placeholder="空港・都市・施設名で検索（例：仁川、ぼてぢゅう）" autocomplete="off" aria-label="検索">
+  </div>
+  <div class="tabs" role="tablist">
+    <button class="tab" role="tab" data-tab="jp">国内</button>
+    <button class="tab" role="tab" data-tab="ov">海外</button>
+    <button class="tab" role="tab" data-tab="rule">使い方・ルール</button>
+  </div>
+</header>
+
+<main id="view"></main>
+
+<div class="sheet" id="sheet" hidden><div class="panel" id="panel" role="dialog" aria-modal="true"></div></div>
+
+<script src="data.js?v=2026-11-10-1"></script>
+<script>
+const APP_VERSION = "2026-11-10-1";
+const D = window.PP_DATA;
+const $ = s => document.querySelector(s);
+const ls = { get(k,d){ try{ const v=localStorage.getItem(k); return v==null?d:JSON.parse(v);}catch(_){return d;} }, set(k,v){ try{localStorage.setItem(k,JSON.stringify(v));}catch(_){} } };
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const AP = Object.fromEntries(D.airports.map(a=>[a.code,a]));
+const isLounge = f => f.cat === 'ラウンジ';
+
+/* ---------- カード ---------- */
+const CARDS = [
+  {id:'',          name:'未選択', sub:'カードを選ぶと、施設ごとに使えるかを表示します'},
+  {id:'saison_pb', name:'セゾンプラチナ・ビジネス・アメックス', sub:'ラウンジ・レストランとも回数無制限で無料／同伴者35米ドル'},
+  {id:'saison_g',  name:'セゾンゴールド・アメックス', sub:'2025年12月から毎回35米ドルの有料'},
+  {id:'jcb',       name:'JCBプラチナ／ザ・クラス', sub:'ラウンジは無料。国内のレストラン等は対象外（海外は可）'},
+  {id:'diners',    name:'ダイナースクラブ', sub:'ラウンジは無料。国内のレストラン等は対象外（海外は年10回まで）'},
+  {id:'rakuten',   name:'楽天プレミアム', sub:'ラウンジのみ年5回まで。レストラン等は対象外'},
+  {id:'mufg',      name:'三菱UFJカード プラチナ・アメックス', sub:'ラウンジのみ（2026年12月2日から年10回）。レストラン等は対象外'},
+  {id:'smbc',      name:'三井住友カード プラチナ', sub:'ラウンジは無料。国内のレストラン等は対象外'},
+  {id:'apollo',    name:'apollostation THE PLATINUM（出光）', sub:'2026年8月3日から年5回。レストランも利用可'},
+];
+let card = ls.get('pp-card','');
+function judge(f){
+  const ov = AP[f.ap].kind === 'ov';
+  const L = isLounge(f);
+  switch(card){
+    case 'saison_pb': return ['ok','このカードで無料'];
+    case 'saison_g':  return ['warn','有料（35米ドル）'];
+    case 'jcb':       return L||ov ? ['ok','このカードで利用可'] : ['ng','このカードは対象外'];
+    case 'diners':    return L ? ['ok','このカードで利用可'] : ov ? ['ok','利用可（海外は年10回まで）'] : ['ng','このカードは対象外'];
+    case 'rakuten':   return L ? ['warn','年5回まで無料'] : ['ng','このカードは対象外'];
+    case 'mufg':      return L ? ['ok','利用可（12/2から年10回）'] : ['ng','このカードは対象外'];
+    case 'smbc':      return L ? ['ok','このカードで利用可'] : ov ? ['warn','カード会社に確認'] : ['ng','このカードは対象外'];
+    case 'apollo':    return ['warn','年5回まで無料'];
+    default: return null;
+  }
+}
+function setCardLabel(){ $('#cardName').textContent = (CARDS.find(c=>c.id===card)||CARDS[0]).name; }
+
+/* ---------- 共通部品 ---------- */
+function catClass(c){ return c==='ラウンジ'?'cat-ラウンジ':c==='レストラン'?'cat-レストラン':'cat-other'; }
+function facTags(f){
+  const t=[`<span class="t ${catClass(f.cat)}">${esc(f.cat)}</span>`];
+  if(f.area && f.area!=='—') t.push(`<span class="t">${esc(f.area)}</span>`);
+  if(AP[f.ap].kind==='jp') t.push(f.dom==='○'?'<span class="t dom">国内線OK</span>':'<span class="t">国際線のみ</span>');
+  const j=judge(f); if(j) t.push(`<span class="t ${j[0]}">${esc(j[1])}</span>`);
+  if(f.airline) t.push('<span class="t ng">航空会社限定</span>');
+  if(f.fee) t.push('<span class="t ng">追加料金</span>');
+  if(f.check) t.push('<span class="t warn">要確認</span>');
+  return t.join('');
+}
+function facCard(f, showAp){
+  return `<button class="fac" type="button" data-fac="${f.id}">
+    <div class="top"><span class="name">${esc(f.name)}</span></div>
+    <div class="meta">${showAp?`<span>${esc(AP[f.ap].name)}</span>`:''}<span>${esc(f.term)}</span><span>🕐 ${esc(f.hours||'—')}</span></div>
+    <div class="tags">${facTags(f)}</div></button>`;
+}
+
+/* ---------- 画面 ---------- */
+let tab = ls.get('pp-tab','jp'), cur = null, filt = 'all', domOnly = false;
+function setTab(t){ tab=t; ls.set('pp-tab',t); document.querySelectorAll('.tab').forEach(b=>b.setAttribute('aria-selected', b.dataset.tab===t?'true':'false')); }
+
+function render(){
+  const q = $('#q').value.trim().toLowerCase();
+  const v = $('#view');
+  if(q){ return renderSearch(q); }
+  if(cur){ return renderAirport(cur); }
+  if(tab==='rule'){ v.innerHTML = RULES(); return; }
+  const aps = D.airports.filter(a=>a.kind===tab);
+  const groups = {};
+  aps.forEach(a=>{ (groups[a.country]=groups[a.country]||[]).push(a); });
+  let h='';
+  if(tab==='jp') h+='<div class="group">日本でプライオリティ・パスが使える8空港</div>';
+  for(const [g,list] of Object.entries(groups)){
+    if(tab==='ov') h+=`<div class="group">${esc(g)}</div>`;
+    h+='<div class="aplist">'+list.map(a=>{
+      const fs=D.facilities.filter(f=>f.ap===a.code);
+      const nl=fs.filter(isLounge).length, nr=fs.filter(f=>f.cat==='レストラン').length, no=fs.length-nl-nr;
+      const dom = a.kind==='jp' ? fs.filter(f=>f.dom==='○').length : null;
+      const ok = card ? fs.filter(f=>{const j=judge(f);return j&&j[0]!=='ng';}).length : null;
+      const sub=[nl&&`ラウンジ${nl}`,nr&&`レストラン${nr}`,no&&`その他${no}`].filter(Boolean).join('・')+(dom!==null?`｜国内線OK ${dom}`:'');
+      return `<button class="ap" type="button" data-ap="${a.code}"><span class="code">${a.code}</span><span class="nm"><b>${esc(a.name)}</b><span>${esc(sub)}</span></span><span class="n"><b>${fs.length}</b>${ok!==null?`使える${ok}`:'施設'}</span></button>`;
+    }).join('')+'</div>';
+  }
+  if(tab==='jp') h+='<p class="small" style="margin-top:14px">那覇空港にはPP施設がありません。米子・青森・佐賀のラウンジは日本発行のPPでは使えません。</p>';
+  v.innerHTML=h;
+}
+function renderAirport(code){
+  const a=AP[code], v=$('#view');
+  let fs=D.facilities.filter(f=>f.ap===code);
+  const cats=[['all','すべて'],['ラウンジ','ラウンジ'],['レストラン','レストラン'],['other','その他']].filter(([k])=>k==='all'||fs.some(f=>k==='other'?!['ラウンジ','レストラン'].includes(f.cat):f.cat===k));
+  let list=fs.filter(f=>filt==='all'||(filt==='other'?!['ラウンジ','レストラン'].includes(f.cat):f.cat===filt));
+  if(a.kind==='jp'&&domOnly) list=list.filter(f=>f.dom==='○');
+  v.innerHTML=`<button class="back" type="button" id="backBtn">‹ 空港一覧</button>
+    <div class="aptitle">${esc(a.name)}</div><p class="apsub">${esc(a.country)}｜${fs.length}施設</p>
+    <div class="chips">${cats.map(([k,l])=>`<button class="chip" type="button" data-filt="${k}" aria-pressed="${filt===k}">${l}</button>`).join('')}
+    ${a.kind==='jp'?`<button class="chip" type="button" id="domBtn" aria-pressed="${domOnly}">国内線で使える</button>`:''}</div>
+    <div class="flist">${list.map(f=>facCard(f,false)).join('')||'<p class="empty">条件に合う施設がありません。</p>'}</div>`;
+}
+function renderSearch(q){
+  const words=q.split(/\s+/);
+  const apHit=D.airports.filter(a=>words.every(w=>(a.name+' '+a.code+' '+a.country+' '+a.kw).toLowerCase().includes(w)));
+  const fHit=D.facilities.filter(f=>words.every(w=>(f.name+' '+f.term+' '+f.cat).toLowerCase().includes(w)));
+  $('#view').innerHTML=(apHit.length?'<div class="group">空港</div><div class="aplist">'+apHit.map(a=>`<button class="ap" type="button" data-ap="${a.code}"><span class="code">${a.code}</span><span class="nm"><b>${esc(a.name)}</b><span>${esc(a.country)}</span></span><span class="n"><b>${D.facilities.filter(f=>f.ap===a.code).length}</b>施設</span></button>`).join('')+'</div>':'')+
+    (fHit.length?'<div class="group">施設</div><div class="flist">'+fHit.slice(0,60).map(f=>facCard(f,true)).join('')+'</div>':'')+
+    (!apHit.length&&!fHit.length?'<p class="empty">見つかりませんでした。空港名・都市名・3文字コード（例：ICN）でも探せます。</p>':'');
+}
+
+/* ---------- 施設の詳細 ---------- */
+function howTo(f){
+  const s=[], c=f.cond.join(' '), jp=AP[f.ap].kind==='jp';
+  if(f.airline) s.push('この施設は特定の航空会社の便の利用者だけが入れます。自分の便が対象か確認してから向かってください。');
+  if(/3時間以内|3時間前から/.test(c)) s.push(jp&&!isLounge(f)?'出発の3時間前を過ぎてから行く（早すぎると使えません）':'入場は出発予定時刻の3時間前から。早く着いたら時間をずらして行く');
+  if(f.area==='検査前') s.push('保安検査の前（一般エリア）にあります。利用後に保安検査を通る時間を残しておく');
+  if(f.area==='到着エリア') s.push('到着した人向けの施設です（入国審査の後）');
+  if(f.cat==='ラウンジ'){
+    s.push('受付でプライオリティ・パスのアプリを開き、デジタル会員証（QRコード）を見せる');
+    s.push('当日の搭乗券（紙またはスマホの画面）も一緒に見せる');
+    if(f.fee) s.push('追加料金（1人35米ドルなど）を受付で支払う');
+    s.push('同伴者がいる場合は受付で人数を伝える（料金は後日カードに請求されることがあります）');
+    s.push('中の飲食やWi-Fiは自由に利用。帰るときの手続きは不要');
+  }else if(f.cat==='レストラン'){
+    s.push('入店時に「プライオリティ・パスを使います」と伝える'+(jp?'':'（英語：I\'d like to use Priority Pass.）'));
+    s.push('注文する前に、デジタル会員証と搭乗券を見せる');
+    s.push('PP用のセットメニュー（または割引額）の中から選んで注文する');
+    s.push('セット以外を頼んだ分や、上限額を超えた分だけその場で支払う');
+  }else if(f.cat==='仮眠・休憩'){
+    s.push('受付でデジタル会員証と搭乗券を見せる（事前予約はできないことが多いです）');
+    s.push('空きがあれば、決められた時間だけ利用できる');
+    s.push('時間を延長した分やアメニティは追加料金');
+  }else{
+    s.push('受付で「プライオリティ・パスを使います」と伝え、デジタル会員証と搭乗券を見せる');
+    s.push('PPの対象メニュー（施術・ゲームなど）から選ぶ');
+    s.push('対象外のメニューや上限額を超えた分は、その場で支払う');
+  }
+  return s;
+}
+function openFac(id){
+  const f=D.facilities.find(x=>x.id===id); if(!f) return;
+  const a=AP[f.ap], j=judge(f);
+  const alerts=[];
+  if(j) alerts.push(`<div class="alert ${j[0]}">${j[0]==='ng'?'⚠︎ ':''}選んだカード（${esc((CARDS.find(c=>c.id===card)||{}).name)}）：${esc(j[1])}</div>`);
+  if(f.airline) alerts.push('<div class="alert ng">⚠︎ 特定の航空会社の便を利用する人だけが入れるラウンジです。</div>');
+  if(f.fee) alerts.push('<div class="alert ng">⚠︎ PPの利用1回分に加えて、追加料金がかかります。</div>');
+  if(f.check) alerts.push('<div class="alert warn">情報源によって内容が違うため、当日アプリか施設で確認してください。</div>');
+  $('#panel').innerHTML=`<div class="ptop"><div><div class="small">${esc(a.name)}（${a.code}）</div><h2>${esc(f.name)}</h2></div><button class="x" type="button" id="closeBtn" aria-label="閉じる">×</button></div>
+    <div class="tags" style="margin-top:8px">${facTags(f)}</div>
+    ${alerts.join('')}
+    <div class="sec"><h3>基本情報</h3><dl class="kv"><dt>種類</dt><dd>${esc(f.cat)}</dd><dt>ターミナル</dt><dd>${esc(f.term)}</dd><dt>営業時間</dt><dd>${esc(f.hours||'—')}</dd>${a.kind==='jp'?`<dt>国内線</dt><dd>${f.dom==='○'?'国内線の搭乗券で利用可':'国際線のみ'}</dd>`:''}</dl></div>
+    <div class="sec"><h3>場所・行き方</h3>${f.loc.length?'<ul>'+f.loc.map(x=>`<li>${esc(x)}</li>`).join('')+'</ul>':'<p class="small">公式サイトに記載がありません。PPアプリで確認してください。</p>'}</div>
+    <div class="sec"><h3>利用方法</h3><ol>${howTo(f).map(x=>`<li>${esc(x)}</li>`).join('')}</ol></div>
+    <div class="sec"><h3>使用条件</h3>${f.cond.length?'<ul>'+f.cond.map(x=>`<li>${esc(x)}</li>`).join('')+'</ul>':'<p class="small">公式サイトに記載がありません。PPアプリで確認してください。</p>'}</div>
+    <p class="small" style="margin-top:14px">${a.kind==='jp'?'2026年10〜11月の公開情報をもとに整理':'プライオリティ・パス公式サイトの記載（2026年11月10日確認）を日本語に要約'}。条件は変わることがあるため、利用前にPPアプリでも確認してください。</p>`;
+  $('#sheet').hidden=false; document.body.style.overflow='hidden';
+  history.pushState({m:1},'');
+}
+let ignorePop=false;
+function closeSheet(fromPop){ if($('#sheet').hidden) return; $('#sheet').hidden=true; document.body.style.overflow=''; if(!fromPop){ ignorePop=true; history.back(); } }
+
+/* ---------- カード選択 ---------- */
+function openCards(){
+  $('#panel').innerHTML=`<div class="ptop"><h2>お使いのカード</h2><button class="x" type="button" id="closeBtn" aria-label="閉じる">×</button></div>
+    <p class="small" style="margin:6px 0 0">プライオリティ・パスを付けているカードを選ぶと、施設ごとに「使える／対象外」を表示します。</p>
+    <div class="opts">${CARDS.map(c=>`<button class="opt" type="button" data-card="${c.id}" aria-pressed="${c.id===card}">${esc(c.name)}<small>${esc(c.sub)}</small></button>`).join('')}</div>
+    <p class="small" style="margin-top:10px">カードの条件は2026年11月時点。最新の条件はカード会社の案内で確認してください。</p>`;
+  $('#sheet').hidden=false; document.body.style.overflow='hidden'; history.pushState({m:1},'');
+}
+
+/* ---------- ルール ---------- */
+function RULES(){ return `
+<div class="box"><h3>入場のしかた</h3><ol>
+<li>カード会社の会員サイトでプライオリティ・パスを申し込み、アプリにデジタル会員証を登録しておく</li>
+<li>受付でアプリのデジタル会員証（QRコード）と、当日の搭乗券を見せる</li>
+<li>レストラン等は「プライオリティ・パスを使います」と伝えてから、注文前に見せる</li>
+<li>同伴者は受付で人数を伝える（1人35米ドル前後。後日カードに請求）</li></ol></div>
+<div class="box"><h3>よくある条件</h3><ul>
+<li><b>国内のレストラン・リフレッシュ施設</b>：出発3時間以内の搭乗券が必要（到着便は不可）。同伴不可・6時間以内の再利用不可の店が多い</li>
+<li><b>ラウンジの滞在時間</b>：2〜3時間が多い（施設により4〜5時間）</li>
+<li><b>子ども</b>：2歳または3歳未満は無料の施設が多い。国内のレストランは7歳未満が大人とシェアする場合のみ無料</li>
+<li><b>海外の施設</b>：ほとんどが出国審査・保安検査の後。到着時や見送りでは使えないのが基本</li>
+<li><b>航空会社限定のラウンジ</b>：その航空会社の便でしか入れない（アプリに表示あり）</li>
+<li><b>混雑時</b>：夕方〜夜のハブ空港では入場を断られることがある</li></ul></div>
+<div class="box"><h3>カード別の条件（2026年11月時点）</h3><div class="tw"><table>
+<tr><th>カード</th><th>ラウンジ</th><th>国内レストラン等</th><th>海外レストラン等</th></tr>
+<tr><td>セゾンプラチナ・ビジネス・アメックス</td><td>無制限</td><td>○</td><td>○</td></tr>
+<tr><td>セゾンゴールド・アメックス</td><td>毎回35米ドル</td><td>有料</td><td>有料</td></tr>
+<tr><td>JCBプラチナ／ザ・クラス</td><td>○</td><td>×</td><td>○</td></tr>
+<tr><td>ダイナースクラブ</td><td>○</td><td>×</td><td>○（年10回）</td></tr>
+<tr><td>楽天プレミアム</td><td>年5回</td><td>×</td><td>×</td></tr>
+<tr><td>三菱UFJ プラチナ・アメックス</td><td>○（12/2から年10回）</td><td>×</td><td>×</td></tr>
+<tr><td>三井住友カード プラチナ</td><td>○</td><td>×</td><td>要確認</td></tr>
+<tr><td>apollostation THE PLATINUM</td><td>年5回</td><td>○</td><td>○</td></tr>
+</table></div></div>
+<div class="box"><h3>会員の種類（直接入会する場合の目安）</h3><div class="tw"><table>
+<tr><th>種類</th><th>年会費</th><th>本人</th></tr>
+<tr><td>スタンダード</td><td>99米ドル前後</td><td>毎回35米ドル</td></tr>
+<tr><td>スタンダード・プラス</td><td>329米ドル前後</td><td>年10回無料</td></tr>
+<tr><td>プレステージ</td><td>469米ドル前後</td><td>無制限</td></tr></table></div></div>
+<p class="small">国内は2026年10〜11月の公開情報、海外はプライオリティ・パス公式サイト（2026年11月10日確認）をもとに整理しています。公式の案内ではありません。</p>`; }
+
+/* ---------- イベント ---------- */
+document.addEventListener('click', e=>{
+  const t=e.target.closest('button'); if(!t) return;
+  if(t.dataset.tab){ setTab(t.dataset.tab); cur=null; $('#q').value=''; render(); window.scrollTo(0,0); return; }
+  if(t.dataset.ap){ cur=t.dataset.ap; filt='all'; $('#q').value=''; ls.set('pp-ap',cur); setTab(AP[cur].kind); history.pushState({ap:cur},''); render(); window.scrollTo(0,0); return; }
+  if(t.id==='backBtn'){ history.back(); return; }
+  if(t.dataset.filt){ filt=t.dataset.filt; render(); return; }
+  if(t.id==='domBtn'){ domOnly=!domOnly; render(); return; }
+  if(t.dataset.fac){ openFac(t.dataset.fac); return; }
+  if(t.id==='closeBtn'){ closeSheet(); return; }
+  if(t.id==='cardBtn'){ openCards(); return; }
+  if(t.dataset.card!==undefined){ card=t.dataset.card; ls.set('pp-card',card); setCardLabel(); closeSheet(); render(); return; }
+});
+$('#sheet').addEventListener('click', e=>{ if(e.target.id==='sheet') closeSheet(); });
+$('#q').addEventListener('input', ()=>{ render(); });
+window.addEventListener('popstate', ()=>{
+  if(ignorePop){ ignorePop=false; return; }
+  if(!$('#sheet').hidden){ closeSheet(true); return; }
+  if(cur){ cur=null; render(); }
+});
+
+/* ---------- 新しい版の自動反映 ---------- */
+async function checkUpdate(){
+  try{
+    const r=await fetch(location.pathname+'?v='+Date.now(),{cache:'no-store'});
+    const m=(await r.text()).match(/const APP_VERSION = "([^"]+)"/);
+    if(m && m[1]!==APP_VERSION) location.replace(location.pathname+'?v='+encodeURIComponent(m[1]));
+  }catch(_){}
+}
+document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState==='visible') checkUpdate(); });
+
+setTab(tab==='rule'||tab==='ov'||tab==='jp'?tab:'jp'); setCardLabel(); render(); checkUpdate();
+</script>
+</body>
+</html>
