@@ -183,7 +183,7 @@ details>summary{cursor:pointer;font-weight:700;list-style-position:inside}
 <script>
 /* ▼ Apps Script をデプロイしたときの「ウェブアプリのURL」 */
 const API_URL = "https://script.google.com/macros/s/AKfycbxu6KqyzQ975wMILyUf0ezQrbfr3GPplSS2-yyVkQfkrT60V-51TKG_x2Oi8NZB7nk0ZQ/exec";
-const APP_VERSION = "2026-11-09-3";
+const APP_VERSION = "2026-11-10-1";
 
 const $ = s => document.querySelector(s);
 const ls = {
@@ -423,9 +423,10 @@ document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState=
 
 /* ---------- 起動 ---------- */
 renderPicker(); renderManager();
+checkUpdate();
 if(!API_URL){ $("#engine").textContent = "未設定"; $("#mgList").innerHTML = '<p class="empty-note">データの接続先がまだ設定されていません。</p>'; }
 else if(!pass) showLock();
-else { checkUpdate(); api("list").catch(err=>{ if(err.code==="network"){ $("#engine").textContent = "オフライン"; } }); }
+else { api("list").catch(err=>{ if(err.code==="network"){ $("#engine").textContent = "オフライン"; } }); }
 </script>
 </body>
 </html>
