@@ -129,9 +129,9 @@ th{color:var(--muted);font-weight:500;white-space:nowrap}
 
 <div class="sheet" id="sheet" hidden><div class="panel" id="panel" role="dialog" aria-modal="true"></div></div>
 
-<script src="data.js?v=2026-11-11-1"></script>
+<script src="data.js?v=2026-11-11-2"></script>
 <script>
-const APP_VERSION = "2026-11-11-1";
+const APP_VERSION = "2026-11-11-2";
 const D = window.PP_DATA;
 const $ = s => document.querySelector(s);
 const ls = { get(k,d){ try{ const v=localStorage.getItem(k); return v==null?d:JSON.parse(v);}catch(_){return d;} }, set(k,v){ try{localStorage.setItem(k,JSON.stringify(v));}catch(_){} } };
@@ -143,6 +143,7 @@ const isLounge = f => f.cat === 'ラウンジ';
 const CARDS = [
   {id:'',          name:'未選択', sub:'カードを選ぶと、施設ごとに使えるかを表示します'},
   {id:'saison_pb', name:'セゾンプラチナ・ビジネス・アメックス', sub:'ラウンジ・レストランとも回数無制限で無料／同伴者35米ドル'},
+  {id:'saison_comp', name:'セゾン（家族カード・同伴者）', sub:'本会員と一緒に入る場合。1人35米ドル。家族カード単独では入れません'},
   {id:'saison_g',  name:'セゾンゴールド・アメックス', sub:'2025年12月から毎回35米ドルの有料'},
   {id:'jcb',       name:'JCBプラチナ／ザ・クラス', sub:'ラウンジは無料。国内のレストラン等は対象外（海外は可）'},
   {id:'diners',    name:'ダイナースクラブ', sub:'ラウンジは無料。国内のレストラン等は対象外（海外は年10回まで）'},
@@ -152,11 +153,21 @@ const CARDS = [
   {id:'apollo',    name:'apollostation THE PLATINUM（出光）', sub:'2026年8月3日から年5回。レストランも利用可'},
 ];
 let card = ls.get('pp-card2','saison_pb');  // 既定はセゾンプラチナ・ビジネス・アメックス
+function guestJudge(f){
+  const c=f.cond.join(' ');
+  if(/同伴者は不可|同伴者の登録は不可/.test(c)) return ['ng','同伴者は入れない'];
+  if(/同伴者1名(を登録すると|なら)/.test(c)) return ['ok','同伴者で入れる（1人35米ドル）'];
+  let m=c.match(/同伴者は(?:1人につき)?(?:最大)?(\d)名/)||c.match(/同伴者(\d)名（有料）/);
+  if(m) return ['ok',`同伴者で入れる（${m[1]}名まで・有料）`];
+  if(isLounge(f)) return ['ok','同伴者で入れる（1人35米ドル）'];
+  return ['warn','同伴者の可否は要確認'];
+}
 function judge(f){
   const ov = AP[f.ap].kind === 'ov';
   const L = isLounge(f);
   switch(card){
     case 'saison_pb': return ['ok','このカードで無料'];
+    case 'saison_comp': return guestJudge(f);
     case 'saison_g':  return ['warn','有料（35米ドル）'];
     case 'jcb':       return L||ov ? ['ok','このカードで利用可'] : ['ng','このカードは対象外'];
     case 'diners':    return L ? ['ok','このカードで利用可'] : ov ? ['ok','利用可（海外は年10回まで）'] : ['ng','このカードは対象外'];
@@ -272,6 +283,7 @@ function openFac(id){
   const a=AP[f.ap], j=judge(f);
   const alerts=[];
   if(j) alerts.push(`<div class="alert ${j[0]}">${j[0]==='ng'?'⚠︎ ':''}選んだカード（${esc((CARDS.find(c=>c.id===card)||{}).name)}）：${esc(j[1])}</div>`);
+  if(card==='saison_comp') alerts.push('<div class="alert warn">家族カード（追加カード）ではプライオリティ・パスを作れないため、本会員（セゾンプラチナ・ビジネス・アメックス）と一緒に「同伴者」として入ります。料金は1人35米ドルで、後日本会員のカードに請求されます。本会員がいないと入れません。</div>');
   if(f.airline) alerts.push('<div class="alert ng">⚠︎ 特定の航空会社の便を利用する人だけが入れるラウンジです。</div>');
   if(f.fee) alerts.push('<div class="alert ng">⚠︎ PPの利用1回分に加えて、追加料金がかかります。</div>');
   if(f.check) alerts.push('<div class="alert warn">情報源によって内容が違うため、当日アプリか施設で確認してください。</div>');
@@ -312,9 +324,18 @@ function RULES(){ return `
 <li><b>海外の施設</b>：ほとんどが出国審査・保安検査の後。到着時や見送りでは使えないのが基本</li>
 <li><b>航空会社限定のラウンジ</b>：その航空会社の便でしか入れない（アプリに表示あり）</li>
 <li><b>混雑時</b>：夕方〜夜のハブ空港では入場を断られることがある</li></ul></div>
+<div class="box"><h3>家族カード（追加カード）・同伴者</h3><ul>
+<li><b>セゾンプラチナ・ビジネス・アメックスの家族カード（追加カード）では、プライオリティ・パスを作れません</b>（本会員のみ）</li>
+<li>家族は、本会員と一緒に<b>同伴者として</b>入ります。料金は1人35米ドル（約5,500円）で、後日本会員のカードに請求されます</li>
+<li>本会員がいないと入れません。受付で本会員がデジタル会員証を見せ、同伴者の人数を伝えます</li>
+<li>国内のレストラン（ぼてぢゅう、大阪エアポートワイナリー、グランドエールなど）は<b>同伴者不可</b>の店が多いので注意</li>
+<li>同伴者の人数に上限がある施設もあります（例：2名まで）。施設ごとの「使用条件」で確認できます</li>
+<li>右上のカードで「セゾン（家族カード・同伴者）」を選ぶと、同伴者で入れる施設・入れない施設が表示されます</li>
+<li>よく一緒に使う場合は、家族も自分名義でセゾンプラチナ・ビジネス・アメックス（年会費33,000円・初年度無料）を作ると、同伴者料金がかかりません</li></ul></div>
 <div class="box"><h3>カード別の条件（2026年11月時点）</h3><div class="tw"><table>
 <tr><th>カード</th><th>ラウンジ</th><th>国内レストラン等</th><th>海外レストラン等</th></tr>
 <tr><td>セゾンプラチナ・ビジネス・アメックス</td><td>無制限</td><td>○</td><td>○</td></tr>
+<tr><td>同上の家族カード（同伴者として）</td><td>1人35米ドル</td><td>同伴可の店のみ有料</td><td>同伴可の施設は有料</td></tr>
 <tr><td>セゾンゴールド・アメックス</td><td>毎回35米ドル</td><td>有料</td><td>有料</td></tr>
 <tr><td>JCBプラチナ／ザ・クラス</td><td>○</td><td>×</td><td>○</td></tr>
 <tr><td>ダイナースクラブ</td><td>○</td><td>×</td><td>○（年10回）</td></tr>
