@@ -138,7 +138,7 @@ td.net{color:var(--accent);font-weight:600}
 <script>
 /* ▼ Apps Script をデプロイしたときの「ウェブアプリのURL」 */
 const API_URL = "https://script.google.com/macros/s/AKfycbwNWiqaeTw23PfypT3TgOCv5yzfKzFbipU4u9-N8RqWFOFwLfzuaNQdL6oO3yKhytNZ4g/exec";
-const APP_VERSION = "2026-11-11-2";
+const APP_VERSION = "2026-11-11-3";
 const FISCAL_START = 2025;   // 第1期 = 2025年4月〜2026年3月
 
 const $ = s => document.querySelector(s);
@@ -235,8 +235,8 @@ function tiles(rs){
 }
 function vOverview(){
   const gs=groups(); if(!gs.length) return '<div class="state">表示できるデータがありません。</div>';
-  const last=rows[rows.length-1]; let h='';
-  if(last && yfilter==='all'){ h+=`<div class="sh">直近の締め期間</div><div class="cards">${periodCard(last,true)}</div>`; }
+  const now=new Date(); const closed=rows.filter(r=>new Date(r.year,r.m-1,20,23,59)<=now); const last=closed[closed.length-1]||rows[rows.length-1]; let h='';
+  if(last && yfilter==='all'){ h+=`<div class="sh">直近の締め期間（締め日を過ぎたもの）</div><div class="cards">${periodCard(last,true)}</div>`; }
   for(const g of gs){
     h+=`<div class="gl">${esc(g.label)}<small>${g.rows.length}か月</small></div>${tiles(g.rows)}<div class="cards">${[...g.rows].reverse().map(r=>periodCard(r,false)).join('')}</div>`;
   }
