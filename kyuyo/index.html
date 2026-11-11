@@ -138,7 +138,7 @@ td.net{color:var(--accent);font-weight:600}
 <script>
 /* ▼ Apps Script をデプロイしたときの「ウェブアプリのURL」 */
 const API_URL = "https://script.google.com/macros/s/AKfycbwNWiqaeTw23PfypT3TgOCv5yzfKzFbipU4u9-N8RqWFOFwLfzuaNQdL6oO3yKhytNZ4g/exec";
-const APP_VERSION = "2026-11-11-3";
+const APP_VERSION = "2026-11-11-4";
 const FISCAL_START = 2025;   // 第1期 = 2025年4月〜2026年3月
 
 const $ = s => document.querySelector(s);
@@ -225,10 +225,11 @@ function bars(r){
 }
 function periodCard(r,open){
   return `<div class="pc${open?' open':''}"><button class="ph" type="button"><span class="pl">${esc(r.label)}<br><small style="color:var(--muted);font-weight:500">${r.year}年${r.m}月締め</small></span><span class="pt"><b>${yen(r.gross)}</b><small>差引 ${yen(r.net)}</small></span><span class="cv">▼</span></button>
-  <div class="pb">${bars(r)}<div class="chips"><span>所得税 <b>${yen(r.incTax)}</b></span><span>社保 <b>${yen(r.hoken)}</b></span><span>住民税 <b>${yen(r.jumin)}</b></span><span>日当 <b>${yen(r.nittou)}</b></span></div></div></div>`;
+  <div class="pb">${bars(r)}<div class="chips">${r.bonus?`<span>賞与 <b>${yen(r.bonus)}</b></span>`:''}<span>所得税 <b>${yen(r.incTax)}</b></span><span>社保 <b>${yen(r.hoken)}</b></span><span>住民税 <b>${yen(r.jumin)}</b></span><span>日当 <b>${yen(r.nittou)}</b></span></div></div></div>`;
 }
 function tiles(rs){
   return `<div class="tiles"><div class="tile main"><span>支給合計（税引前）</span><b>${yen(sum(rs,'gross'))}</b><small>給与・報酬・賞与</small></div>
+  <div class="tile main"><span>うち賞与</span><b>${yen(sum(rs,'bonus'))}</b><small>社員・役員の賞与</small></div>
   <div class="tile ded"><span>控除合計</span><b>${yen(sum(rs,'ded'))}</b><small>所得税・社保・住民税</small></div>
   <div class="tile main"><span>差引支給（手取り）</span><b>${yen(sum(rs,'net'))}</b><small>日当は含まない</small></div>
   <div class="tile"><span>日当合計</span><b>${yen(sum(rs,'nittou'))}</b><small>出張日当（非課税）</small></div></div>`;
@@ -247,14 +248,14 @@ function vStaff(){
   for(const P of people){
     const pr=fr.filter(r=>r.by[P.name]); if(!pr.length) continue;
     const g=k=>sum(pr,r=>r.by[P.name][k]); const isH=roleOf(P.name)==='時給'||g('hours')>0;
-    const tot=g('pay')+g('bonus'), ded=g('incTax')+g('hoken')+g('jumin');
+    const tot=g('pay')+g('bonus'), ded=g('incTax')+g('hoken')+g('jumin'); const hasB=roleOf(P.name)!=='時給'||g('bonus')>0;
     h+=`<div class="gl">${esc(P.name)}<span class="tag">${roleOf(P.name)}</span><small>${yfilter==='all'?'全期間':esc(gs[0].label)}</small></div>`;
     h+=`<p class="note">${P.titles.map(esc).join('<br>')}</p>`;
-    h+=`<div class="tiles"><div class="tile main"><span>支給合計</span><b>${yen(tot)}</b></div>${ded?`<div class="tile ded"><span>控除合計</span><b>${yen(ded)}</b></div>`:''}<div class="tile main"><span>差引（手取り）</span><b>${yen(tot-ded)}</b></div><div class="tile"><span>日当合計</span><b>${yen(g('nittou'))}</b></div>${isH?`<div class="tile"><span>稼働時間・出勤日数</span><b>${g('hours')}h</b><small>${g('days')}日（うち休日${g('hd')}日）</small></div>`:''}</div>`;
-    h+=`<div class="tw"><table><tr><th>締め期間</th>${isH?'<th class="r">稼働</th><th class="r">出勤</th>':''}<th class="r">支給</th><th class="r">日当</th><th class="r">所得税</th><th class="r">社保</th><th class="r">住民税</th><th class="r">差引</th></tr>`;
+    h+=`<div class="tiles"><div class="tile main"><span>支給合計</span><b>${yen(tot)}</b>${g('bonus')?`<small>うち賞与 ${yen(g('bonus'))}</small>`:''}</div>${hasB?`<div class="tile main"><span>賞与合計</span><b>${yen(g('bonus'))}</b></div>`:''}${ded?`<div class="tile ded"><span>控除合計</span><b>${yen(ded)}</b></div>`:''}<div class="tile main"><span>差引（手取り）</span><b>${yen(tot-ded)}</b></div><div class="tile"><span>日当合計</span><b>${yen(g('nittou'))}</b></div>${isH?`<div class="tile"><span>稼働時間・出勤日数</span><b>${g('hours')}h</b><small>${g('days')}日（うち休日${g('hd')}日）</small></div>`:''}</div>`;
+    h+=`<div class="tw"><table><tr><th>締め期間</th>${isH?'<th class="r">稼働</th><th class="r">出勤</th>':''}<th class="r">${hasB?'給与・報酬':'支給'}</th>${hasB?'<th class="r">賞与</th>':''}<th class="r">日当</th><th class="r">所得税</th><th class="r">社保</th><th class="r">住民税</th><th class="r">差引</th></tr>`;
     for(const r of [...pr].sort((x,y)=>(y.year*100+y.m)-(x.year*100+x.m))){ const p=r.by[P.name]; if(!(p.pay+p.bonus+p.nittou)) continue;
-      h+=`<tr><td>${esc(r.label)}${yfilter==='all'?`<br><small style="color:var(--muted)">${r.year}年${r.m}月締め</small>`:''}</td>${isH?`<td class="r">${p.hours?p.hours+'h':'—'}</td><td class="r">${p.days?p.days+'日':'—'}</td>`:''}<td class="r">${yen(p.pay+p.bonus)}</td><td class="r">${p.nittou?yen(p.nittou):'—'}</td><td class="r">${p.incTax?yen(p.incTax):'—'}</td><td class="r">${p.hoken?yen(p.hoken):'—'}</td><td class="r">${p.jumin?yen(p.jumin):'—'}</td><td class="r net">${yen(p.net)}</td></tr>`; }
-    h+=`<tr class="tot"><td>合計</td>${isH?`<td class="r">${g('hours')}h</td><td class="r">${g('days')}日</td>`:''}<td class="r">${yen(tot)}</td><td class="r">${yen(g('nittou'))}</td><td class="r">${yen(g('incTax'))}</td><td class="r">${yen(g('hoken'))}</td><td class="r">${yen(g('jumin'))}</td><td class="r">${yen(tot-ded)}</td></tr></table></div>`;
+      h+=`<tr><td>${esc(r.label)}${yfilter==='all'?`<br><small style="color:var(--muted)">${r.year}年${r.m}月締め</small>`:''}</td>${isH?`<td class="r">${p.hours?p.hours+'h':'—'}</td><td class="r">${p.days?p.days+'日':'—'}</td>`:''}<td class="r">${yen(p.pay)}</td>${hasB?`<td class="r">${p.bonus?yen(p.bonus):'—'}</td>`:''}<td class="r">${p.nittou?yen(p.nittou):'—'}</td><td class="r">${p.incTax?yen(p.incTax):'—'}</td><td class="r">${p.hoken?yen(p.hoken):'—'}</td><td class="r">${p.jumin?yen(p.jumin):'—'}</td><td class="r net">${yen(p.net)}</td></tr>`; }
+    h+=`<tr class="tot"><td>合計</td>${isH?`<td class="r">${g('hours')}h</td><td class="r">${g('days')}日</td>`:''}<td class="r">${yen(g('pay'))}</td>${hasB?`<td class="r">${yen(g('bonus'))}</td>`:''}<td class="r">${yen(g('nittou'))}</td><td class="r">${yen(g('incTax'))}</td><td class="r">${yen(g('hoken'))}</td><td class="r">${yen(g('jumin'))}</td><td class="r">${yen(tot-ded)}</td></tr></table></div>`;
   }
   return h||'<div class="state">表示できるデータがありません。</div>';
 }
@@ -276,9 +277,9 @@ function vTable(){
   const gs=groups(); let h='';
   for(const g of gs){
     const names=people.map(p=>p.name).filter(n=>g.rows.some(r=>r.by[n]&&(r.by[n].pay+r.by[n].bonus)>0));
-    h+=`<div class="gl">${esc(g.label)}</div><div class="tw"><table><tr><th>締め期間</th>${names.map(n=>`<th class="r">${esc(n)}</th>`).join('')}<th class="r">支給合計</th><th class="r">控除</th><th class="r">差引</th><th class="r">日当</th></tr>`;
-    for(const r of [...g.rows].reverse()) h+=`<tr><td>${esc(r.label)}</td>${names.map(n=>{const p=r.by[n];const v=p?p.pay+p.bonus:0;return `<td class="r">${v?yen(v):'—'}</td>`;}).join('')}<td class="r"><b>${yen(r.gross)}</b></td><td class="r">${r.ded?yen(r.ded):'—'}</td><td class="r net">${yen(r.net)}</td><td class="r">${r.nittou?yen(r.nittou):'—'}</td></tr>`;
-    h+=`<tr class="tot"><td>合計</td>${names.map(n=>`<td class="r">${yen(sum(g.rows,r=>r.by[n]?r.by[n].pay+r.by[n].bonus:0))}</td>`).join('')}<td class="r">${yen(sum(g.rows,'gross'))}</td><td class="r">${yen(sum(g.rows,'ded'))}</td><td class="r">${yen(sum(g.rows,'net'))}</td><td class="r">${yen(sum(g.rows,'nittou'))}</td></tr></table></div>`;
+    h+=`<div class="gl">${esc(g.label)}</div><div class="tw"><table><tr><th>締め期間</th>${names.map(n=>`<th class="r">${esc(n)}</th>`).join('')}<th class="r">うち賞与</th><th class="r">支給合計</th><th class="r">控除</th><th class="r">差引</th><th class="r">日当</th></tr>`;
+    for(const r of [...g.rows].reverse()) h+=`<tr><td>${esc(r.label)}</td>${names.map(n=>{const p=r.by[n];const v=p?p.pay+p.bonus:0;return `<td class="r">${v?yen(v):'—'}</td>`;}).join('')}<td class="r">${r.bonus?yen(r.bonus):'—'}</td><td class="r"><b>${yen(r.gross)}</b></td><td class="r">${r.ded?yen(r.ded):'—'}</td><td class="r net">${yen(r.net)}</td><td class="r">${r.nittou?yen(r.nittou):'—'}</td></tr>`;
+    h+=`<tr class="tot"><td>合計</td>${names.map(n=>`<td class="r">${yen(sum(g.rows,r=>r.by[n]?r.by[n].pay+r.by[n].bonus:0))}</td>`).join('')}<td class="r">${yen(sum(g.rows,'bonus'))}</td><td class="r">${yen(sum(g.rows,'gross'))}</td><td class="r">${yen(sum(g.rows,'ded'))}</td><td class="r">${yen(sum(g.rows,'net'))}</td><td class="r">${yen(sum(g.rows,'nittou'))}</td></tr></table></div>`;
   }
   return h||'<div class="state">表示できるデータがありません。</div>';
 }
