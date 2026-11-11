@@ -129,9 +129,9 @@ th{color:var(--muted);font-weight:500;white-space:nowrap}
 
 <div class="sheet" id="sheet" hidden><div class="panel" id="panel" role="dialog" aria-modal="true"></div></div>
 
-<script src="data.js?v=2026-11-10-1"></script>
+<script src="data.js?v=2026-11-11-1"></script>
 <script>
-const APP_VERSION = "2026-11-10-1";
+const APP_VERSION = "2026-11-11-1";
 const D = window.PP_DATA;
 const $ = s => document.querySelector(s);
 const ls = { get(k,d){ try{ const v=localStorage.getItem(k); return v==null?d:JSON.parse(v);}catch(_){return d;} }, set(k,v){ try{localStorage.setItem(k,JSON.stringify(v));}catch(_){} } };
@@ -151,7 +151,7 @@ const CARDS = [
   {id:'smbc',      name:'三井住友カード プラチナ', sub:'ラウンジは無料。国内のレストラン等は対象外'},
   {id:'apollo',    name:'apollostation THE PLATINUM（出光）', sub:'2026年8月3日から年5回。レストランも利用可'},
 ];
-let card = ls.get('pp-card','');
+let card = ls.get('pp-card2','saison_pb');  // 既定はセゾンプラチナ・ビジネス・アメックス
 function judge(f){
   const ov = AP[f.ap].kind === 'ov';
   const L = isLounge(f);
@@ -341,7 +341,7 @@ document.addEventListener('click', e=>{
   if(t.dataset.fac){ openFac(t.dataset.fac); return; }
   if(t.id==='closeBtn'){ closeSheet(); return; }
   if(t.id==='cardBtn'){ openCards(); return; }
-  if(t.dataset.card!==undefined){ card=t.dataset.card; ls.set('pp-card',card); setCardLabel(); closeSheet(); render(); return; }
+  if(t.dataset.card!==undefined){ card=t.dataset.card; ls.set('pp-card2',card); setCardLabel(); closeSheet(); render(); return; }
 });
 $('#sheet').addEventListener('click', e=>{ if(e.target.id==='sheet') closeSheet(); });
 $('#q').addEventListener('input', ()=>{ render(); });
