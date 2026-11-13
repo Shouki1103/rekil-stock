@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="管理番号シール">
+<meta name="theme-color" content="#2a5bd7">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-192.png">
+<title>ReKiL 管理番号シール</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+  :root{--ink:#1d1d1f;--sub:#6b6b70;--line:#e3e3e6;--bg:#f6f6f7;--acc:#2a5bd7;--acc2:#e8eefc;--ok:#1f8a4c;--warn:#b54708}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:"Noto Sans JP",system-ui,sans-serif;color:var(--ink);background:var(--bg);font-size:14px}
+  header{padding:calc(14px + env(safe-area-inset-top)) 20px 14px;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  header h1{font-size:18px;margin:0}
+  header span{color:var(--sub);font-size:12px}
+  .wrap{display:grid;grid-template-columns:minmax(300px,420px) 1fr;gap:16px;padding:16px;max-width:1400px;margin:0 auto}
+  @media (max-width:860px){.wrap{grid-template-columns:1fr}}
+  .card{background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;margin-bottom:14px}
+  .card h2{font-size:14px;margin:0 0 10px;display:flex;align-items:center;gap:6px}
+  .card h2 .n{background:var(--acc);color:#fff;border-radius:50%;width:20px;height:20px;display:inline-flex;align-items:center;justify-content:center;font-size:12px}
+  label{display:block;font-size:12px;color:var(--sub);margin:6px 0 3px}
+  input,select,textarea{width:100%;font:inherit;padding:7px 8px;border:1px solid var(--line);border-radius:6px;background:#fff}
+  textarea{min-height:170px;font-family:ui-monospace,Menlo,Consolas,"Noto Sans JP",monospace;font-size:13px;line-height:1.5}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+  .row4{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+  button{font:inherit;border:1px solid var(--line);background:#fff;padding:8px 12px;border-radius:7px;cursor:pointer}
+  button:hover{background:var(--bg)}
+  button.primary{background:var(--acc);color:#fff;border-color:var(--acc);font-weight:700}
+  button.primary:hover{filter:brightness(1.07)}
+  button:disabled{opacity:.5;cursor:not-allowed}
+  .btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+  .hint{font-size:12px;color:var(--sub);line-height:1.6;margin-top:6px}
+  .chk{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--ink);margin:6px 0}
+  .chk input{width:auto}
+  details summary{cursor:pointer;font-size:13px;color:var(--acc);margin-top:6px}
+  .status{font-size:13px;margin-top:8px;min-height:18px}
+  .status.ok{color:var(--ok)} .status.err{color:var(--warn)}
+  .preview-head{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+  .pager{display:flex;align-items:center;gap:6px}
+  .sheetbox{background:#d9d9de;border-radius:10px;padding:14px;display:flex;justify-content:center;overflow:auto}
+  canvas#sheet{background:#fff;box-shadow:0 2px 10px rgba(0,0,0,.18);max-width:100%;height:auto;cursor:pointer}
+  .summary{font-size:13px;color:var(--sub)}
+  .summary b{color:var(--ink)}
+  .pill{display:inline-block;background:var(--acc2);color:var(--acc);border-radius:20px;padding:2px 10px;font-size:12px;margin-left:4px}
+  @media (max-width:600px){header{padding:10px 14px}header span{display:none}.wrap{padding:10px;gap:10px}.tabs{padding:8px 10px 0}.tab{padding:8px 10px;font-size:12px}}
+  .tabs{display:flex;gap:6px;padding:12px 16px 0;max-width:1400px;margin:0 auto}
+  .tab{border:1px solid var(--line);border-bottom:none;border-radius:8px 8px 0 0;padding:9px 16px;background:#eceef2;cursor:pointer;font-weight:700;color:var(--sub)}
+  .tab.on{background:#fff;color:var(--ink)}
+  .hide{display:none!important}
+  .big{font-size:22px;font-weight:700;padding:10px 12px}
+  .qty{display:flex;align-items:center;gap:6px}
+  .qty button{width:44px;height:44px;font-size:20px;padding:0}
+  .qty input{width:90px;text-align:center;font-size:20px;font-weight:700}
+  button.issue{width:100%;font-size:20px;padding:14px;margin-top:12px}
+  .lblbox{background:#d9d9de;border-radius:10px;padding:24px;display:flex;justify-content:center;align-items:center;min-height:200px}
+  canvas#lbl{background:#fff;box-shadow:0 2px 10px rgba(0,0,0,.18);max-width:100%;height:auto}
+  table.hist{width:100%;border-collapse:collapse;font-size:13px}
+  table.hist td,table.hist th{border-bottom:1px solid var(--line);padding:6px 4px;text-align:left}
+  table.hist th{color:var(--sub);font-weight:500}
+  #printArea{display:none}
+  @media print{
+    body>*:not(#printArea){display:none!important}
+    #printArea{display:block!important}
+    #printArea img{display:block;page-break-after:always;break-after:page}
+    #printArea img:last-child{page-break-after:auto;break-after:auto}
+  }
+</style>
+<style id="pageSize"></style>
+</head>
+<body>
+<header>
+  <h1>🏷 ReKiL 管理番号シール</h1>
+  <span>管理番号を入れて枚数を選び「発行する」で、ラベルを1枚ずつ印刷します</span><a href="../portal/" style="margin-left:auto;font-size:12px;color:var(--acc);text-decoration:none">ポータル ›</a>
+</header>
+
+<div class="tabs"><div class="tab on" data-t="one">🏷 1枚ずつ発行（ラベルプリンター）</div><div class="tab" data-t="sheet">📄 A4シール用紙にまとめて印刷</div></div>
+
+<div class="wrap" id="modeOne">
+  <div>
+    <div class="card">
+      <h2><span class="n">1</span>ラベルのサイズ</h2>
+      <select id="lsize"></select>
+      <div class="row" id="lcustom" style="display:none">
+        <div><label>幅 mm</label><input id="lcw" type="number" step="0.5" value="62"></div>
+        <div><label>高さ mm</label><input id="lch" type="number" step="0.5" value="29"></div>
+      </div>
+      <div class="hint">プリンターの設定（用紙サイズ）も同じラベルにしておいてください。</div>
+    </div>
+    <div class="card">
+      <h2><span class="n">2</span>内容と枚数</h2>
+      <label>管理番号</label>
+      <input id="oNum" class="big" value="A-001" autocomplete="off">
+      <label>テキスト（ブランド名・商品名など。空欄でもOK）</label>
+      <input id="oText" autocomplete="off">
+      <label>発行枚数</label>
+      <div class="qty"><button id="qMinus">−</button><input id="oQty" type="number" min="1" max="100" value="1"><button id="qPlus">＋</button><span class="hint" style="margin:0">枚</span></div>
+      <label class="chk"><input type="checkbox" id="oNext">発行したら次の番号にする（A-001 → A-002）</label>
+      <label class="chk"><input type="checkbox" id="oKeepText">テキストは発行後も残す</label>
+      <button class="primary issue" id="oIssue">発行する</button>
+      <button class="issue hide" id="oShare" style="font-size:15px;padding:10px;margin-top:8px">📤 共有で印刷（ブラザーのアプリなど）</button>
+      <div class="status" id="oStatus"></div>
+    </div>
+  </div>
+  <div>
+    <div class="card">
+      <h2>プレビュー</h2>
+      <div class="lblbox"><canvas id="lbl"></canvas></div>
+      <div class="hint" id="oModeHint"></div>
+    </div>
+    <div class="card">
+      <h2>発行履歴（この端末のみ・最新50件）</h2>
+      <table class="hist"><thead><tr><th>日時</th><th>管理番号</th><th>テキスト</th><th>枚数</th><th></th></tr></thead><tbody id="hist"></tbody></table>
+      <div class="hint" id="histEmpty">まだ発行していません</div>
+    </div>
+  </div>
+</div>
+
+<div class="wrap hide" id="modeSheet">
+  <div>
+    <div class="card">
+      <h2><span class="n">1</span>シール用紙</h2>
+      <label>用紙（A4・ラベル面数）</label>
+      <select id="preset"></select>
+      <details id="dimBox">
+        <summary>寸法を細かく合わせる（用紙のパッケージの寸法を入力）</summary>
+        <div class="row4">
+          <div><label>横の枚数</label><input id="cols" type="number" min="1" max="10"></div>
+          <div><label>縦の枚数</label><input id="rows" type="number" min="1" max="30"></div>
+          <div><label>幅 mm</label><input id="lw" type="number" step="0.1"></div>
+          <div><label>高さ mm</label><input id="lh" type="number" step="0.1"></div>
+        </div>
+        <div class="row4">
+          <div><label>横の間隔</label><input id="gx" type="number" step="0.1"></div>
+          <div><label>縦の間隔</label><input id="gy" type="number" step="0.1"></div>
+          <div><label>左の余白</label><input id="ml" type="number" step="0.1"></div>
+          <div><label>上の余白</label><input id="mt" type="number" step="0.1"></div>
+        </div>
+        <label class="chk"><input type="checkbox" id="center" checked>余白は自動で真ん中に合わせる</label>
+        <div class="row">
+          <div><label>印刷のずれ補正 横（＋で右）mm</label><input id="ox" type="number" step="0.1" value="0"></div>
+          <div><label>印刷のずれ補正 縦（＋で下）mm</label><input id="oy" type="number" step="0.1" value="0"></div>
+        </div>
+        <div class="hint">最初は「枠線を印刷」にチェックして普通紙にテスト印刷し、シール用紙に重ねてずれを確認すると失敗しません。</div>
+      </details>
+    </div>
+
+    <div class="card">
+      <h2><span class="n">2</span>管理番号とテキスト</h2>
+      <textarea id="data" placeholder="1行で1枚。管理番号のあとにタブかカンマでテキスト
+例）
+A-0001,LOUIS VUITTON スピーディ25
+A-0002,GUCCI ショルダーバッグ
+A-0003"></textarea>
+      <div class="hint">スプレッドシートから「管理番号」「商品名」の2列をコピーしてそのまま貼り付けできます。テキストは無くてもOK。同じ行を2枚以上にしたいときは、行の最後に「,×3」のように付けます。</div>
+      <details>
+        <summary>連番でまとめて作る</summary>
+        <div class="row3">
+          <div><label>頭の文字</label><input id="sqPre" value="A-"></div>
+          <div><label>開始番号</label><input id="sqStart" type="number" value="1"></div>
+          <div><label>枚数</label><input id="sqCount" type="number" value="24"></div>
+        </div>
+        <div class="row">
+          <div><label>桁数（0埋め）</label><input id="sqDigits" type="number" value="4"></div>
+          <div><label>テキスト（全部に同じもの・空欄可）</label><input id="sqText"></div>
+        </div>
+        <div class="btns"><button id="sqAdd">下に追加</button><button id="sqReplace">入れ替える</button></div>
+      </details>
+    </div>
+
+    <div class="card">
+      <h2><span class="n">3</span>見た目</h2>
+      <div class="row">
+        <div><label>管理番号の大きさ</label>
+          <select id="numSize"><option value="0.62">大</option><option value="0.5" selected>中</option><option value="0.38">小</option></select></div>
+        <div><label>テキストの行数（最大）</label>
+          <select id="txtLines"><option>1</option><option selected>2</option><option>3</option></select></div>
+      </div>
+      <label class="chk"><input type="checkbox" id="bold" checked>管理番号を太字にする</label>
+      <label class="chk"><input type="checkbox" id="border">枠線を印刷する（テスト印刷・切り取り線に）</label>
+      <label class="chk"><input type="checkbox" id="sep" checked>番号とテキストの間に線を入れる</label>
+    </div>
+  </div>
+
+  <div>
+    <div class="card">
+      <div class="preview-head">
+        <h2 style="margin:0"><span class="n">4</span>プレビューと印刷</h2>
+        <div class="pager"><button id="prev">◀</button><span id="pageInfo">1 / 1</span><button id="next">▶</button></div>
+      </div>
+      <div class="summary" id="summary"></div>
+      <div class="hint">使いかけのシール用紙なら、プレビューの<b>貼り始めたい位置をクリック</b>すると、そこから印刷します（1ページ目だけ）。いまの開始位置：<span class="pill" id="startInfo">1枚目</span> <button id="startReset" style="padding:2px 8px;font-size:12px">先頭に戻す</button></div>
+      <div class="sheetbox" style="margin-top:10px"><canvas id="sheet"></canvas></div>
+      <div class="btns">
+        <button class="primary" id="makePdf">🖨 印刷する</button>
+      </div>
+      <div class="status" id="status"></div>
+      <div class="hint">保存したPDFを開いて印刷するときは、<b>倍率を「100%（実際のサイズ）」</b>にし、「ページに合わせる」は外してください。用紙はA4、プリンターの用紙種類は「普通紙」か用紙の説明にあるものを選びます。</div>
+    </div>
+  </div>
+</div>
+<div id="printArea"></div>
+
+<script>
+const PRESETS = [
+  {name:"A4 12面（86.4×42.3mm／2列×6段）", cols:2, rows:6, lw:86.4, lh:42.3, gx:2.5, gy:0},
+  {name:"A4 18面（70×42.3mm／3列×6段）", cols:3, rows:6, lw:70, lh:42.3, gx:0, gy:0},
+  {name:"A4 21面（70×42.3mm／3列×7段）", cols:3, rows:7, lw:70, lh:42.3, gx:0, gy:0},
+  {name:"A4 24面（66×33.9mm／3列×8段）", cols:3, rows:8, lw:66, lh:33.9, gx:2.5, gy:0},
+  {name:"A4 40面（48.3×25.4mm／4列×10段）", cols:4, rows:10, lw:48.3, lh:25.4, gx:0, gy:0},
+  {name:"A4 44面（48.3×25.4mm／4列×11段）", cols:4, rows:11, lw:48.3, lh:25.4, gx:0, gy:0},
+  {name:"A4 65面（38.1×21.2mm／5列×13段）", cols:5, rows:13, lw:38.1, lh:21.2, gx:2.5, gy:0},
+  {name:"カスタム（寸法を入力）", custom:true}
+];
+const A4W = 210, A4H = 297;
+const $ = id => document.getElementById(id);
+const fields = ["cols","rows","lw","lh","gx","gy","ml","mt","ox","oy"];
+let page = 0, startPos = 0;
+
+const sel = $("preset");
+PRESETS.forEach((p,i)=>{const o=document.createElement("option");o.value=i;o.textContent=p.name;sel.appendChild(o);});
+
+function store(k,v){try{localStorage.setItem("rekil-sticker-"+k,JSON.stringify(v));}catch(e){}}
+function load(k){try{const v=localStorage.getItem("rekil-sticker-"+k);return v?JSON.parse(v):null;}catch(e){return null;}}
+
+function applyPreset(i){
+  const p = PRESETS[i]; if(p.custom){ $("dimBox").open = true; return; }
+  ["cols","rows","lw","lh","gx","gy"].forEach(k=>$(k).value=p[k]);
+  $("center").checked = true; recenter();
+}
+function recenter(){
+  if(!$("center").checked) return;
+  const c=+$("cols").value, r=+$("rows").value, lw=+$("lw").value, lh=+$("lh").value, gx=+$("gx").value, gy=+$("gy").value;
+  $("ml").value = Math.max(0,((A4W - (c*lw + (c-1)*gx))/2)).toFixed(1);
+  $("mt").value = Math.max(0,((A4H - (r*lh + (r-1)*gy))/2)).toFixed(1);
+}
+function layout(){
+  const L = {}; fields.forEach(k=>L[k]=parseFloat($(k).value)||0);
+  L.cols=Math.max(1,Math.round(L.cols)); L.rows=Math.max(1,Math.round(L.rows));
+  return L;
+}
+
+function parseItems(){
+  const out=[];
+  $("data").value.split(/\r?\n/).forEach(line=>{
+    if(!line.trim()) return;
+    let parts = line.includes("\t") ? line.split("\t") : line.split(/[,，]/);
+    parts = parts.map(s=>s.trim());
+    let copies = 1;
+    const last = parts[parts.length-1];
+    const m = last && last.match(/^[×xX*](\d{1,3})$/);
+    if(m && parts.length>1){ copies = Math.max(1,+m[1]); parts.pop(); }
+    const num = parts[0]||"";
+    const text = parts.slice(1).filter(Boolean).join(" ");
+    for(let i=0;i<copies;i++) out.push({num,text});
+  });
+  return out;
+}
+
+function pagesFor(items,L){
+  const per = L.cols*L.rows;
+  const pages=[]; let idx=0, p=0;
+  while(idx<items.length || p===0){
+    const slots = new Array(per).fill(null);
+    for(let s=(p===0?Math.min(startPos,per-1):0); s<per && idx<items.length; s++) slots[s]=items[idx++];
+    pages.push(slots); p++;
+    if(idx>=items.length) break;
+  }
+  return pages;
+}
+
+function wrapLines(ctx,text,maxW,maxLines){
+  const lines=[]; let cur="";
+  for(const ch of [...text]){
+    const t=cur+ch;
+    if(ctx.measureText(t).width>maxW && cur){ lines.push(cur); cur=ch.trimStart(); if(lines.length===maxLines) return {lines,over:true}; }
+    else cur=t;
+  }
+  if(cur) lines.push(cur);
+  return {lines, over: lines.length>maxLines};
+}
+
+function drawLabel(ctx,item,x,y,w,h,pxmm,opt){
+  const pad = Math.min(w,h)*0.07;
+  const iw = w-pad*2, ih = h-pad*2;
+  const hasText = !!item.text;
+  const numShare = hasText ? opt.numSize : 0.9;
+  const font = '"Noto Sans JP", sans-serif';
+  // 管理番号
+  let numH = ih*numShare;
+  let fs = numH*0.9;
+  ctx.font = `${opt.bold?900:500} ${fs}px ${font}`;
+  let mw = ctx.measureText(item.num).width;
+  if(mw>iw){ fs*= iw/mw; ctx.font = `${opt.bold?900:500} ${fs}px ${font}`; }
+  ctx.fillStyle="#000"; ctx.textAlign="center"; ctx.textBaseline="middle";
+  const numCY = hasText ? y+pad+numH/2 : y+h/2;
+  ctx.fillText(item.num, x+w/2, numCY);
+  if(!hasText) return;
+  const sepY = y+pad+numH + ih*0.02;
+  if(opt.sep){ ctx.strokeStyle="#000"; ctx.lineWidth=Math.max(1,pxmm*0.2); ctx.beginPath(); ctx.moveTo(x+pad,sepY); ctx.lineTo(x+w-pad,sepY); ctx.stroke(); }
+  // テキスト
+  const areaTop = sepY + ih*0.04, areaH = y+h-pad-areaTop;
+  const maxLines = opt.lines;
+  let tfs = Math.min(areaH/maxLines*0.85, fs*0.7);
+  let res;
+  for(let k=0;k<40;k++){
+    ctx.font = `700 ${tfs}px ${font}`;
+    res = wrapLines(ctx,item.text,iw,maxLines);
+    if(!res.over || tfs<pxmm*1.4) break;
+    tfs*=0.92;
+  }
+  let lines = res.lines.slice(0,maxLines);
+  if(res.over){ let l=lines[maxLines-1]; while(l.length>1 && ctx.measureText(l+"…").width>iw) l=l.slice(0,-1); lines[maxLines-1]=l+"…"; }
+  const lh = tfs*1.18, total = lh*lines.length;
+  let ty = areaTop + (areaH-total)/2 + lh/2;
+  lines.forEach(l=>{ ctx.fillText(l, x+w/2, ty); ty+=lh; });
+}
+
+function renderPage(canvas,slots,L,pxmm,opt,preview){
+  canvas.width = Math.round(A4W*pxmm); canvas.height = Math.round(A4H*pxmm);
+  const ctx = canvas.getContext("2d");
+  ctx.fillStyle="#fff"; ctx.fillRect(0,0,canvas.width,canvas.height);
+  for(let r=0;r<L.rows;r++) for(let c=0;c<L.cols;c++){
+    const i=r*L.cols+c;
+    const x=(L.ml+L.ox + c*(L.lw+L.gx))*pxmm, y=(L.mt+L.oy + r*(L.lh+L.gy))*pxmm;
+    const w=L.lw*pxmm, h=L.lh*pxmm;
+    if(preview){
+      ctx.strokeStyle = slots[i] ? "#9aa3b5" : "#d4d7de"; ctx.lineWidth=1;
+      ctx.setLineDash(slots[i]?[]:[4,3]); ctx.strokeRect(x+.5,y+.5,w-1,h-1); ctx.setLineDash([]);
+      if(!slots[i] && page===0 && i<startPos){ ctx.fillStyle="rgba(0,0,0,.06)"; ctx.fillRect(x,y,w,h); ctx.fillStyle="#999"; ctx.font=`${Math.min(w,h)*0.18}px sans-serif`; ctx.textAlign="center"; ctx.textBaseline="middle"; ctx.fillText("使用済み",x+w/2,y+h/2); }
+    } else if(opt.border){
+      ctx.strokeStyle="#000"; ctx.lineWidth=Math.max(1,pxmm*0.15); ctx.strokeRect(x,y,w,h);
+    }
+    if(preview && opt.border && slots[i]){ ctx.strokeStyle="#000"; ctx.lineWidth=1; ctx.strokeRect(x+.5,y+.5,w-1,h-1); }
+    if(slots[i]) drawLabel(ctx,slots[i],x,y,w,h,pxmm,opt);
+  }
+}
+
+function options(){ return {numSize:+$("numSize").value, lines:+$("txtLines").value, bold:$("bold").checked, border:$("border").checked, sep:$("sep").checked}; }
+
+function refresh(){
+  const L = layout(), items = parseItems(), pages = pagesFor(items,L);
+  if(page>=pages.length) page=pages.length-1; if(page<0) page=0;
+  const cv=$("sheet");
+  const pxmm = Math.max(2.5, Math.min(4, ((cv.parentElement.clientWidth||700)-28)/A4W));
+  renderPage(cv,pages[page],L,pxmm*2,options(),true);
+  cv.style.width = (A4W*pxmm)+"px";
+  $("pageInfo").textContent = `${page+1} / ${pages.length}`;
+  const per=L.cols*L.rows;
+  $("summary").innerHTML = `シール <b>${items.length}枚</b>・用紙 <b>${items.length?pages.length:0}枚</b>（1枚に${per}面）`;
+  $("startInfo").textContent = `${startPos+1}枚目（${Math.floor(startPos/L.cols)+1}段目・左から${startPos%L.cols+1}番目）`;
+  $("makePdf").disabled = !items.length;
+  saveState();
+}
+
+function saveState(){
+  const s={preset:sel.value,center:$("center").checked,data:$("data").value,numSize:$("numSize").value,txtLines:$("txtLines").value,bold:$("bold").checked,border:$("border").checked,sep:$("sep").checked};
+  fields.forEach(k=>s[k]=$(k).value); store("state",s);
+}
+function restore(){
+  const s=load("state");
+  if(!s){ sel.value=5; applyPreset(5); $("data").value="A-0001,LOUIS VUITTON スピーディ25\nA-0002,GUCCI GGマーモント ショルダーバッグ\nA-0003,PRADA ナイロン トートバッグ\nA-0004"; return; }
+  sel.value=s.preset; fields.forEach(k=>{ if(s[k]!=null) $(k).value=s[k]; });
+  ["center","bold","border","sep"].forEach(k=>$(k).checked=!!s[k]);
+  $("data").value=s.data||""; $("numSize").value=s.numSize||"0.5"; $("txtLines").value=s.txtLines||"2";
+}
+
+// 連番
+function seq(){
+  const pre=$("sqPre").value, st=parseInt($("sqStart").value)||0, n=Math.min(2000,Math.max(0,parseInt($("sqCount").value)||0)), d=Math.max(0,parseInt($("sqDigits").value)||0), t=$("sqText").value.trim();
+  const a=[]; for(let i=0;i<n;i++){ a.push(pre+String(st+i).padStart(d,"0")+(t?","+t:"")); } return a.join("\n");
+}
+$("sqAdd").onclick=()=>{ const v=$("data").value.trim(); $("data").value=(v?v+"\n":"")+seq(); refresh(); };
+$("sqReplace").onclick=()=>{ $("data").value=seq(); refresh(); };
+
+// イベント
+sel.onchange=()=>{ applyPreset(+sel.value); startPos=0; refresh(); };
+fields.forEach(k=>$(k).addEventListener("input",()=>{ if(["cols","rows","lw","lh","gx","gy"].includes(k)){ sel.value=PRESETS.length-1; recenter(); } if(k==="ml"||k==="mt") $("center").checked=false; refresh(); }));
+$("center").onchange=()=>{ recenter(); refresh(); };
+["data","numSize","txtLines","bold","border","sep"].forEach(k=>$(k).addEventListener("input",refresh));
+$("prev").onclick=()=>{ page--; refresh(); };
+$("next").onclick=()=>{ page++; refresh(); };
+$("startReset").onclick=()=>{ startPos=0; refresh(); };
+$("sheet").addEventListener("click",e=>{
+  if(page!==0) { setStatus("開始位置は1ページ目で選んでください","err"); return; }
+  const L=layout(), cv=$("sheet"), rect=cv.getBoundingClientRect();
+  const mx=(e.clientX-rect.left)/rect.width*A4W - L.ml - L.ox, my=(e.clientY-rect.top)/rect.height*A4H - L.mt - L.oy;
+  const c=Math.floor(mx/(L.lw+L.gx)), r=Math.floor(my/(L.lh+L.gy));
+  if(c<0||r<0||c>=L.cols||r>=L.rows) return;
+  startPos=r*L.cols+c; refresh();
+});
+window.addEventListener("resize",refresh);
+
+function setStatus(t,cls){ const s=$("status"); s.textContent=t; s.className="status "+(cls||""); }
+
+let downloads=null;
+(async()=>{ try{ if(window.claude && claude.use){ downloads = await claude.use("downloads"); } }catch(e){} })();
+
+$("makePdf").onclick = async ()=>{
+  const items=parseItems(); if(!items.length) return;
+  setStatus("作っています…");
+  try{ await document.fonts.load('900 20px "Noto Sans JP"'); await document.fonts.load('700 20px "Noto Sans JP"'); }catch(e){}
+  const L=layout(), pages=pagesFor(items,L), opt=options();
+  const cs=pages.map(slots=>{ const c=document.createElement("canvas"); renderPage(c,slots,L,11.811,opt,false); return c; });
+  const d=new Date(), name=`管理番号シール_${String(d.getFullYear()).slice(2)}${String(d.getMonth()+1).padStart(2,"0")}${String(d.getDate()).padStart(2,"0")}_${items.length}枚.pdf`;
+  await output(cs,A4W,A4H,name,setStatus);
+};
+
+
+// ===== 共通：印刷（PCで開いたHTMLは印刷画面、claude.ai上はPDF保存） =====
+const IN_ARTIFACT = !!(window.claude && window.claude.use);
+async function output(canvases, wmm, hmm, filename, statusFn){
+  if(!IN_ARTIFACT){
+    $("pageSize").textContent = `@page{size:${wmm}mm ${hmm}mm;margin:0}#printArea img{width:${wmm}mm;height:${hmm}mm}`;
+    const area=$("printArea"); area.innerHTML="";
+    canvases.forEach(c=>{ const im=new Image(); im.src=c.toDataURL("image/png"); area.appendChild(im); });
+    await Promise.all([...area.images||area.querySelectorAll("img")].map(im=>im.decode?im.decode().catch(()=>{}):0));
+    window.print();
+    statusFn("印刷画面を開きました。プリンターを選んで「印刷」を押してください","ok");
+    return;
+  }
+  if(!window.jspdf){ statusFn("PDFの部品を読み込めませんでした。ページを開き直してください","err"); return; }
+  const pdf = new jspdf.jsPDF({unit:"mm",format:[wmm,hmm],orientation:wmm>=hmm?"landscape":"portrait",compress:true});
+  canvases.forEach((c,i)=>{ if(i>0) pdf.addPage([wmm,hmm], wmm>=hmm?"landscape":"portrait"); pdf.addImage(c.toDataURL("image/png"),"PNG",0,0,wmm,hmm,undefined,"FAST"); });
+  if(!downloads){ statusFn("この画面ではファイルを保存できません","err"); return; }
+  try{
+    await downloads.save({filename, data:pdf.output("blob")});
+    statusFn(`PDFを保存しました：${filename}（開いて印刷してください）`,"ok");
+  }catch(e){
+    if(e && e.code==="declined") statusFn("保存をキャンセルしました"); else statusFn("保存できませんでした："+(e&&e.message?e.message:e),"err");
+  }
+}
+
+// ===== 1枚ずつ発行 =====
+const LSIZES = [
+  {name:"62×29mm（ブラザー DK-11209 小型宛名ラベル）", w:62, h:29},
+  {name:"90×29mm（ブラザー DK-11201 標準宛名ラベル）", w:90, h:29},
+  {name:"54×17mm（ブラザー DK-11204 多目的ラベル）", w:54, h:17},
+  {name:"62mm幅 長尺テープを40mmでカット（DK-22205）", w:40, h:62},
+  {name:"50×30mm", w:50, h:30},
+  {name:"40×30mm", w:40, h:30},
+  {name:"カスタム（幅×高さを入力）", custom:true}
+];
+LSIZES.forEach((p,i)=>{const o=document.createElement("option");o.value=i;o.textContent=p.name;$("lsize").appendChild(o);});
+function lsize(){ const p=LSIZES[+$("lsize").value]; if(p.custom) return {w:+$("lcw").value||62,h:+$("lch").value||29}; return p; }
+function oItem(){ return {num:$("oNum").value.trim(), text:$("oText").value.trim()}; }
+function renderLabel(canvas,item,pxmm,preview){
+  const {w,h}=lsize();
+  canvas.width=Math.round(w*pxmm); canvas.height=Math.round(h*pxmm);
+  const ctx=canvas.getContext("2d"); ctx.fillStyle="#fff"; ctx.fillRect(0,0,canvas.width,canvas.height);
+  const opt=options(); opt.border=false;
+  drawLabel(ctx,item,0,0,canvas.width,canvas.height,pxmm,opt);
+  if(preview){ ctx.strokeStyle="#c9ccd3"; ctx.strokeRect(.5,.5,canvas.width-1,canvas.height-1); }
+}
+function oRefresh(){
+  $("lcustom").style.display = LSIZES[+$("lsize").value].custom ? "grid":"none";
+  const cv=$("lbl"), {w}=lsize(); const disp=Math.max(2,Math.min(5, ((cv.parentElement.clientWidth||500)-60)/w));
+  const it=oItem(); renderLabel(cv, it.num?it:{num:"（管理番号）",text:it.text}, disp*2, true); cv.style.width=(w*disp)+"px";
+  $("oIssue").textContent = `${parseInt($("oQty").value)||1}枚 発行する`;
+  saveO();
+}
+function nextNum(n){ const m=n.match(/^(.*?)(\d+)(\D*)$/); if(!m) return n; const v=String(parseInt(m[2],10)+1).padStart(m[2].length,"0"); return m[1]+v+m[3]; }
+function oStatus(t,c){ const s=$("oStatus"); s.textContent=t; s.className="status "+(c||""); }
+async function issue(item,qty){
+  if(!item.num){ oStatus("管理番号を入れてください","err"); $("oNum").focus(); return false; }
+  qty=Math.max(1,Math.min(100,qty));
+  try{ await document.fonts.load('900 20px "Noto Sans JP"'); await document.fonts.load('700 20px "Noto Sans JP"'); }catch(e){}
+  const {w,h}=lsize(); const cs=[];
+  for(let i=0;i<qty;i++){ const c=document.createElement("canvas"); renderLabel(c,item,11.811,false); cs.push(c); }
+  addHist(item,qty);
+  await output(cs,w,h,`${item.num}_${qty}枚.pdf`,oStatus);
+  return true;
+}
+$("oIssue").onclick=async()=>{
+  const it=oItem(), q=parseInt($("oQty").value)||1;
+  if(await issue(it,q)){
+    if($("oNext").checked) $("oNum").value=nextNum(it.num);
+    if(!$("oKeepText").checked) $("oText").value="";
+    $("oQty").value=1; oRefresh();
+  }
+};
+$("qMinus").onclick=()=>{ $("oQty").value=Math.max(1,(parseInt($("oQty").value)||1)-1); oRefresh(); };
+$("qPlus").onclick=()=>{ $("oQty").value=Math.min(100,(parseInt($("oQty").value)||1)+1); oRefresh(); };
+["oNum","oText","oQty","lcw","lch","lsize"].forEach(k=>$(k).addEventListener("input",oRefresh));
+["oNum","oText","oQty"].forEach(k=>$(k).addEventListener("keydown",e=>{ if(e.key==="Enter"){ e.preventDefault(); $("oIssue").click(); } }));
+["numSize","txtLines","bold","sep"].forEach(k=>$(k).addEventListener("input",oRefresh));
+
+let hist = load("hist")||[];
+function addHist(item,qty){ const d=new Date(); hist.unshift({t:`${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`,num:item.num,text:item.text,qty}); hist=hist.slice(0,50); store("hist",hist); drawHist(); }
+function esc(s){ return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+function drawHist(){
+  $("hist").innerHTML = hist.map((h,i)=>`<tr><td>${esc(h.t)}</td><td><b>${esc(h.num)}</b></td><td>${esc(h.text)}</td><td>${h.qty}</td><td><button data-i="${i}" style="padding:3px 8px;font-size:12px">再発行</button></td></tr>`).join("");
+  $("histEmpty").style.display = hist.length?"none":"block";
+}
+$("hist").addEventListener("click",e=>{ const b=e.target.closest("button"); if(!b) return; const h=hist[+b.dataset.i]; issue({num:h.num,text:h.text},1); });
+function saveO(){ store("one",{lsize:$("lsize").value,lcw:$("lcw").value,lch:$("lch").value,num:$("oNum").value,text:$("oText").value,nextOn:$("oNext").checked,keep:$("oKeepText").checked}); }
+(function(){ const o=load("one"); if(!o) return; $("lsize").value=o.lsize||0; $("lcw").value=o.lcw||62; $("lch").value=o.lch||29; $("oNum").value=o.num||"A-001"; $("oText").value=o.text||""; $("oNext").checked=!!o.nextOn; $("oKeepText").checked=!!o.keep; })();
+$("oModeHint").innerHTML = IN_ARTIFACT
+  ? "<b>スマホ（Claudeアプリ）</b>：「発行する」→ 保存の確認で「保存」→ 出てきた共有メニューで<b>「プリント」</b>→ プリンターにラベルプリンター（QL-820NWBなど）を選んで印刷。<br><b>PC</b>：ラベルサイズのPDFが保存されるので、開いて印刷してください（HTML版なら印刷画面がそのまま開きます）。"
+  : "「発行する」を押すと印刷画面が開きます。プリンターにラベルプリンター（QL-820NWBなど）を選んで印刷してください。iPhoneはAirPrintで、同じWi-Fiにつながっていれば選べます。印刷画面が出ないときは「共有で印刷」からブラザーのアプリ（iPrint&Label）やプリントを選んでください。";
+
+// タブ
+document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{
+  document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("on",x===t));
+  $("modeOne").classList.toggle("hide",t.dataset.t!=="one"); $("modeSheet").classList.toggle("hide",t.dataset.t!=="sheet");
+  store("tab",t.dataset.t); refresh(); oRefresh();
+});
+if(load("tab")==="sheet") document.querySelector('.tab[data-t="sheet"]').click();
+drawHist();
+
+// ===== 共有（Web Share）でラベルPDFを渡す =====
+async function makePdfBlob(item,qty){
+  try{ await document.fonts.load('900 20px "Noto Sans JP"'); await document.fonts.load('700 20px "Noto Sans JP"'); }catch(e){}
+  const {w,h}=lsize(), o=w>=h?"landscape":"portrait";
+  const pdf=new jspdf.jsPDF({unit:"mm",format:[w,h],orientation:o,compress:true});
+  for(let i=0;i<qty;i++){ const c=document.createElement("canvas"); renderLabel(c,item,11.811,false); if(i>0) pdf.addPage([w,h],o); pdf.addImage(c.toDataURL("image/png"),"PNG",0,0,w,h,undefined,"FAST"); }
+  return pdf.output("blob");
+}
+(function(){
+  try{ const f=new File([new Blob(["x"],{type:"application/pdf"})],"t.pdf",{type:"application/pdf"}); if(navigator.canShare && navigator.canShare({files:[f]})) $("oShare").classList.remove("hide"); }catch(e){}
+})();
+$("oShare").onclick=async()=>{
+  const it=oItem(), q=Math.max(1,Math.min(100,parseInt($("oQty").value)||1));
+  if(!it.num){ oStatus("管理番号を入れてください","err"); return; }
+  if(!window.jspdf){ oStatus("通信がつながっていません。開き直してください","err"); return; }
+  try{
+    const blob=await makePdfBlob(it,q);
+    await navigator.share({files:[new File([blob],`${it.num}_${q}枚.pdf`,{type:"application/pdf"})]});
+    addHist(it,q);
+    if($("oNext").checked) $("oNum").value=nextNum(it.num);
+    if(!$("oKeepText").checked) $("oText").value="";
+    $("oQty").value=1; oRefresh(); oStatus("共有しました","ok");
+  }catch(e){ if(e && e.name==="AbortError") oStatus("キャンセルしました"); else oStatus("共有できませんでした："+(e&&e.message?e.message:e),"err"); }
+};
+
+restore(); refresh(); oRefresh();
+document.fonts && document.fonts.ready.then(()=>{refresh();oRefresh();});
+window.addEventListener("resize",oRefresh);
+</script>
+</body>
+</html>
