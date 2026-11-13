@@ -100,6 +100,7 @@
 /* ===== ReKiL Stock と同じ見た目 ===== */
 :root{--bg:#14181d;--surface:#1d232a;--card:#1d232a;--line:#2f3740;--ink:#e8ebee;--sub:#9aa4af;--acc:#f5c026;--accink:#14181d;--steel:#0d1014;
   --font-body:"Zen Kaku Gothic New","Hiragino Sans","Yu Gothic",system-ui,sans-serif;--font-code:"IBM Plex Mono",ui-monospace,Menlo,monospace}
+html{padding-top:env(safe-area-inset-top,0px)}
 html,body{background:var(--bg);color:var(--ink)}
 body{font-family:var(--font-body);font-size:15px;line-height:1.6}
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--steel)}
@@ -126,6 +127,9 @@ nav.tabs a[aria-current="page"]::after{content:"";width:22px;height:3px;backgrou
 body{padding-bottom:calc(70px + env(safe-area-inset-bottom,0px))}
 @media (max-width:700px){
   #modeOne{padding:12px 12px calc(230px + env(safe-area-inset-bottom,0px))!important}
+  #modeOne{padding-bottom:calc(270px + env(safe-area-inset-bottom,0px))!important}
+  .lblbox{padding:12px!important}
+  canvas#lbl{max-width:78%!important}
   .issuebar{bottom:calc(64px + env(safe-area-inset-bottom,0px))!important;background:var(--bg)!important;padding:10px 14px!important}
 }
 </style>
@@ -525,7 +529,7 @@ function renderLabel(canvas,item,pxmm,preview){
 }
 function oRefresh(){
   $("lcustom").style.display = LSIZES[+$("lsize").value].custom ? "grid":"none";
-  const cv=$("lbl"), {w}=lsize(); const disp=Math.max(2,Math.min(5, ((cv.parentElement.clientWidth||500)-60)/w));
+  const cv=$("lbl"), {w}=lsize(); const disp=Math.max(2,Math.min(window.innerWidth<700?3.6:5, ((cv.parentElement.clientWidth||500)-60)/w));
   const it=oItem(); renderLabel(cv, it.num?it:{num:"（管理番号）",text:it.text}, disp*2, true); cv.style.width=(w*disp)+"px";
   $("oIssue").textContent = `${parseInt($("oQty").value)||1}枚 発行する`;
   saveO();
@@ -605,7 +609,7 @@ $("oShare").onclick=async()=>{
 };
 
 // 新しい版があれば自動で読み直す
-const SEAL_VERSION = "2026-11-13-3";
+const SEAL_VERSION = "2026-11-13-4";
 async function checkUpdate(){ try{ const r=await fetch(location.pathname+"?v="+Date.now(),{cache:"no-store"}); const t=await r.text(); const m=t.match(/const SEAL_VERSION = "([^"]+)"/); if(m && m[1]!==SEAL_VERSION) location.replace(location.pathname+"?v="+encodeURIComponent(m[1])); }catch(_){} }
 if(location.protocol.startsWith("http")){ checkUpdate(); document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="visible") checkUpdate(); }); }
 
