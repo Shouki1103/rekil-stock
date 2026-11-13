@@ -1,7 +1,7 @@
 {
-  "name": "ReKiL eBayキャンペーン管理",
-  "short_name": "eBayキャンペーン",
-  "description": "eBay販促キャンペーンの進捗・結果・キャッシュバックを管理するアプリ",
+  "name": "ReKiL eBay販促管理",
+  "short_name": "eBay販促管理",
+  "description": "eBay販促（キャンペーン）の進捗・結果・キャッシュバックを管理するアプリ",
   "lang": "ja",
   "start_url": "./",
   "scope": "./",

@@ -6,12 +6,12 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="eBayキャンペーン">
+<meta name="apple-mobile-web-app-title" content="eBay販促管理">
 <meta name="theme-color" content="#111214">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="icon" href="icon-192.png">
-<title>ReKiL eBayキャンペーン管理</title>
+<title>ReKiL eBay販促管理</title>
 <style>
 :root{--bg:#111214;--card:#1c1d21;--field:#25272c;--ink:#f2f2f3;--sub:#9a9ca3;--line:#2f3137;--acc:#4f8cff;--warn:#d98a2b;--ok:#3fa66b;--danger:#ff6b61;color-scheme:dark}
 *{box-sizing:border-box}
@@ -87,7 +87,7 @@ label{display:block;font-size:12px;color:var(--sub);margin:8px 0 3px}
 </head>
 <body>
 <header>
-  <h1>eBayキャンペーン管理 <span class="sync" id="sync"></span></h1>
+  <h1>eBay販促管理 <span class="sync" id="sync"></span></h1>
   <div class="tabs">
     <button data-f="active" class="on">進行中</button>
     <button data-f="end">終了</button>
@@ -145,7 +145,7 @@ label{display:block;font-size:12px;color:var(--sub);margin:8px 0 3px}
 </div></div>
 <div class="toast" id="toast"></div>
 <div id="lock" hidden><form id="lockForm">
-  <h1>eBayキャンペーン管理</h1>
+  <h1>eBay販促管理</h1>
   <p class="meta" id="lockMsg"></p>
   <input id="passIn" type="password" inputmode="numeric" autocomplete="current-password" placeholder="暗証番号">
   <button class="btn main" id="lockGo" type="submit">開く</button>
@@ -154,7 +154,7 @@ label{display:block;font-size:12px;color:var(--sub);margin:8px 0 3px}
 <script>
 /* ▼ Apps Script をデプロイしたときの「ウェブアプリのURL」 */
 const API_URL = "https://script.google.com/macros/s/AKfycby3F-MYmPDbMyj3CC4sR2WC2KwtC73femnvFT4XG67PgCpaQjw9Z5Dp6qRk_KgknGrc/exec";
-const APP_VERSION = "2026-11-13-2";
+const APP_VERSION = "2026-11-13-3";
 
 const $=id=>document.getElementById(id);
 const C_FIELDS=["id","name","status","apply_deadline","start_jst","end_jst","coupon_code","offer","cashback_rate","cashback_cap_usd","budget_usd","min_price_usd","target_items","excluded_items","conditions","cashback_due","inquiry_tag","orders","sales_usd","discount_usd","fees_usd","cashback_expected_usd","cashback_received_usd","cashback_received_date","note","result_pdf"];
