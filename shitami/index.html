@@ -46,6 +46,14 @@ main{padding:12px 14px 100px;max-width:760px;margin:0 auto}
 .meta{font-size:13px;color:var(--sub);margin-top:4px}
 .memo{font-size:14px;margin-top:6px;white-space:pre-wrap}
 .acts{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+.card.sel-mode{cursor:pointer;display:flex;gap:12px;align-items:flex-start}
+.card.sel-mode .cbox{flex:none;width:26px;height:26px;border:2px solid var(--sub);border-radius:7px;margin-top:2px;display:flex;align-items:center;justify-content:center;font-weight:900;color:#111}
+.card.sel-mode.checked{outline:2px solid var(--danger)}
+.card.sel-mode.checked .cbox{background:var(--danger);border-color:var(--danger)}
+.card .cbody{flex:1;min-width:0}
+.selbar{position:fixed;left:0;right:0;bottom:0;z-index:15;background:var(--card);border-top:1px solid var(--line);padding:10px 14px calc(10px + env(safe-area-inset-bottom));display:flex;gap:8px;align-items:center}
+.selbar .cnt{flex:1;font-weight:700}
+.selbar .btn{padding:10px 12px}
 .btn{border:1px solid var(--line);background:var(--field);color:var(--ink);border-radius:10px;padding:9px 14px;cursor:pointer}
 .btn.main{background:var(--acc);color:#111;border-color:var(--acc);font-weight:700}
 .btn.bidb{background:var(--bid);color:#fff;border-color:var(--bid);font-weight:700;flex:1}
@@ -76,7 +84,7 @@ label{display:block;font-size:12px;color:var(--sub);margin:10px 0 4px}
 </head>
 <body>
 <header>
-  <h1>下見・指値 進捗 <small><span class="sync" id="sync"></span><button class="btn ghost" id="setBtn" style="padding:4px 10px">設定</button></small></h1>
+  <h1>下見・指値 進捗 <small><span class="sync" id="sync"></span><button class="btn ghost" id="selBtn" style="padding:4px 10px;margin-right:6px">選択</button><button class="btn ghost" id="setBtn" style="padding:4px 10px">設定</button></small></h1>
   <div class="stats">
     <div class="stat" data-f="done"><b id="cDone">0</b><span>指値待ち（下見済）</span></div>
     <div class="stat" data-f="bid"><b id="cBid">0</b><span>指値登録済</span></div>
@@ -94,6 +102,12 @@ label{display:block;font-size:12px;color:var(--sub);margin:10px 0 4px}
 <main id="list"><div class="empty">読み込み中…</div></main>
 <div class="note" id="note"></div>
 <button class="fab" id="addBtn">＋ 追加</button>
+<div class="selbar" id="selbar" hidden>
+  <span class="cnt" id="selCnt">0件選択</span>
+  <button class="btn" id="selAll">表示中を全選択</button>
+  <button class="btn del" id="selDel">削除</button>
+  <button class="btn ghost" id="selCancel">やめる</button>
+</div>
 
 <div class="sheet" id="edit"><div class="panel">
   <h2 id="eTitle">下見を追加</h2>
@@ -134,7 +148,8 @@ label{display:block;font-size:12px;color:var(--sub);margin:10px 0 4px}
 <script>
 /* ▼ Apps Script をデプロイしたときの「ウェブアプリのURL」 */
 const API_URL = "https://script.google.com/macros/s/AKfycbw7kz9QQt6CMQvwIC4IhtSekntc4xGCUAWuop6U7LO_3U6FMRo--X6wKI0F6hSx3n3Vng/exec";
-const APP_VERSION = "2026-11-13-1";
+const APP_VERSION = "2026-11-13-2";
+let selMode=false,selected=new Set(),shownIds=[];
 const DEF_AUC=["オークネット","エコリング","JDS","JBA","コメ兵","モノバンク","プライム","浜屋","大吉","JWA","トレファク","ペンギン","アプレ","リバオク"];
 const DEF_STAFF=["俊輔","祥貴"],DEF_WHO="俊輔";
 const ST={plan:"下見済・指値待ち",done:"下見済・指値待ち",bid:"指値登録済"};
@@ -189,6 +204,9 @@ function render(){
   const asc=fs!=="bid"&&fs!=="all";
   list.sort((a,b)=>asc?(a.date||"").localeCompare(b.date||"")||(a.createdAt||0)-(b.createdAt||0):(b.date||"").localeCompare(a.date||"")||(b.createdAt||0)-(a.createdAt||0));
   const el=$("list");
+  shownIds=list.map(i=>i.id);
+  for(const id of [...selected])if(!items.some(i=>i.id===id))selected.delete(id);
+  selSync();
   if(!list.length){el.innerHTML='<div class="empty">該当するものはありません<br>右下の「＋ 追加」から登録できます</div>';return}
   let html="",last=null;
   for(const i of list){
@@ -199,8 +217,11 @@ function render(){
       `<button class="btn ghost" data-a="edit" data-id="${i.id}">編集</button>`,
       `<button class="btn del" data-a="del" data-id="${i.id}">削除</button>`].join("");
     const meta=[i.staff?`下見：${esc(i.staff)}`:"下見担当 未設定", i.doneAt?`下見済 ${fmtTs(i.doneAt)}`:"", i.bidAt?`指値登録 ${fmtTs(i.bidAt)}`:""].filter(Boolean).join("　");
-    html+=`<div class="card${i.status==="bid"?" is-bid":""}"><div class="row"><span class="auc">${esc(i.auction||"")}</span><span class="pill ${PCLS[i.status]||"p-plan"}">${ST[i.status]||""}</span></div>
-      <div class="meta">${meta}</div>${i.memo?`<div class="memo">${esc(i.memo)}</div>`:""}<div class="acts">${acts}</div></div>`;
+    const inner=`<div class="row"><span class="auc">${esc(i.auction||"")}</span><span class="pill ${PCLS[i.status]||"p-plan"}">${ST[i.status]||""}</span></div>
+      <div class="meta">${meta}</div>${i.memo?`<div class="memo">${esc(i.memo)}</div>`:""}`;
+    if(selMode){const on=selected.has(i.id);
+      html+=`<div class="card sel-mode${i.status==="bid"?" is-bid":""}${on?" checked":""}" data-sel="${i.id}"><div class="cbox">${on?"✓":""}</div><div class="cbody">${inner}</div></div>`;}
+    else html+=`<div class="card${i.status==="bid"?" is-bid":""}">${inner}<div class="acts">${acts}</div></div>`;
   }
   el.innerHTML=html;
 }
@@ -237,16 +258,36 @@ async function setStatus(id,s){
   try{await api("save",{record:r});toast(s==="bid"?"指値登録済にしました":"指値待ちに戻しました")}catch(e){handleErr(e)}
 }
 let delId=null;
-function askDel(id){const it=items.find(x=>x.id===id);delId=id;$("cMsg").textContent=`${dayLabel(it.date)} ${it.auction} を削除しますか？`;$("confirm").classList.add("open")}
+function askDel(id){const it=items.find(x=>x.id===id);delId=id;delMany=null;$("cMsg").textContent=`${dayLabel(it.date)} ${it.auction} を削除しますか？`;$("confirm").classList.add("open")}
 $("cNo").onclick=()=>$("confirm").classList.remove("open");
-$("cYes").onclick=async()=>{$("confirm").classList.remove("open");try{await api("remove",{id:delId});toast("削除しました")}catch(e){handleErr(e)}};
+let delMany=null;
+$("cYes").onclick=async()=>{$("confirm").classList.remove("open");
+  if(delMany){const ids=delMany;delMany=null;
+    try{await api("removeMany",{ids});toast(`${ids.length}件削除しました`);selected.clear();selMode=false;render()}catch(e){handleErr(e)}return}
+  try{await api("remove",{id:delId});toast("削除しました")}catch(e){handleErr(e)}};
+function selSync(){
+  $("selbar").hidden=!selMode;$("addBtn").style.display=selMode||readOnly?"none":"";
+  $("selBtn").textContent=selMode?"選択中":"選択";
+  $("selCnt").textContent=`${selected.size}件選択`;
+  const allOn=shownIds.length&&shownIds.every(id=>selected.has(id));
+  $("selAll").textContent=allOn?"全解除":"表示中を全選択";
+  $("selDel").disabled=!selected.size;
+}
+$("selBtn").onclick=()=>{selMode=!selMode;selected.clear();render()};
+$("selCancel").onclick=()=>{selMode=false;selected.clear();render()};
+$("selAll").onclick=()=>{const allOn=shownIds.length&&shownIds.every(id=>selected.has(id));
+  if(allOn)shownIds.forEach(id=>selected.delete(id));else shownIds.forEach(id=>selected.add(id));render()};
+$("selDel").onclick=()=>{if(!selected.size)return;delMany=[...selected];
+  $("cMsg").textContent=`選択した${delMany.length}件を削除しますか？（元に戻せません）`;$("confirm").classList.add("open")};
 
 function handleErr(e){
   const c=e?.code;
   if(c==="passcode")return;
   toast(c==="network"?"通信できませんでした。電波の良い場所でもう一度お試しください":c==="no_api"?"データ側がまだ設定されていません":`保存できませんでした（${c}）`);
 }
-$("list").onclick=e=>{const b=e.target.closest("button[data-a]");if(!b)return;const id=b.dataset.id,a=b.dataset.a;
+$("list").onclick=e=>{
+  const sc=e.target.closest("[data-sel]");if(selMode&&sc){const id=sc.dataset.sel;selected.has(id)?selected.delete(id):selected.add(id);render();return}
+  const b=e.target.closest("button[data-a]");if(!b)return;const id=b.dataset.id,a=b.dataset.a;
   if(a==="edit")openEdit(items.find(x=>x.id===id));else if(a==="del")askDel(id);else setStatus(id,a)};
 $("addBtn").onclick=()=>openEdit(null);
 $("eCancel").onclick=()=>$("edit").classList.remove("open");
