@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="下見・指値">
+<meta name="theme-color" content="#111214">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-192.png">
+<title>ReKiL 下見・指値 進捗</title>
+<style>
+:root{--bg:#111214;--card:#1c1d21;--field:#25272c;--ink:#f2f2f3;--sub:#9a9ca3;--line:#2f3137;--acc:#d9a441;--plan:#5b5f68;--done:#d98a2b;--bid:#3fa66b;--danger:#ff6b61;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Noto Sans JP",sans-serif;font-size:15px;padding:0 env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+#lock{position:fixed;inset:0;background:var(--bg);z-index:40;display:flex;align-items:center;justify-content:center;padding:20px}
+#lock form{width:100%;max-width:340px}
+#lock input{width:100%;padding:12px;border:1px solid var(--line);border-radius:10px;background:var(--field);color:var(--ink);font-size:18px;margin:10px 0}
+#lock .btn{width:100%;padding:12px}
+[hidden]{display:none!important}
+.sync{font-size:11px;color:var(--sub);margin-right:8px}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding:14px 14px 8px;border-bottom:1px solid var(--line)}
+h1{font-size:18px;margin:0 0 10px;display:flex;justify-content:space-between;align-items:center}
+h1 small{font-size:12px;color:var(--sub);font-weight:400}
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:10px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px;text-align:center;cursor:pointer}
+.stat b{display:block;font-size:26px}
+.stat[data-f="done"] b{color:var(--done)}.stat[data-f="bid"] b{color:var(--bid)}
+.stat span{font-size:11px;color:var(--sub)}
+.stat.on{outline:2px solid var(--acc)}
+.tools{display:flex;gap:8px;flex-wrap:wrap}
+select,input,textarea,button{font:inherit}
+.tools select{flex:1;min-width:0;padding:9px;border:1px solid var(--line);border-radius:10px;background:var(--field);color:var(--ink)}
+main{padding:12px 14px 100px;max-width:760px;margin:0 auto}
+.day{margin:18px 0 8px;font-size:14px;color:var(--acc);font-weight:700;letter-spacing:.02em}
+.card{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--done);border-radius:12px;padding:14px;margin-bottom:10px}
+.card.is-bid{border-left-color:var(--bid);opacity:.8}
+.row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.auc{font-weight:700;font-size:18px}
+.pill{font-size:12px;padding:3px 10px;border-radius:99px;color:#111;font-weight:700;white-space:nowrap}
+.p-plan{background:var(--plan)}.p-done{background:var(--done)}.p-bid{background:var(--bid)}
+.meta{font-size:13px;color:var(--sub);margin-top:4px}
+.memo{font-size:14px;margin-top:6px;white-space:pre-wrap}
+.acts{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+.btn{border:1px solid var(--line);background:var(--field);color:var(--ink);border-radius:10px;padding:9px 14px;cursor:pointer}
+.btn.main{background:var(--acc);color:#111;border-color:var(--acc);font-weight:700}
+.btn.bidb{background:var(--bid);color:#fff;border-color:var(--bid);font-weight:700;flex:1}
+.btn.ghost{color:var(--sub)}
+.btn.del{color:var(--danger)}
+.fab{position:fixed;right:18px;bottom:calc(18px + env(safe-area-inset-bottom));background:var(--acc);color:#111;border:0;border-radius:99px;padding:14px 20px;font-size:16px;font-weight:700;box-shadow:0 4px 18px rgba(0,0,0,.6);cursor:pointer}
+.empty{text-align:center;color:var(--sub);padding:40px 10px}
+.note{font-size:12px;color:var(--sub);text-align:center;padding:6px}
+.sheet{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:flex-end;justify-content:center;z-index:20}
+.sheet.open{display:flex}
+.panel{background:var(--card);width:100%;max-width:560px;border-radius:16px 16px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom));max-height:90vh;overflow:auto}
+.panel h2{font-size:17px;margin:0 0 12px}
+label{display:block;font-size:12px;color:var(--sub);margin:10px 0 4px}
+.panel input,.panel select,.panel textarea{width:100%;padding:11px;border:1px solid var(--line);border-radius:10px;background:var(--field);color:var(--ink);font-size:16px}
+#eDate{cursor:pointer}
+.seg{display:flex;gap:6px}
+.seg button{flex:1;padding:11px;border:1px solid var(--line);border-radius:10px;background:var(--field);color:var(--ink);cursor:pointer}
+.seg button.on{background:var(--acc);color:#111;border-color:var(--acc);font-weight:700}
+.foot{display:flex;gap:8px;margin-top:16px}
+.foot .btn{flex:1;padding:11px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{background:var(--field);border:1px solid var(--line);border-radius:99px;padding:4px 6px 4px 10px;font-size:13px;display:flex;gap:4px;align-items:center}
+.chip button{border:0;background:none;color:var(--danger);cursor:pointer;font-size:14px}
+.addrow{display:flex;gap:6px;margin-top:6px}
+.addrow input{flex:1}
+.toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:#f2f2f3;color:#111 !important;color:#fff;padding:8px 14px;border-radius:8px;font-size:13px;display:none;z-index:30}
+</style>
+</head>
+<body>
+<header>
+  <h1>下見・指値 進捗 <small><span class="sync" id="sync"></span><button class="btn ghost" id="setBtn" style="padding:4px 10px">設定</button></small></h1>
+  <div class="stats">
+    <div class="stat" data-f="done"><b id="cDone">0</b><span>指値待ち（下見済）</span></div>
+    <div class="stat" data-f="bid"><b id="cBid">0</b><span>指値登録済</span></div>
+  </div>
+  <div class="tools">
+    <select id="fStatus">
+      <option value="done">指値待ち</option>
+      <option value="bid">指値登録済</option>
+      <option value="all">すべて</option>
+    </select>
+    <select id="fAuc"><option value="">全オークション</option></select>
+    <select id="fMonth"><option value="">全期間</option></select>
+  </div>
+</header>
+<main id="list"><div class="empty">読み込み中…</div></main>
+<div class="note" id="note"></div>
+<button class="fab" id="addBtn">＋ 追加</button>
+
+<div class="sheet" id="edit"><div class="panel">
+  <h2 id="eTitle">下見を追加</h2>
+  <label>開催日（タップでカレンダー）</label><input type="date" id="eDate">
+  <label>オークション</label><select id="eAuc"></select>
+  <label>下見担当</label><select id="eWho"></select>
+  <label>状態</label>
+  <div class="seg" id="eStat">
+    <button data-s="done">下見済（指値待ち）</button><button data-s="bid">指値登録済</button>
+  </div>
+  <label>メモ（気になる件数・注意点など）</label><textarea id="eMemo" rows="3"></textarea>
+  <div class="foot"><button class="btn" id="eCancel">キャンセル</button><button class="btn main" id="eSave">保存</button></div>
+</div></div>
+
+<div class="sheet" id="setting"><div class="panel">
+  <h2>設定</h2>
+  <label>オークション一覧</label>
+  <div class="chips" id="sAuc"></div>
+  <div class="addrow"><input id="sAucIn" placeholder="オークション名を追加"><button class="btn" id="sAucAdd">追加</button></div>
+  <label>下見担当</label>
+  <div class="chips" id="sWho"></div>
+  <div class="addrow"><input id="sWhoIn" placeholder="名前を追加"><button class="btn" id="sWhoAdd">追加</button></div>
+  <div class="foot"><button class="btn main" id="sClose">閉じる</button></div>
+</div></div>
+
+<div class="sheet" id="confirm"><div class="panel">
+  <h2 id="cMsg">削除しますか？</h2>
+  <div class="foot"><button class="btn" id="cNo">やめる</button><button class="btn del" id="cYes">削除する</button></div>
+</div></div>
+<div class="toast" id="toast"></div>
+<div id="lock" hidden><form id="lockForm">
+  <h1>ReKiL 下見・指値 進捗</h1>
+  <p class="meta" id="lockMsg"></p>
+  <input id="passIn" type="password" inputmode="numeric" autocomplete="current-password" placeholder="暗証番号">
+  <button class="btn main" id="lockGo" type="submit">開く</button>
+</form></div>
+
+<script>
+/* ▼ Apps Script をデプロイしたときの「ウェブアプリのURL」 */
+const API_URL = "https://script.google.com/macros/s/AKfycbw7kz9QQt6CMQvwIC4IhtSekntc4xGCUAWuop6U7LO_3U6FMRo--X6wKI0F6hSx3n3Vng/exec";
+const APP_VERSION = "2026-11-13-1";
+const DEF_AUC=["オークネット","エコリング","JDS","JBA","コメ兵","モノバンク","プライム","浜屋","大吉","JWA","トレファク","ペンギン","アプレ","リバオク"];
+const DEF_STAFF=["俊輔","祥貴"],DEF_WHO="俊輔";
+const ST={plan:"下見済・指値待ち",done:"下見済・指値待ち",bid:"指値登録済"};
+const PCLS={plan:"p-done",done:"p-done",bid:"p-bid"};
+const $=id=>document.getElementById(id);
+let items=[], online=false, busy=0, pass="", settings={auctions:DEF_AUC.slice(),staff:DEF_STAFF.slice()}, editing=null, eStatus="done", readOnly=false;
+
+
+try{pass=localStorage.getItem("rekil-shitami-pass")||localStorage.getItem("rekil-pass")||""}catch(e){}
+try{const c=JSON.parse(localStorage.getItem("shitami-data")||"null");if(c){items=c.items||[];if(c.settings)settings=c.settings}}catch(e){}
+class ApiError extends Error{constructor(c){super(c);this.code=c}}
+function setSync(){const el=$("sync");if(el)el.textContent=!API_URL?"未設定":busy?"同期中…":online?"接続済み":"未接続"}
+async function api(action,params={}){
+  if(!API_URL)throw new ApiError("no_api");
+  busy++;setSync();
+  try{
+    let res;try{res=await fetch(API_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({action,pass,...params})})}catch(e){throw new ApiError("network")}
+    let j;try{j=await res.json()}catch(e){throw new ApiError("bad_response")}
+    if(!j.ok){if(j.error==="passcode")showLock();throw new ApiError(j.error||"error")}
+    if(j.data){items=j.data.items||[];settings={auctions:(j.data.settings?.auctions?.length?j.data.settings.auctions:DEF_AUC.slice()),staff:(j.data.settings?.staff?.length?j.data.settings.staff:DEF_STAFF.slice())};try{localStorage.setItem("shitami-data",JSON.stringify({items,settings}))}catch(e){}}
+    online=true;return j.result;
+  }finally{busy--;setSync();render();if($("setting").classList.contains("open"))renderSettings()}
+}
+function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function today(){return new Date(Date.now()+9*3600e3).toISOString().slice(0,10)}
+function dayLabel(s){if(!s)return"日付なし";const d=new Date(s+"T00:00:00");const w="日月火水木金土"[d.getDay()];const t=today();let x="";if(s===t)x="（今日）";return `${d.getMonth()+1}月${d.getDate()}日（${w}）${x}`}
+function fmtTs(ms){if(!ms)return"";const d=new Date(ms);return `${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`}
+function toast(m){const t=$("toast");t.textContent=m;t.style.display="block";clearTimeout(t._h);t._h=setTimeout(()=>t.style.display="none",2200)}
+
+function fillSelects(){
+  const fa=$("fAuc"),cur=fa.value;
+  fa.innerHTML='<option value="">全オークション</option>'+settings.auctions.map(a=>`<option>${esc(a)}</option>`).join("");
+  fa.value=cur;
+  const months=[...new Set(items.map(i=>(i.date||"").slice(0,7)).filter(Boolean))].sort().reverse();
+  const fm=$("fMonth"),cm=fm.value;
+  fm.innerHTML='<option value="">全期間</option>'+months.map(m=>`<option value="${m}">${+m.slice(0,4)}年${+m.slice(5)}月</option>`).join("");
+  fm.value=cm;
+}
+
+function render(){
+  fillSelects();
+  $("cDone").textContent=items.filter(i=>i.status!=="bid").length;
+  $("cBid").textContent=items.filter(i=>i.status==="bid").length;
+  const fs=$("fStatus").value,fa=$("fAuc").value,fm=$("fMonth").value;
+  document.querySelectorAll(".stat").forEach(s=>s.classList.toggle("on",s.dataset.f===fs));
+  let list=items.filter(i=>{
+    if(fs==="done"&&i.status==="bid")return false;
+    if(fs==="bid"&&i.status!=="bid")return false;
+    if(fa&&i.auction!==fa)return false;
+    if(fm&&!(i.date||"").startsWith(fm))return false;
+    return true;});
+  const asc=fs!=="bid"&&fs!=="all";
+  list.sort((a,b)=>asc?(a.date||"").localeCompare(b.date||"")||(a.createdAt||0)-(b.createdAt||0):(b.date||"").localeCompare(a.date||"")||(b.createdAt||0)-(a.createdAt||0));
+  const el=$("list");
+  if(!list.length){el.innerHTML='<div class="empty">該当するものはありません<br>右下の「＋ 追加」から登録できます</div>';return}
+  let html="",last=null;
+  for(const i of list){
+    if(i.date!==last){html+=`<div class="day">${dayLabel(i.date)}</div>`;last=i.date}
+    const acts=readOnly?"":[
+      i.status!=="bid"?`<button class="btn bidb" data-a="bid" data-id="${i.id}">指値登録済にする</button>`:"",
+      i.status==="bid"?`<button class="btn ghost" data-a="done" data-id="${i.id}">指値待ちに戻す</button>`:"",
+      `<button class="btn ghost" data-a="edit" data-id="${i.id}">編集</button>`,
+      `<button class="btn del" data-a="del" data-id="${i.id}">削除</button>`].join("");
+    const meta=[i.staff?`下見：${esc(i.staff)}`:"下見担当 未設定", i.doneAt?`下見済 ${fmtTs(i.doneAt)}`:"", i.bidAt?`指値登録 ${fmtTs(i.bidAt)}`:""].filter(Boolean).join("　");
+    html+=`<div class="card${i.status==="bid"?" is-bid":""}"><div class="row"><span class="auc">${esc(i.auction||"")}</span><span class="pill ${PCLS[i.status]||"p-plan"}">${ST[i.status]||""}</span></div>
+      <div class="meta">${meta}</div>${i.memo?`<div class="memo">${esc(i.memo)}</div>`:""}<div class="acts">${acts}</div></div>`;
+  }
+  el.innerHTML=html;
+}
+
+function openEdit(item){
+  editing=item||null;
+  $("eTitle").textContent=item?"編集":"下見を追加";
+  $("eDate").value=item?.date||today();
+  const auc=settings.auctions.slice(); if(item?.auction&&!auc.includes(item.auction))auc.push(item.auction);
+  $("eAuc").innerHTML=auc.map(a=>`<option>${esc(a)}</option>`).join("");
+  $("eAuc").value=item?.auction||($("fAuc").value||auc[0]||"");
+  const st=settings.staff.slice(); if(item?.staff&&!st.includes(item.staff))st.push(item.staff);
+  $("eWho").innerHTML='<option value="">（未設定）</option>'+st.map(a=>`<option>${esc(a)}</option>`).join("");
+  $("eWho").value=item?item.staff||"":(st.includes(DEF_WHO)?DEF_WHO:(st[0]||""));
+  eStatus=item?.status==="bid"?"bid":"done"; segSync();
+  $("eMemo").value=item?.memo||"";
+  $("edit").classList.add("open");
+}
+function segSync(){document.querySelectorAll("#eStat button").forEach(b=>b.classList.toggle("on",b.dataset.s===eStatus))}
+document.querySelectorAll("#eStat button").forEach(b=>b.onclick=()=>{eStatus=b.dataset.s;segSync()});
+
+async function save(){
+  const now=Date.now();
+  const body={date:$("eDate").value,auction:$("eAuc").value,staff:$("eWho").value,memo:$("eMemo").value.trim(),status:eStatus,updatedAt:now};
+  if(editing){const p=editing;body.id=p.id;body.createdAt=p.createdAt||now;body.doneAt=p.doneAt||now;body.bidAt=eStatus==="bid"?(p.bidAt||now):"";}
+  else{body.createdAt=now;body.doneAt=now;body.bidAt=eStatus==="bid"?now:"";}
+  $("eSave").disabled=true;
+  try{await api("save",{record:body});$("edit").classList.remove("open");toast("保存しました")}catch(e){handleErr(e)}
+  $("eSave").disabled=false;
+}
+async function setStatus(id,s){
+  const it=items.find(x=>x.id===id);if(!it)return;
+  const now=Date.now();const r={...it,status:s,updatedAt:now,doneAt:it.doneAt||now,bidAt:s==="bid"?now:""};
+  try{await api("save",{record:r});toast(s==="bid"?"指値登録済にしました":"指値待ちに戻しました")}catch(e){handleErr(e)}
+}
+let delId=null;
+function askDel(id){const it=items.find(x=>x.id===id);delId=id;$("cMsg").textContent=`${dayLabel(it.date)} ${it.auction} を削除しますか？`;$("confirm").classList.add("open")}
+$("cNo").onclick=()=>$("confirm").classList.remove("open");
+$("cYes").onclick=async()=>{$("confirm").classList.remove("open");try{await api("remove",{id:delId});toast("削除しました")}catch(e){handleErr(e)}};
+
+function handleErr(e){
+  const c=e?.code;
+  if(c==="passcode")return;
+  toast(c==="network"?"通信できませんでした。電波の良い場所でもう一度お試しください":c==="no_api"?"データ側がまだ設定されていません":`保存できませんでした（${c}）`);
+}
+$("list").onclick=e=>{const b=e.target.closest("button[data-a]");if(!b)return;const id=b.dataset.id,a=b.dataset.a;
+  if(a==="edit")openEdit(items.find(x=>x.id===id));else if(a==="del")askDel(id);else setStatus(id,a)};
+$("addBtn").onclick=()=>openEdit(null);
+$("eCancel").onclick=()=>$("edit").classList.remove("open");
+$("eSave").onclick=save;
+$("eDate").addEventListener("click",()=>{try{$("eDate").showPicker()}catch(e){}});
+["fStatus","fAuc","fMonth"].forEach(id=>$(id).onchange=render);
+document.querySelectorAll(".stat").forEach(s=>s.onclick=()=>{$("fStatus").value=s.dataset.f;render()});
+
+// settings
+function renderSettings(){
+  $("sAuc").innerHTML=settings.auctions.map((a,i)=>`<span class="chip">${esc(a)}<button data-k="auctions" data-i="${i}">×</button></span>`).join("");
+  $("sWho").innerHTML=settings.staff.map((a,i)=>`<span class="chip">${esc(a)}<button data-k="staff" data-i="${i}">×</button></span>`).join("")||'<span class="meta">まだ登録がありません</span>';
+}
+async function saveSettings(){try{await api("config",{settings})}catch(e){handleErr(e)}}
+$("setBtn").onclick=()=>{renderSettings();$("setting").classList.add("open")};
+$("sClose").onclick=()=>$("setting").classList.remove("open");
+$("setting").onclick=async e=>{const b=e.target.closest("button[data-k]");if(!b)return;settings[b.dataset.k].splice(+b.dataset.i,1);renderSettings();await saveSettings()};
+async function addTo(k,inp){const v=$(inp).value.trim();if(!v||settings[k].includes(v))return;settings[k].push(v);$(inp).value="";renderSettings();await saveSettings()}
+$("sAucAdd").onclick=()=>addTo("auctions","sAucIn");
+$("sWhoAdd").onclick=()=>addTo("staff","sWhoIn");
+
+function showLock(){online=false;$("lock").hidden=false;
+  $("lockMsg").textContent=pass?"暗証番号が違います。もう一度入力してください。":"社内の暗証番号を入力してください（ReKiL Stockと同じ番号）。一度入力すると、このスマホでは次から入力不要です。";
+  setTimeout(()=>$("passIn").focus(),100)}
+$("lockForm").addEventListener("submit",async e=>{
+  e.preventDefault();pass=$("passIn").value.trim();if(!pass)return;
+  $("lockGo").disabled=true;$("lockGo").textContent="確認中…";
+  try{await api("list");try{localStorage.setItem("rekil-shitami-pass",pass)}catch(_){}
+    $("lock").hidden=true;$("passIn").value="";toast("接続しました")}
+  catch(err){if(err.code==="network")$("lockMsg").textContent="データ側に接続できませんでした。電波を確認してください。";
+    else if(err.code==="no_api")$("lockMsg").textContent="データ側（Apps Script）がまだ設定されていません。";
+    else if(err.code!=="passcode")$("lockMsg").textContent=`データ側でエラーが起きました（${err.code}）`;}
+  $("lockGo").disabled=false;$("lockGo").textContent="開く";
+});
+async function refresh(){if(!pass||busy||!API_URL)return;try{await api("list")}catch(err){if(err.code==="network"){online=false;setSync()}}}
+async function checkUpdate(){try{const r=await fetch(location.pathname+"?v="+Date.now(),{cache:"no-store"});const t=await r.text();const m=t.match(/const APP_VERSION = "([^"]+)"/);
+  if(m&&m[1]!==APP_VERSION&&!busy)location.replace(location.pathname+"?v="+encodeURIComponent(m[1]))}catch(_){}}
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"){checkUpdate();refresh()}});
+setInterval(()=>{if(document.visibilityState==="visible"&&!$("edit").classList.contains("open"))refresh()},60000);
+render();setSync();
+if(!API_URL){$("list").innerHTML='<div class="empty">データ側（Apps Script）の設定待ちです。<br>設定が終わるとここに表示されます。</div>'}
+else if(!pass)showLock();else{checkUpdate();refresh()}
+</script>
+</body>
+</html>
