@@ -119,8 +119,8 @@ input[type=checkbox]{min-height:0;width:20px;height:20px;padding:0;accent-color:
 #oNum{font-family:var(--font-code);font-weight:700;letter-spacing:.04em}
 .lblbox,.sheetbox{background:var(--steel)}
 nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--surface);border-top:1px solid var(--line);
-  display:grid;grid-template-columns:repeat(6,1fr);padding-bottom:env(safe-area-inset-bottom,0px)}
-nav.tabs a{display:flex;flex-direction:column;align-items:center;gap:2px;padding:9px 4px 10px;color:var(--sub);text-decoration:none;font-size:12px;font-weight:700}
+  display:grid;grid-template-columns:repeat(7,1fr);padding-bottom:env(safe-area-inset-bottom,0px)}
+nav.tabs a{display:flex;flex-direction:column;align-items:center;gap:2px;padding:9px 1px 10px;white-space:nowrap;color:var(--sub);text-decoration:none;font-size:12px;font-weight:700}
 nav.tabs a svg{width:22px;height:22px}
 nav.tabs a[aria-current="page"]{color:var(--ink)}
 nav.tabs a[aria-current="page"]::after{content:"";width:22px;height:3px;background:var(--acc);border-radius:2px}
@@ -273,6 +273,7 @@ A-0003"></textarea>
   <a href="../#racks"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 3v18M20 3v18M4 8h16M4 14h16M4 20h16"/></svg>ラック</a>
   <a href="../#labels"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="6" height="6"/><rect x="14" y="4" width="6" height="6"/><rect x="4" y="14" width="6" height="6"/><path d="M14 14h2v2h-2zM18 18h2v2h-2zM14 18h2M18 14h2"/></svg>QR発行</a>
   <a href="./" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12V5a2 2 0 0 1 2-2h7l9 9-9 9-9-9z"/><circle cx="8" cy="8" r="1.5"/></svg>シール</a>
+  <a href="../zaiko/"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7l9-4 9 4v10l-9 4-9-4z"/><path d="M3 7l9 4 9-4M12 11v10"/></svg>在庫</a>
 </nav>
 <div id="printArea"></div>
 
@@ -609,7 +610,7 @@ $("oShare").onclick=async()=>{
 };
 
 // 新しい版があれば自動で読み直す
-const SEAL_VERSION = "2026-11-13-4";
+const SEAL_VERSION = "2026-11-13-5";
 async function checkUpdate(){ try{ const r=await fetch(location.pathname+"?v="+Date.now(),{cache:"no-store"}); const t=await r.text(); const m=t.match(/const SEAL_VERSION = "([^"]+)"/); if(m && m[1]!==SEAL_VERSION) location.replace(location.pathname+"?v="+encodeURIComponent(m[1])); }catch(_){} }
 if(location.protocol.startsWith("http")){ checkUpdate(); document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="visible") checkUpdate(); }); }
 

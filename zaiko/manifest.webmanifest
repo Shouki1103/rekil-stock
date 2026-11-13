@@ -1,0 +1,16 @@
+{
+  "name": "ReKiL 在庫",
+  "short_name": "在庫",
+  "description": "在庫/売上管理シートの商品を、仕入値・仕入日・売上つきでスマホから検索する",
+  "lang": "ja",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#14181d",
+  "theme_color": "#0d1014",
+  "icons": [
+    {"src": "icon-192.png","sizes": "192x192","type": "image/png"},
+    {"src": "icon-512.png","sizes": "512x512","type": "image/png"},
+    {"src": "icon-512.png","sizes": "512x512","type": "image/png","purpose": "maskable"}
+  ]
+}

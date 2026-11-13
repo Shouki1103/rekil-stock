@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="在庫">
+<meta name="theme-color" content="#0d1014">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-192.png">
+<title>ReKiL 在庫</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=IBM+Plex+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#14181d;--surface:#1d232a;--line:#2f3740;--fg:#e8ebee;--muted:#9aa4af;--accent:#f5c026;--accent-ink:#14181d;--steel:#0d1014;--ok:#4cc27e;--danger:#ff7a6b;
+  --font-body:"Zen Kaku Gothic New","Hiragino Sans","Yu Gothic",system-ui,sans-serif;--font-code:"IBM Plex Mono",ui-monospace,Menlo,monospace;color-scheme:dark}
+*{box-sizing:border-box}
+html{padding-top:env(safe-area-inset-top,0px)}
+html,body{background:var(--bg);color:var(--fg);margin:0}
+body{font-family:var(--font-body);font-size:15px;line-height:1.55;padding-bottom:calc(76px + env(safe-area-inset-bottom,0px))}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--steel)}
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--steel);padding:10px 14px 12px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:900;font-size:17px;letter-spacing:.04em;color:#fff}
+.brand i{display:inline-block;width:12px;height:22px;background:repeating-linear-gradient(-45deg,var(--accent) 0 5px,#1d2228 5px 10px);border-radius:2px}
+.sync{font-size:12px;color:#c9d1d9;background:none;border:none;padding:4px 0;font:inherit;font-size:12px;cursor:pointer}
+.searchbox{position:relative}
+.searchbox input{width:100%;font:inherit;font-size:16px;padding:12px 40px 12px 40px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--fg);min-height:48px}
+.searchbox svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);width:20px;height:20px;color:var(--muted)}
+.searchbox .clr{position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--muted);font-size:20px;width:36px;height:36px;cursor:pointer}
+.chips{display:flex;gap:6px;margin-top:10px;overflow-x:auto;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;font:inherit;font-size:13px;font-weight:700;border:1px solid var(--line);background:var(--surface);color:var(--muted);border-radius:999px;padding:6px 12px;cursor:pointer}
+.chip.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+select.chip{appearance:none;-webkit-appearance:none;padding-right:26px;background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);background-position:calc(100% - 14px) 50%,calc(100% - 9px) 50%;background-size:5px 5px;background-repeat:no-repeat}
+main{max-width:720px;margin:0 auto;padding:12px}
+.sum{display:flex;gap:8px;margin-bottom:12px}
+.sum div{flex:1;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:8px 10px}
+.sum b{display:block;font-family:var(--font-code);font-size:17px;color:#fff}
+.sum span{font-size:11px;color:var(--muted);font-weight:700;letter-spacing:.04em}
+.item{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:8px;cursor:pointer}
+.item .r1{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+.item .nm{font-weight:700;font-size:15px;line-height:1.4;word-break:break-all}
+.item .cost{font-family:var(--font-code);font-weight:700;font-size:18px;color:var(--accent);white-space:nowrap}
+.item .r2{display:flex;flex-wrap:wrap;gap:4px 12px;margin-top:6px;font-size:12px;color:var(--muted)}
+.item .r2 .no{font-family:var(--font-code);color:#c9d1d9}
+.tag{display:inline-block;font-size:11px;font-weight:700;border-radius:4px;padding:1px 6px}
+.tag.on{background:#1f3a2a;color:var(--ok)} .tag.sold{background:#2a2f36;color:var(--muted)}
+.age.old{color:var(--danger);font-weight:700}
+.detail{display:none;margin-top:10px;border-top:1px dashed var(--line);padding-top:10px;font-size:13px}
+.item.open .detail{display:block}
+.detail dl{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin:0}
+.detail dt{color:var(--muted)} .detail dd{margin:0;word-break:break-all}
+.detail .num{font-family:var(--font-code)}
+.pos{color:var(--ok)} .neg{color:var(--danger)}
+.copy{margin-top:8px;font:inherit;font-size:12px;font-weight:700;border:1px solid var(--line);background:var(--bg);color:var(--fg);border-radius:8px;padding:6px 10px;cursor:pointer}
+.more{width:100%;font:inherit;font-weight:700;border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:10px;padding:12px;margin:4px 0 12px;cursor:pointer}
+.empty{color:var(--muted);text-align:center;padding:40px 10px}
+nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--surface);border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(7,1fr);padding-bottom:env(safe-area-inset-bottom,0px)}
+nav.tabs a{display:flex;flex-direction:column;align-items:center;gap:2px;padding:9px 2px 10px;color:var(--muted);text-decoration:none;font-size:11px;font-weight:700;white-space:nowrap}
+nav.tabs a svg{width:22px;height:22px}
+nav.tabs a[aria-current="page"]{color:var(--fg)}
+nav.tabs a[aria-current="page"]::after{content:"";width:22px;height:3px;background:var(--accent);border-radius:2px}
+#lock{position:fixed;inset:0;z-index:20;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:24px}
+#lock[hidden]{display:none}
+#lock form{width:100%;max-width:360px;display:flex;flex-direction:column;gap:12px}
+#lock h2{margin:0;font-size:20px;font-weight:900}
+#lock p{margin:0;color:var(--muted);font-size:14px}
+#lock input{font:inherit;font-size:16px;padding:12px;border:2px solid var(--accent);border-radius:8px;background:var(--steel);color:var(--fg);min-height:48px}
+#lock button{font:inherit;font-weight:700;border:none;border-radius:8px;background:var(--accent);color:var(--accent-ink);min-height:48px;cursor:pointer}
+.toast{position:fixed;left:50%;bottom:calc(90px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:#fff;color:#111;font-weight:700;font-size:13px;padding:8px 14px;border-radius:999px;z-index:30;opacity:0;transition:opacity .2s;pointer-events:none}
+.toast.show{opacity:1}
+</style>
+</head>
+<body>
+<header>
+  <div class="top">
+    <div class="brand"><i></i>在庫</div>
+    <button class="sync" id="sync" type="button">読み込み中…</button>
+  </div>
+  <div class="searchbox">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/></svg>
+    <input id="q" type="search" placeholder="商品名・No.・仕入先・型番で検索" autocomplete="off" enterkeyhint="search">
+    <button class="clr" id="clr" type="button" aria-label="消す" hidden>×</button>
+  </div>
+  <div class="chips">
+    <button class="chip on" data-st="出品中" type="button">出品中</button>
+    <button class="chip" data-st="売却済み" type="button">売却済み</button>
+    <button class="chip" data-st="" type="button">すべて</button>
+    <select class="chip" id="sort" aria-label="並び順">
+      <option value="buyDesc">仕入日 新しい順</option>
+      <option value="buyAsc">仕入日 古い順</option>
+      <option value="costDesc">仕入値 高い順</option>
+      <option value="costAsc">仕入値 安い順</option>
+      <option value="soldDesc">売却日 新しい順</option>
+      <option value="noDesc">No. 大きい順</option>
+    </select>
+  </div>
+</header>
+
+<main>
+  <div class="sum" id="sum"></div>
+  <div id="list"></div>
+</main>
+
+<nav class="tabs" aria-label="メニュー">
+  <a href="../#store"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7V4h3M21 7V4h-3M3 17v3h3M21 17v3h-3"/><path d="M8 12h8M12 8v8"/></svg>収納</a>
+  <a href="../#search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/></svg>探す</a>
+  <a href="../#pickup"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16l-1.5 12h-13z"/><path d="M9 7V5a3 3 0 0 1 6 0v2"/><path d="M9 13l2 2 4-4"/></svg>ピック</a>
+  <a href="../#racks"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 3v18M20 3v18M4 8h16M4 14h16M4 20h16"/></svg>ラック</a>
+  <a href="../#labels"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="6" height="6"/><rect x="14" y="4" width="6" height="6"/><rect x="4" y="14" width="6" height="6"/><path d="M14 14h2v2h-2zM18 18h2v2h-2zM14 18h2M18 14h2"/></svg>QR発行</a>
+  <a href="../seal/"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12V5a2 2 0 0 1 2-2h7l9 9-9 9-9-9z"/><circle cx="8" cy="8" r="1.5"/></svg>シール</a>
+  <a href="./" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7l9-4 9 4v10l-9 4-9-4z"/><path d="M3 7l9 4 9-4M12 11v10"/></svg>在庫</a>
+</nav>
+
+<div id="lock" hidden>
+  <form id="lockForm">
+    <div class="brand"><i></i>ReKiL 在庫</div>
+    <h2>暗証番号</h2>
+    <p id="lockMsg">社内の暗証番号を入力してください。一度入力すると、この端末では次から入力不要です。</p>
+    <input id="passIn" type="password" inputmode="numeric" autocomplete="current-password" placeholder="暗証番号">
+    <button type="submit">開く</button>
+  </form>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ▼ Apps Script をデプロイしたときの「ウェブアプリのURL」（未設定なら空） */
+const API_URL = "";
+const APP_VERSION = "2026-11-13-1";
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const yen = v => v==null || v==="" ? "—" : "¥" + Math.round(v).toLocaleString("ja-JP");
+const norm = s => String(s ?? "").normalize("NFKC").toLowerCase().replace(/\s+/g,"");
+const SYN = [["ヴィトン","ルイヴィトン","louisvuitton","vuitton"],["シャネル","chanel"],["グッチ","gucci"],["エルメス","hermes","hermès"],["プラダ","prada"],["フェンディ","fendi"],["ディオール","dior"],["セリーヌ","celine","céline"],["バーバリー","burberry"],["ロエベ","loewe"],["ボッテガ","bottega"],["サンローラン","saintlaurent","ysl"],["コーチ","coach"],["ミュウミュウ","miumiu"],["バレンシアガ","balenciaga"],["ゴヤール","goyard"],["カルティエ","cartier"],["ロレックス","rolex"],["モンクレール","moncler"],["マックスマーラ","maxmara"],["ジバンシィ","ジバンシー","givenchy"],["ヴァレンティノ","バレンティノ","valentino"],["フェラガモ","ferragamo"],["トッズ","tod's","tods"],["クロエ","chloe","chloé"],["ルブタン","louboutin"],["ジミーチュウ","jimmychoo"],["マルジェラ","margiela"],["アクネ","acne"],["サカイ","sacai"],["コムデギャルソン","ギャルソン","commedesgarcons","garcons"]].map(g=>g.map(norm));
+const variants = w => { const g = SYN.find(g=>g.some(v=>v===w || (w.length>=3 && v.startsWith(w)))); return g ? [w, ...g] : [w]; };
+let pass = ""; try{ pass = localStorage.getItem("rekil-zaiko-pass") || localStorage.getItem("rekil-pass") || localStorage.getItem("rekil-kyuyo-pass") || ""; }catch(_){}
+let rows = [], idx = [], st = "出品中", shown = 60, openKey = null, loadedAt = null;
+try{ st = localStorage.getItem("rekil-zaiko-st") ?? "出品中"; const so = localStorage.getItem("rekil-zaiko-sort"); if(so) $("#sort").value = so; }catch(_){}
+
+function toast(t){ const el=$("#toast"); el.textContent=t; el.classList.add("show"); clearTimeout(toast.t); toast.t=setTimeout(()=>el.classList.remove("show"),1800); }
+const today = new Date(); today.setHours(0,0,0,0);
+const daysSince = d => { if(!d) return null; const t = new Date(d+"T00:00:00"); return isNaN(t) ? null : Math.round((today - t)/86400000); };
+const fmtD = d => d ? d.replace(/^(\d{4})-(\d{2})-(\d{2})$/, (_,y,m,dd)=>`${y}/${+m}/${+dd}`) : "—";
+
+function setData(list, at){
+  rows = list.map(r => ({no:r[0], name:r[1], cost:r[2], src:r[3], buy:r[4], memo:r[5], st:r[6], sold:r[7], sale:r[8], ch:r[9], total:r[10], profit:r[11]}));
+  idx = rows.map(r => norm(`${r.no} ${r.name} ${r.src} ${r.memo} ${r.ch}`));
+  loadedAt = at ? new Date(at) : new Date();
+  updSync(); render();
+}
+function updSync(text){ $("#sync").textContent = text || (loadedAt ? `${loadedAt.getMonth()+1}/${loadedAt.getDate()} ${String(loadedAt.getHours()).padStart(2,"0")}:${String(loadedAt.getMinutes()).padStart(2,"0")} 更新 ↻` : "未接続"); }
+
+function filtered(){
+  const q = $("#q").value.trim();
+  const words = q ? q.normalize("NFKC").split(/\s+/).map(norm).filter(Boolean) : [];
+  const numOnly = /^\d+$/.test(q.normalize("NFKC")) ? q.normalize("NFKC") : null;
+  const wv = words.map(variants);
+  let out = [];
+  for(let i=0;i<rows.length;i++){
+    const r = rows[i];
+    if(st && r.st !== st) continue;
+    if(words.length && !wv.every(vs => vs.some(v => idx[i].includes(v)))) continue;
+    out.push(r);
+  }
+  if(numOnly){ out.sort((a,b)=> (String(b.no)===numOnly) - (String(a.no)===numOnly) || cmp(a,b)); return out; }
+  return out.sort(cmp);
+}
+function cmp(a,b){
+  const s = $("#sort").value, n = v => v==null ? -Infinity : v;
+  if(s==="buyDesc") return (b.buy||"").localeCompare(a.buy||"") || (+b.no||0)-(+a.no||0);
+  if(s==="buyAsc") return (a.buy||"9").localeCompare(b.buy||"9") || (+a.no||0)-(+b.no||0);
+  if(s==="costDesc") return n(b.cost)-n(a.cost);
+  if(s==="costAsc") return (a.cost??Infinity)-(b.cost??Infinity);
+  if(s==="soldDesc") return (b.sold||"").localeCompare(a.sold||"");
+  return (+b.no||0)-(+a.no||0);
+}
+
+function render(){
+  const list = filtered();
+  const sumCost = list.reduce((s,r)=>s+(r.cost||0),0);
+  const sold = list.filter(r=>r.st==="売却済み");
+  const sumProfit = sold.reduce((s,r)=>s+(r.profit||0),0);
+  $("#sum").innerHTML = `<div><span>件数</span><b>${list.length.toLocaleString()}点</b></div><div><span>仕入値の合計</span><b>${yen(sumCost)}</b></div>` +
+    (st!=="出品中" && sold.length ? `<div><span>粗利の合計</span><b class="${sumProfit<0?"neg":"pos"}">${yen(sumProfit)}</b></div>` : "");
+  if(!rows.length){ $("#list").innerHTML = `<div class="empty">${API_URL ? "読み込み中…" : "データの接続先がまだ設定されていません"}</div>`; return; }
+  if(!list.length){ $("#list").innerHTML = `<div class="empty">見つかりませんでした</div>`; return; }
+  const part = list.slice(0, shown);
+  $("#list").innerHTML = part.map(r => {
+    const key = `${r.no}|${r.name}`, age = daysSince(r.buy), isSold = r.st==="売却済み";
+    const ageTxt = !isSold && age!=null ? `<span class="age ${age>=180?"old":""}">${age}日目</span>` : "";
+    return `<div class="item ${openKey===key?"open":""}" data-k="${esc(key)}">
+      <div class="r1"><div class="nm">${esc(r.name)}</div><div class="cost">${yen(r.cost)}</div></div>
+      <div class="r2"><span class="no">No.${esc(r.no)}</span><span class="tag ${isSold?"sold":"on"}">${esc(r.st||"—")}</span><span>${esc(r.src||"—")}</span><span>${fmtD(r.buy)}</span>${ageTxt}${isSold&&r.sale!=null?`<span>売 ${yen(r.sale)}</span>`:""}</div>
+      <div class="detail"><dl>
+        <dt>仕入値</dt><dd class="num">${yen(r.cost)}</dd>
+        <dt>仕入先</dt><dd>${esc(r.src||"—")}</dd>
+        <dt>仕入日</dt><dd>${fmtD(r.buy)}${age!=null&&!isSold?`（${age}日目）`:""}</dd>
+        <dt>備考</dt><dd>${esc(r.memo||"—")}</dd>
+        ${isSold ? `<dt>売却日</dt><dd>${fmtD(r.sold)}</dd><dt>販売先</dt><dd>${esc(r.ch||"—")}</dd><dt>売上</dt><dd class="num">${yen(r.sale)}</dd><dt>総原価</dt><dd class="num">${yen(r.total)}</dd><dt>粗利</dt><dd class="num ${r.profit<0?"neg":"pos"}">${yen(r.profit)}${r.sale?`（${(r.profit/r.sale*100).toFixed(1)}%）`:""}</dd>` : ""}
+      </dl><button class="copy" type="button" data-copy="${esc(r.name)}">商品名をコピー</button></div>
+    </div>`;
+  }).join("") + (list.length>shown ? `<button class="more" id="more" type="button">もっと見る（残り${(list.length-shown).toLocaleString()}点）</button>` : "");
+}
+
+$("#list").addEventListener("click", e => {
+  const c = e.target.closest("[data-copy]");
+  if(c){ e.stopPropagation(); navigator.clipboard?.writeText(c.dataset.copy).then(()=>toast("コピーしました"), ()=>toast("コピーできませんでした")); return; }
+  if(e.target.id==="more"){ shown += 100; render(); return; }
+  const it = e.target.closest(".item"); if(!it) return;
+  openKey = openKey===it.dataset.k ? null : it.dataset.k; it.classList.toggle("open", openKey===it.dataset.k);
+  document.querySelectorAll(".item.open").forEach(x=>{ if(x!==it) x.classList.remove("open"); });
+});
+let qt; $("#q").addEventListener("input", ()=>{ $("#clr").hidden = !$("#q").value; clearTimeout(qt); qt=setTimeout(()=>{ shown=60; render(); }, 120); });
+$("#q").addEventListener("keydown", e=>{ if(e.key==="Enter") $("#q").blur(); });
+$("#clr").onclick = ()=>{ $("#q").value=""; $("#clr").hidden=true; shown=60; render(); $("#q").focus(); };
+document.querySelectorAll(".chip[data-st]").forEach(b=>{ b.classList.toggle("on", b.dataset.st===st); b.onclick=()=>{ st=b.dataset.st; document.querySelectorAll(".chip[data-st]").forEach(x=>x.classList.toggle("on",x===b)); if(st==="売却済み" && $("#sort").value==="buyDesc") $("#sort").value="soldDesc"; if(st!=="売却済み" && $("#sort").value==="soldDesc") $("#sort").value="buyDesc"; try{localStorage.setItem("rekil-zaiko-st",st);localStorage.setItem("rekil-zaiko-sort",$("#sort").value);}catch(_){} shown=60; render(); }; });
+$("#sort").onchange = ()=>{ try{localStorage.setItem("rekil-zaiko-sort",$("#sort").value);}catch(_){} shown=60; render(); };
+
+// データ
+async function load(){
+  if(!API_URL){ updSync("未接続"); render(); return; }
+  if(!pass){ showLock(); return; }
+  updSync("更新中…");
+  let j;
+  try{
+    const res = await fetch(API_URL, {method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"}, body: JSON.stringify({action:"list", pass})});
+    j = await res.json();
+  }catch(_){ updSync(); toast(rows.length ? "通信できません（前回のデータを表示中）" : "通信できません"); return; }
+  if(!j.ok){ updSync(); if(j.error==="passcode"||j.error==="passcode_not_set") showLock(j.error); else toast("読み込めませんでした"); return; }
+  try{ localStorage.setItem("rekil-zaiko-pass", pass); localStorage.setItem("rekil-zaiko-cache", JSON.stringify({at:j.at, result:j.result})); }catch(_){}
+  setData(j.result, j.at); $("#lock").hidden = true;
+}
+function showLock(err){
+  $("#lockMsg").textContent = err==="passcode_not_set" ? "データ側で暗証番号がまだ設定されていません。Apps Scriptの PASSCODE を書き換えて、もう一度デプロイしてください。"
+    : err==="passcode" && pass ? "暗証番号が違います。もう一度入力してください。" : "社内の暗証番号を入力してください。一度入力すると、この端末では次から入力不要です。";
+  $("#lock").hidden = false; setTimeout(()=>$("#passIn").focus(),100);
+}
+$("#lockForm").onsubmit = e => { e.preventDefault(); pass = $("#passIn").value.trim(); if(pass) load(); };
+$("#sync").onclick = load;
+try{ const c = JSON.parse(localStorage.getItem("rekil-zaiko-cache")||"null"); if(c && c.result) setData(c.result, c.at); }catch(_){}
+render(); load();
+document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState==="visible" && loadedAt && Date.now()-loadedAt>5*60000) load(); });
+
+// 新しい版の自動反映
+async function checkUpdate(){ try{ const r=await fetch(location.pathname+"?v="+Date.now(),{cache:"no-store"}); const t=await r.text(); const m=t.match(/const APP_VERSION = "([^"]+)"/); if(m && m[1]!==APP_VERSION) location.replace(location.pathname+"?v="+encodeURIComponent(m[1])); }catch(_){} }
+if(location.protocol.startsWith("http")){ checkUpdate(); document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="visible") checkUpdate(); }); }
+</script>
+</body>
+</html>
