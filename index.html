@@ -154,7 +154,10 @@ input,select{font:inherit;width:100%;padding:11px 12px;border:1px solid var(--li
 .whobtn span{overflow:hidden;text-overflow:ellipsis}
 .sync.pending{color:var(--accent);font-weight:700}
 .whochips{display:flex;gap:6px;flex-wrap:wrap}
-.whochips button{min-height:34px;padding:4px 12px;font-size:14px}
+.whochips button{min-height:44px;padding:6px 16px;font-size:16px}
+.whochips button[aria-checked="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.whoadd{cursor:pointer;font-weight:700;color:var(--muted);font-size:14px;list-style:none}
+.whoadd::-webkit-details-marker{display:none}
 .qrow{display:flex;gap:8px}
 .qrow input{flex:1;min-width:0}
 .qscan{flex:none;width:50px;padding:0}
@@ -386,10 +389,12 @@ input,select{font:inherit;width:100%;padding:11px 12px;border:1px solid var(--li
     <div id="passRow" style="display:flex;flex-direction:column;gap:14px">
       <input id="passIn" type="password" inputmode="numeric" autocomplete="current-password" placeholder="暗証番号" aria-label="暗証番号">
     </div>
-    <label class="label" for="whoIn" style="margin-top:4px">使う人の名前（だれが操作したかの記録に使います）</label>
-    <input id="whoIn" list="whoList" autocomplete="name" placeholder="例：櫻井" aria-label="使う人の名前">
-    <datalist id="whoList"></datalist>
-    <div class="whochips" id="whoChips"></div>
+    <span class="label" style="margin-top:4px">使う人の名前（だれが操作したかの記録に使います）</span>
+    <div class="whochips" id="whoChips" role="radiogroup" aria-label="使う人の名前"></div>
+    <details id="whoAddBox">
+      <summary class="whoadd">＋ 名前を追加する</summary>
+      <input id="whoIn" autocomplete="off" placeholder="新しい名前を入力" aria-label="追加する名前" style="margin-top:8px">
+    </details>
     <button class="primary" id="lockGo" type="submit">開く</button>
   </form>
 </div>
@@ -1351,32 +1356,42 @@ function onScan(txt){
 }
 
 /* ---------- 暗証番号 ---------- */
-function knownNames(){ const s=new Set(); for(const v of items.values()) if(v.by) s.add(v.by); if(who) s.add(who); return [...s].sort((a,b)=>a.localeCompare(b,"ja")); }
+const DEFAULT_NAMES = ["祥貴","俊輔","真由美"];
+let extraNames = []; try{ extraNames = JSON.parse(localStorage.getItem("rekil-names")||"[]") || []; }catch(_){}
+let whoPick = "";
+function knownNames(){
+  const s = [...DEFAULT_NAMES];
+  const add = n => { n = String(n||"").trim(); if(n && !s.includes(n)) s.push(n); };
+  extraNames.forEach(add); for(const v of items.values()) add(v.by); add(who);
+  return s;
+}
 function renderWhoList(){
   $("#whoName").textContent = who || "名前";
-  const names = knownNames();
-  $("#whoList").innerHTML = names.map(n=>`<option value="${esc(n)}">`).join("");
-  $("#whoChips").innerHTML = names.map(n=>`<button type="button" data-who="${esc(n)}">${esc(n)}</button>`).join("");
+  $("#whoChips").innerHTML = knownNames().map(n=>`<button type="button" role="radio" aria-checked="${n===whoPick}" data-who="${esc(n)}">${esc(n)}</button>`).join("");
 }
-$("#whoChips").addEventListener("click", e=>{ const b=e.target.closest("[data-who]"); if(b){ $("#whoIn").value=b.dataset.who; } });
+$("#whoChips").addEventListener("click", e=>{ const b=e.target.closest("[data-who]"); if(!b) return; whoPick=b.dataset.who; $("#whoIn").value=""; $("#whoAddBox").open=false; renderWhoList(); });
+$("#whoIn").addEventListener("input", ()=>{ if($("#whoIn").value.trim()){ whoPick=""; renderWhoList(); } });
+$("#whoAddBox").addEventListener("toggle", ()=>{ if($("#whoAddBox").open) setTimeout(()=>$("#whoIn").focus(),50); });
 function showWho(){
   $("#lock").hidden = false; $("#passRow").hidden = true; $("#lockT").textContent = "使う人の名前";
-  $("#lockMsg").textContent = "このスマホを使う人の名前を選ぶか入力してください。収納・売れた・取り出しなどの操作に、名前が記録されます。";
-  $("#whoIn").value = who; renderWhoList(); setTimeout(()=>$("#whoIn").focus(), 100);
+  $("#lockMsg").textContent = "このスマホを使う人の名前を選んでください。収納・売れた・取り出しなどの操作に、名前が記録されます。";
+  whoPick = who; $("#whoIn").value = ""; $("#whoAddBox").open = false; renderWhoList();
 }
 $("#whoBtn").onclick = showWho;
 function showLock(err){
   online = false;
-  $("#lock").hidden = false; $("#passRow").hidden = false; $("#lockT").textContent = "暗証番号"; $("#whoIn").value = who; renderWhoList();
+  $("#lock").hidden = false; $("#passRow").hidden = false; $("#lockT").textContent = "暗証番号"; whoPick = who; $("#whoIn").value = ""; renderWhoList();
   $("#lockMsg").textContent = err==="passcode_not_set" ? "データ側で暗証番号がまだ設定されていません。Apps Scriptの PASSCODE を書き換えて、もう一度デプロイしてください。"
     : err==="passcode" && pass ? "暗証番号が違います。もう一度入力してください。" : "社内の暗証番号を入力してください。一度入力すると、このスマホでは次から入力不要です。";
   setTimeout(()=>$("#passIn").focus(), 100);
 }
 $("#lockForm").addEventListener("submit", async e=>{
   e.preventDefault();
-  const nm = $("#whoIn").value.trim().slice(0,20);
-  if(!nm){ $("#lockMsg").textContent = "使う人の名前を入れてください。"; $("#whoIn").focus(); return; }
-  who = nm; try{ localStorage.setItem("rekil-who", who); }catch(_){} renderWhoList();
+  const typed = $("#whoIn").value.trim().slice(0,20);
+  const nm = typed || whoPick;
+  if(!nm){ $("#lockMsg").textContent = "使う人の名前を選んでください。"; return; }
+  if(typed && !knownNames().includes(typed)){ extraNames.push(typed); try{ localStorage.setItem("rekil-names", JSON.stringify(extraNames)); }catch(_){} }
+  who = nm; whoPick = nm; $("#whoIn").value = ""; try{ localStorage.setItem("rekil-who", who); }catch(_){} renderWhoList();
   if($("#passRow").hidden){ $("#lock").hidden = true; toast(`${who} さんとして記録します`); return; }
   pass = $("#passIn").value.trim(); if(!pass) return;
   $("#lockGo").disabled = true; $("#lockGo").textContent = "確認中…";
@@ -1408,7 +1423,7 @@ document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState=
 /* ---------- 新しい版の自動反映 ----------
    GitHub Pagesやスマホが古い画面を覚えていても、開いたとき・画面に戻ったときに
    最新版があるか確認し、あれば自動で読み直す */
-const APP_VERSION = "2026-11-13-5";
+const APP_VERSION = "2026-11-13-6";
 async function checkUpdate(){
   try{
     const r = await fetch(location.pathname + "?v=" + Date.now(), {cache:"no-store"});
