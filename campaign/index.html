@@ -154,14 +154,14 @@ label{display:block;font-size:12px;color:var(--sub);margin:8px 0 3px}
 <script>
 /* ▼ Apps Script をデプロイしたときの「ウェブアプリのURL」 */
 const API_URL = "https://script.google.com/macros/s/AKfycby3F-MYmPDbMyj3CC4sR2WC2KwtC73femnvFT4XG67PgCpaQjw9Z5Dp6qRk_KgknGrc/exec";
-const APP_VERSION = "2026-11-13-1";
+const APP_VERSION = "2026-11-13-2";
 
 const $=id=>document.getElementById(id);
 const C_FIELDS=["id","name","status","apply_deadline","start_jst","end_jst","coupon_code","offer","cashback_rate","cashback_cap_usd","budget_usd","min_price_usd","target_items","excluded_items","conditions","cashback_due","inquiry_tag","orders","sales_usd","discount_usd","fees_usd","cashback_expected_usd","cashback_received_usd","cashback_received_date","note","result_pdf"];
 const NUM=new Set(["cashback_rate","cashback_cap_usd","budget_usd","min_price_usd","target_items","excluded_items","orders","sales_usd","discount_usd","fees_usd","cashback_expected_usd","cashback_received_usd"]);
 let campaigns=[],steps=[],filter="active",pass="",online=false,busy=0,editingC=null,editingS=null,stepFor=null,confirmFn=null;
 try{pass=localStorage.getItem("rekil-campaign-pass")||localStorage.getItem("rekil-shitami-pass")||localStorage.getItem("rekil-pass")||""}catch(e){}
-try{const c=JSON.parse(localStorage.getItem("campaign-data")||"null");if(c){campaigns=c.campaigns||[];steps=c.steps||[]}}catch(e){}
+try{const c=JSON.parse(localStorage.getItem("campaign-data")||"null");if(c){campaigns=(c.campaigns||[]).map(fixDates);steps=(c.steps||[]).map(fixDates)}}catch(e){}
 
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const today=()=>new Date(Date.now()+9*3600e3).toISOString().slice(0,10);
@@ -173,6 +173,8 @@ const usd=v=>v===""||v==null?"—":"$"+Number(v).toLocaleString("en-US",{maximum
 const num=v=>v===""||v==null?"—":Number(v).toLocaleString("ja-JP");
 function toast(m){const t=$("toast");t.textContent=m;t.style.display="block";clearTimeout(t._h);t._h=setTimeout(()=>t.style.display="none",2200)}
 
+/* データ側から日時が「2026-11-18T15:00:00.000Z」の形で来たら、日本時間の日付に直す */
+function fixDates(o){const r={...o};for(const k in r){const v=r[k];if(typeof v==="string"&&/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(\.\d+)?Z$/.test(v)){const j=new Date(Date.parse(v)+9*3600e3).toISOString();r[k]=(k==="start_jst"||k==="end_jst")?j.slice(0,10)+" "+j.slice(11,16):j.slice(0,10)}}return r}
 class ApiError extends Error{constructor(c){super(c);this.code=c}}
 function setSync(){$("sync").textContent=!API_URL?"未設定":busy?"同期中…":online?"接続済み":"未接続"}
 async function api(action,params={}){
@@ -182,7 +184,7 @@ async function api(action,params={}){
     let res;try{res=await fetch(API_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({action,pass,...params})})}catch(e){throw new ApiError("network")}
     let j;try{j=await res.json()}catch(e){throw new ApiError("bad_response")}
     if(!j.ok){if(j.error==="passcode")showLock();throw new ApiError(j.error||"error")}
-    if(j.data){campaigns=j.data.campaigns||[];steps=j.data.steps||[];try{localStorage.setItem("campaign-data",JSON.stringify({campaigns,steps}))}catch(e){}}
+    if(j.data){campaigns=(j.data.campaigns||[]).map(fixDates);steps=(j.data.steps||[]).map(fixDates);try{localStorage.setItem("campaign-data",JSON.stringify({campaigns,steps}))}catch(e){}}
     online=true;return j.result;
   }finally{busy--;setSync();render()}
 }
