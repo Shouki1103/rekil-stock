@@ -149,13 +149,44 @@ input,select{font:inherit;width:100%;padding:11px 12px;border:1px solid var(--li
 .stchip.sd{color:var(--ok);border-color:var(--ok)}
 .selbar .ghost{color:#fff;border-color:#ffffff66}
 .warn{font-size:13px;color:var(--danger);font-weight:700}
+.hdr-r{display:flex;align-items:center;gap:10px;min-width:0}
+.whobtn{min-height:30px;padding:3px 9px;font-size:12px;gap:4px;background:transparent;border-color:#ffffff40;color:#e8ebee;max-width:120px;overflow:hidden;white-space:nowrap}
+.whobtn span{overflow:hidden;text-overflow:ellipsis}
+.sync.pending{color:var(--accent);font-weight:700}
+.whochips{display:flex;gap:6px;flex-wrap:wrap}
+.whochips button{min-height:34px;padding:4px 12px;font-size:14px}
+.qrow{display:flex;gap:8px}
+.qrow input{flex:1;min-width:0}
+.qscan{flex:none;width:50px;padding:0}
+.scanner{position:fixed;inset:0;z-index:40;background:#000;color:#fff}
+.scanner video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.scan-frame{position:absolute;left:50%;top:44%;width:min(68vw,320px);aspect-ratio:1;transform:translate(-50%,-50%);border:3px solid var(--accent);border-radius:16px;box-shadow:0 0 0 100vmax rgba(0,0,0,.45);transition:border-color .15s}
+.scan-frame.ok{border-color:var(--ok)}
+.scan-frame.ng{border-color:var(--danger)}
+.scan-top{position:absolute;left:0;right:0;top:0;display:flex;align-items:center;justify-content:space-between;gap:10px;
+  padding:calc(env(safe-area-inset-top,0px) + 12px) max(16px,env(safe-area-inset-right,0px)) 12px max(16px,env(safe-area-inset-left,0px));background:linear-gradient(#000c,#0000)}
+.scan-rack{display:flex;flex-direction:column}
+.scan-rack b{font-family:var(--font-code);font-size:30px;line-height:1.1;color:var(--accent)}
+.scan-close{min-height:42px;background:#ffffff1a;border-color:#ffffff55;color:#fff}
+.scan-bottom{position:absolute;left:0;right:0;bottom:0;display:flex;flex-direction:column;gap:8px;
+  padding:16px max(16px,env(safe-area-inset-right,0px)) calc(env(safe-area-inset-bottom,0px) + 16px) max(16px,env(safe-area-inset-left,0px));background:linear-gradient(#0000,#000d 30%)}
+.scan-msg{font-weight:700;font-size:16px}
+.scan-log{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px;max-height:28vh;overflow:auto;font-size:14px}
+.scan-log li{display:flex;gap:8px;align-items:baseline}
+.scan-log b{font-family:var(--font-code)}
+.scan-log span{color:#c9d1d9;font-size:12px}
+.scanner .scan-bottom button{align-self:flex-start}
+.hist-op{font-size:12px;font-weight:700;padding:1px 8px;border-radius:999px;border:1px solid var(--line);white-space:nowrap}
 .confirm{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:13px}
 @media (prefers-reduced-motion:no-preference){.toast{animation:pop .18s ease-out}@keyframes pop{from{opacity:0;transform:translate(-50%,8px)}}}
 </style>
 
 <header>
   <div class="brand"><i></i>ReKiL Stock</div>
-  <div class="sync" id="sync">接続中…</div>
+  <div class="hdr-r">
+    <button type="button" class="whobtn" id="whoBtn" aria-label="操作する人を変える"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg><span id="whoName">名前</span></button>
+    <div class="sync" id="sync">接続中…</div>
+  </div>
 </header>
 
 <main>
@@ -180,8 +211,9 @@ input,select{font:inherit;width:100%;padding:11px 12px;border:1px solid var(--li
         <span class="label">① ラックを選ぶ</span>
         <button class="primary scanbtn" id="scanRackBtn" type="button">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7V4h3M21 7V4h-3M3 17v3h3M21 17v3h-3"/><rect x="7" y="7" width="4" height="4"/><rect x="13" y="13" width="4" height="4"/><path d="M13 7h4v4M7 13v4h4"/></svg>
-          ラックのQRを撮影
+          QRを読み取る（カメラ）
         </button>
+        <p class="note" style="margin:0">カメラを開いたまま、ラックのQR → 商品のQRと続けて読むと、そのまま収納されます。</p>
         <div class="or">または一覧から選ぶ</div>
         <div class="row pick2">
           <div><span class="label">記号</span><select id="pfxSelect" aria-label="ラックの記号を選択"></select></div>
@@ -250,7 +282,10 @@ input,select{font:inherit;width:100%;padding:11px 12px;border:1px solid var(--li
         <button type="button" role="tab" id="qModeOne" aria-selected="true">1件で探す</button>
         <button type="button" role="tab" id="qModeMulti" aria-selected="false">まとめて探す</button>
       </div>
-      <input id="q" type="search" placeholder="管理番号・商品名で検索" aria-label="検索">
+      <div class="qrow" id="qRow">
+        <input id="q" type="search" placeholder="管理番号・商品名で検索" aria-label="検索">
+        <button type="button" class="qscan" id="scanFindBtn" aria-label="QRで探す" title="QRで探す"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7V4h3M21 7V4h-3M3 17v3h3M21 17v3h-3"/><rect x="8" y="8" width="8" height="8"/></svg></button>
+      </div>
       <div id="qMultiBox" hidden style="display:flex;flex-direction:column;gap:8px">
         <textarea id="qMulti" rows="5" placeholder="管理番号を1行に1つずつ（Excelからの貼り付けもOK）&#10;26-1108-001&#10;26-1108-002" aria-label="まとめて探す管理番号"></textarea>
         <div class="note" id="qMissing"></div>
@@ -271,7 +306,7 @@ input,select{font:inherit;width:100%;padding:11px 12px;border:1px solid var(--li
         <h2>ラック一覧</h2>
         <p class="lead">タップすると中身を表示します。QRを撮影して中身を確認することもできます。</p>
       </div>
-      <button class="dark" id="scanViewBtn" type="button">QRを撮影して中身を見る</button>
+      <button class="dark" id="scanViewBtn" type="button">QRを読み取って中身を見る</button>
       <div class="panel">
         <span class="label">在庫データの出力</span>
         <p class="note" style="margin:0">全ラックの在庫を1つのCSVファイルにまとめて保存します。Excelやスプレッドシートでそのまま開けます。</p>
@@ -280,6 +315,13 @@ input,select{font:inherit;width:100%;padding:11px 12px;border:1px solid var(--li
       </div>
       <div class="rackgrid" id="rackGrid"></div>
       <div id="rackDetail"></div>
+      <details class="panel" id="histBox">
+        <summary style="font-weight:700;cursor:pointer">操作履歴（いつ・誰が・何をしたか）</summary>
+        <div class="row">
+          <input id="histQ" type="search" placeholder="管理番号で絞り込み（空欄で最新100件）" aria-label="管理番号で絞り込み">
+        </div>
+        <div class="list" id="histList"><div class="empty">開くと読み込みます。</div></div>
+      </details>
       <details class="panel" id="addRackBox">
         <summary style="font-weight:700;cursor:pointer">ラックを追加する</summary>
         <div class="row">
@@ -341,9 +383,29 @@ input,select{font:inherit;width:100%;padding:11px 12px;border:1px solid var(--li
     <div class="brand" style="color:var(--fg)"><i></i>ReKiL Stock</div>
     <h2 id="lockT">暗証番号</h2>
     <p class="note" id="lockMsg" style="margin:0"></p>
-    <input id="passIn" type="password" inputmode="numeric" autocomplete="current-password" placeholder="暗証番号" aria-label="暗証番号">
+    <div id="passRow" style="display:flex;flex-direction:column;gap:14px">
+      <input id="passIn" type="password" inputmode="numeric" autocomplete="current-password" placeholder="暗証番号" aria-label="暗証番号">
+    </div>
+    <label class="label" for="whoIn" style="margin-top:4px">使う人の名前（だれが操作したかの記録に使います）</label>
+    <input id="whoIn" list="whoList" autocomplete="name" placeholder="例：櫻井" aria-label="使う人の名前">
+    <datalist id="whoList"></datalist>
+    <div class="whochips" id="whoChips"></div>
     <button class="primary" id="lockGo" type="submit">開く</button>
   </form>
+</div>
+
+<div class="scanner" id="scanner" hidden role="dialog" aria-modal="true" aria-label="QR読み取り">
+  <video id="scanVideo" playsinline muted autoplay></video>
+  <div class="scan-frame" id="scanFrame"></div>
+  <div class="scan-top">
+    <div class="scan-rack"><span class="label" style="color:inherit;opacity:.75">収納先</span><b id="scanRack">未選択</b></div>
+    <button type="button" class="scan-close" id="scanClose">閉じる</button>
+  </div>
+  <div class="scan-bottom">
+    <div class="scan-msg" id="scanMsg" aria-live="polite">ラックのQRを枠に入れてください</div>
+    <ol class="scan-log" id="scanLog"></ol>
+    <button type="button" class="small ghost" id="scanPhoto" style="color:#fff;border-color:#ffffff66">うまく読めないときは写真で読む</button>
+  </div>
 </div>
 
 <input type="file" id="cam" accept="image/*" capture="environment" hidden>
@@ -360,8 +422,8 @@ const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const natural = (a,b) => a.localeCompare(b, "ja", {numeric:true});
 
-let online = false, pass = "";
-try{ pass = localStorage.getItem("rekil-pass") || ""; }catch(_){}
+let online = false, pass = "", who = "";
+try{ pass = localStorage.getItem("rekil-pass") || ""; who = localStorage.getItem("rekil-who") || ""; }catch(_){}
 class ApiError extends Error{ constructor(code){ super(code); this.code = code; } }
 async function api(action, params={}){
   if(!API_URL) throw new ApiError("no_api");
@@ -369,22 +431,124 @@ async function api(action, params={}){
   try{
     res = action==="list"
       ? await fetch(`${API_URL}?action=list&pass=${encodeURIComponent(pass)}&t=${Date.now()}`)
-      : await fetch(API_URL, {method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"}, body: JSON.stringify({action, pass, ...params})});
+      : await fetch(API_URL, {method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"}, body: JSON.stringify({action, pass, who, ...params})});
   }catch(_){ throw new ApiError("network"); }
   let j; try{ j = await res.json(); }catch(_){ throw new ApiError("bad_response"); }
   if(!j.ok){ if(j.error==="passcode"||j.error==="passcode_not_set") showLock(j.error); throw new ApiError(j.error||"error"); }
   if(j.racks) applyData(j);
-  return j.result;
+  return action==="history" ? (j.history||[]) : j.result;
 }
-function applyData(j){
+function applyData(j, fromCache){
   racks = new Map(j.racks.map(r=>[r.code, r]));
   items = new Map(j.items.map(({id,...v})=>[id, v]));
-  online = true; lastSync = Date.now();
-  $("#sync").textContent = `商品 ${items.size}点 / ラック ${racks.size}台`;
-  renderAll(); updatePreview(); applyPendingRack();
+  if(!fromCache){
+    lastSync = Date.now();
+    try{ localStorage.setItem("rekil-cache", JSON.stringify({racks:j.racks, items:j.items, at:Date.now()})); }catch(_){}
+  }
+  online = true;
+  for(const op of queue) applyLocal(op);   // まだ送れていない操作を上に重ねる
+  updateSyncLabel(); renderAll(); updatePreview(); applyPendingRack(); renderWhoList();
 }
 let lastSync = 0, busy = 0;
-function setBusy(d){ busy += d; $("#sync").textContent = busy>0 ? "保存中…" : (online? `商品 ${items.size}点 / ラック ${racks.size}台` : "未接続"); }
+function updateSyncLabel(){
+  const el=$("#sync"); el.classList.toggle("pending", queue.length>0);
+  if(queue.length) el.textContent = flushing ? `送信中… ${queue.length}件` : `未送信 ${queue.length}件`;
+  else if(busy>0) el.textContent = "保存中…";
+  else el.textContent = online ? `商品 ${items.size}点 / ラック ${racks.size}台` : "未接続";
+}
+function setBusy(d){ busy += d; updateSyncLabel(); }
+
+/* ---------- 送信待ちの列（電波が弱くても先に画面へ反映し、つながったら送る） ---------- */
+let queue = [];
+try{ queue = JSON.parse(localStorage.getItem("rekil-queue")||"[]") || []; }catch(_){ queue = []; }
+function saveQueue(){ try{ localStorage.setItem("rekil-queue", JSON.stringify(queue)); }catch(_){} }
+let opSeq = 0, flushing = false, legacy = false, flushTimer = null;
+function refOf(id){ const v = items.get(id); return {id: String(id).startsWith("tmp-") ? "" : id, no: v ? v.no : ""}; }
+function idByRef(ref){
+  if(ref.id && items.has(ref.id)) return ref.id;
+  if(ref.no){ const h = findByNo(ref.no); if(h) return h[0]; }
+  return null;
+}
+function applyLocal(op){
+  const now = op.at || Date.now();
+  if(op.action==="storeItems"){
+    return (op.list||[]).map((x,i)=>{
+      const no = String(x.no||"").trim(), name = String(x.name||"").trim(); if(!no) return "skip";
+      const h = findByNo(no);
+      if(h){
+        const [id,v] = h;
+        if(v.rack===op.rack && !name && !v.soldAt) return "same";
+        const {soldAt, ...rest} = v;
+        items.set(id, {...rest, name: name || v.name || "", rack: op.rack, updatedAt: now+i, by: op.who});
+        return v.rack===op.rack ? "updated" : "moved:"+v.rack;
+      }
+      items.set("tmp-"+no.toUpperCase(), {no, name, rack: op.rack, updatedAt: now+i, by: op.who});
+      return "new";
+    });
+  }
+  if(op.action==="setSoldMany"){
+    for(const ref of op.refs||[]){
+      const id = idByRef(ref); if(!id) continue;
+      const {soldAt, ...rest} = items.get(id);
+      if(op.sold && soldAt) continue; if(!op.sold && !soldAt) continue;
+      items.set(id, op.sold ? {...rest, soldAt: now, by: op.who} : {...rest, by: op.who});
+    }
+    return;
+  }
+  if(op.action==="deleteItems"){ for(const ref of op.refs||[]){ const id = idByRef(ref); if(id) items.delete(id); } return; }
+  if(op.action==="restoreItems"){
+    for(const it of op.items||[]){ if(!it.no || findByNo(it.no)) continue; const {id, ...v} = it; items.set(id && !items.has(id) ? id : "tmp-"+String(it.no).toUpperCase(), v); }
+    return;
+  }
+  if(op.action==="updateItem"){
+    const id = idByRef({id: op.id, no: op.oldNo}); if(!id) return;
+    items.set(id, {...items.get(id), no: op.no, name: op.name, by: op.who});
+  }
+}
+function enqueue(action, params){
+  const op = {opId: Date.now().toString(36)+"-"+(opSeq++)+"-"+Math.random().toString(36).slice(2,6), action, who, at: Date.now(), ...params};
+  const res = applyLocal(op);
+  queue.push(op); saveQueue();
+  updateSyncLabel(); renderAll();
+  clearTimeout(flushTimer); flushTimer = setTimeout(flush, 250);   // 続けて操作したときは1回にまとめて送る
+  return res;
+}
+const OP_ERR = c => c.startsWith("duplicate:") ? `その管理番号はすでに ${c.slice(10)} にあります` : c==="rack_not_found" ? "ラックが見つかりません" : c==="item_not_found" ? "" : "保存できない操作がありました";
+async function legacySend(op){
+  // データ側（Apps Script）が古い版のときの送り方
+  const ids = refs => (refs||[]).map(idByRef).filter(id=>id && !String(id).startsWith("tmp-"));
+  if(op.action==="storeItems") return api("storeItems", {rack: op.rack, list: op.list});
+  if(op.action==="setSoldMany"){ for(const id of ids(op.refs)) await api("setSold", {id, sold: op.sold}); return; }
+  if(op.action==="deleteItems") return api("deleteItems", {ids: ids(op.refs)});
+  if(op.action==="restoreItems") return api("restoreItems", {items: op.items});
+  if(op.action==="updateItem"){ const id = idByRef({id: op.id, no: op.oldNo}); if(id) return api("updateItem", {id, no: op.no, name: op.name}); }
+}
+async function flush(){
+  if(flushing || !queue.length || !pass) return;
+  flushing = true; updateSyncLabel();
+  const sending = queue.slice(0, 40); const sent = new Set(sending.map(o=>o.opId));
+  let ok = false, fails = [];
+  try{
+    if(!legacy){
+      try{ const r = await api("batch", {ops: sending}); fails = (r||[]).filter(x=>x && x.ok===false); ok = true; }
+      catch(err){ if(err.code==="unknown_action") legacy = true; else throw err; }
+    }
+    if(legacy && !ok){
+      for(const op of sending){ try{ await legacySend(op); }catch(err){ if(err.code==="network") throw err; fails.push({error: err.code||"error"}); } }
+      ok = true;
+    }
+  }catch(err){
+    if(err.code!=="network" && err.code!=="passcode" && err.code!=="passcode_not_set"){ ok = true; fails.push({error: err.code||"error"}); }
+  }
+  if(ok){ queue = queue.filter(o=>!sent.has(o.opId)); saveQueue(); }
+  flushing = false;
+  const msg = fails.map(f=>OP_ERR(String(f.error||""))).filter(Boolean)[0];
+  if(msg){ toast(msg); refresh(true); }
+  if(ok){ for(const op of queue) applyLocal(op); renderAll(); }
+  updateSyncLabel();
+  if(ok && queue.length) setTimeout(flush, 100);
+}
+addEventListener("online", ()=>flush());
 async function write(action, params){ setBusy(1); try{ return await api(action, params); } finally{ setBusy(-1); } }
 let racks = new Map();   // code -> data
 let items = new Map();   // docId -> data
@@ -420,6 +584,11 @@ function showView(){
     pendingRack = hh.slice(HASH_PREFIX.length).toUpperCase();
     applyPendingRack();
     try{ history.replaceState(null,"","#store"); }catch(_){ }
+  }
+  if(hh.toLowerCase().startsWith("item-")){
+    const no = decodeURIComponent(hh.slice(5));
+    try{ history.replaceState(null,"","#search"); }catch(_){ }
+    setTimeout(()=>{ try{ setQMode(false); $("#q").value = no; renderSearch(); }catch(_){} }, 0);
   }
   const v = VIEWS.includes(location.hash.slice(1)) ? location.hash.slice(1) : "store";
   document.querySelectorAll("[data-view]").forEach(s => s.hidden = s.dataset.view !== v);
@@ -497,7 +666,7 @@ function itemRow(id,v,showRack){
   return `<div class="item${on?" is-sold":""}" data-id="${esc(id)}">
     <label class="sold"><input type="checkbox" data-sold="${esc(id)}" ${on?"checked":""} aria-label="${esc(v.no)} 売れた">売れた</label>
     ${showRack? `<span class="code-chip">${esc(v.rack)}</span>`:""}
-    <div class="body"><div class="no">${esc(v.no)}</div>${v.name?`<div class="nm">${esc(v.name)}</div>`:""}<div class="when">${on? fmtTime(v.soldAt)+" 売却" : fmtTime(v.updatedAt)+" 収納"}</div></div>
+    <div class="body"><div class="no">${esc(v.no)}</div>${v.name?`<div class="nm">${esc(v.name)}</div>`:""}<div class="when">${on? fmtTime(v.soldAt)+" 売却" : fmtTime(v.updatedAt)+" 収納"}${v.by?` ・${esc(v.by)}`:""}</div></div>
     <div class="acts"><button class="small ghost" data-act="edit" data-id="${esc(id)}" type="button">編集</button>${on?`<button class="small ghost danger" data-act="delItem" data-id="${esc(id)}" type="button">削除</button>`:""}</div>
   </div>`;
 }
@@ -538,7 +707,7 @@ function renderPickup(){
       <div class="pk-h"><span class="code-chip">${esc(c)}</span><span class="pk-n">${esc(r&&r.name||"")}</span><span class="grp-n">${l.length}点</span>
         ${l.length>1?`<button type="button" class="small" data-act="pickRack" data-rack="${esc(c)}">${l.length}点まとめて取り出した</button>`:""}</div>
       <div class="list">${l.map(([id,v])=>`<div class="item" data-id="${esc(id)}">
-        <div class="body"><div class="no">${esc(v.no)}</div>${v.name?`<div class="nm">${esc(v.name)}</div>`:""}<div class="when">${fmtTime(v.soldAt)} 売却</div></div>
+        <div class="body"><div class="no">${esc(v.no)}</div>${v.name?`<div class="nm">${esc(v.name)}</div>`:""}<div class="when">${fmtTime(v.soldAt)} 売却${v.by?` ・${esc(v.by)}`:""}</div></div>
         <button type="button" class="primary small pk-go" data-act="pickOne" data-id="${esc(id)}">取り出した</button>
       </div>`).join("")}</div></div>`;
   }).join("");
@@ -557,7 +726,7 @@ function selRow(id,v){
   return `<div class="item${on?" is-sold":""}${sel?" is-picked":""}" data-id="${esc(id)}">
     <label class="selbox"><input type="checkbox" data-pick="${esc(id)}" ${sel?"checked":""} aria-label="${esc(v.no)} を選択"></label>
     <span class="code-chip">${esc(v.rack)}</span>
-    <div class="body"><div class="no">${esc(v.no)}</div>${v.name?`<div class="nm">${esc(v.name)}</div>`:""}<div class="when">${on? fmtTime(v.soldAt)+" 売却" : fmtTime(v.updatedAt)+" 収納"}</div></div>
+    <div class="body"><div class="no">${esc(v.no)}</div>${v.name?`<div class="nm">${esc(v.name)}</div>`:""}<div class="when">${on? fmtTime(v.soldAt)+" 売却" : fmtTime(v.updatedAt)+" 収納"}${v.by?` ・${esc(v.by)}`:""}</div></div>
     <span class="stchip${on?" sd":""}">${on?"売却済み":"出品中"}</span>
   </div>`;
 }
@@ -596,7 +765,7 @@ function renderSearch(){
       const exact = hits.find(([,v])=>String(v.no).toUpperCase()===q);
       if(hits.length===1 || exact){
         const v = (exact||hits[0])[1]; const r = racks.get(v.rack);
-        best.innerHTML = `<div class="big-result"><span class="label">${esc(v.no)} の場所</span><div class="code">${esc(v.rack)}</div>${r&&r.name?`<div class="note">${esc(r.name)}</div>`:""}</div>`;
+        best.innerHTML = `<div class="big-result"><span class="label">${esc(v.no)} の場所</span><div class="code">${esc(v.rack)}</div>${r&&r.name?`<div class="note">${esc(r.name)}</div>`:""}${v.by?`<div class="note">最後の操作：${esc(v.by)}</div>`:""}</div>`;
       } else best.innerHTML = "";
     } else best.innerHTML="";
   }
@@ -740,8 +909,9 @@ $("#cam").addEventListener("change", async e=>{
   else { curRack = r; renderRackSelect(); renderStore(); setTimeout(()=>$("#itemNo").focus(),80); }
   toast(`ラック ${r} を読み取りました`);
 });
-$("#scanRackBtn").onclick = ()=>openCamera("store");
-$("#scanViewBtn").onclick = ()=>openCamera("view");
+$("#scanRackBtn").onclick = ()=>openScanner("store");
+$("#scanViewBtn").onclick = ()=>openScanner("find");
+$("#scanFindBtn").onclick = ()=>openScanner("find");
 
 /* ---------- actions ---------- */
 $("#pfxSelect").onchange = e=>{ pickPfx = e.target.value; renderRackSelect(); if(pickPfx) $("#rackSelect").focus(); };
@@ -778,13 +948,12 @@ $("#topModeBulk").onclick = ()=>setStoreMode(true);
 $("#modeBulk").onclick = ()=>setStoreMode(true);
 
 async function storeMany(list, rack){
-  const res = await write("storeItems", {rack, list});
-  return (res||[]).map(x=>x.r);
+  return enqueue("storeItems", {rack, list}).filter(r=>r!=="skip");
 }
 async function storeOne(no, name, rack){ return (await storeMany([{no,name}], rack))[0] || "same"; }
 $("#storeForm").addEventListener("submit", async e=>{
   e.preventDefault();
-  if(!online){ toast("データに接続できていません"); return; }
+  if(!racks.size){ toast("データに接続できていません"); return; }
   const no = $("#itemNo").value.trim(); const name = $("#itemName").value.trim();
   if(!no || !curRack) return;
   try{
@@ -821,7 +990,7 @@ function updateBulkPreview(){
 }
 $("#bulkText").addEventListener("input", updateBulkPreview);
 $("#bulkGo").onclick = async ()=>{
-  if(!online || !curRack){ toast("データに接続できていません"); return; }
+  if(!racks.size || !curRack){ toast("データに接続できていません"); return; }
   const list = parseBulk($("#bulkText").value); if(!list.length) return;
   const btn = $("#bulkGo"); btn.disabled = true;
   let ok=0, moved=0, same=0;
@@ -856,7 +1025,7 @@ document.addEventListener("click", async e=>{
     const no=box.querySelector(".ed-no").value.trim(), name=box.querySelector(".ed-name").value.trim();
     if(!no){ toast("管理番号を入力してください"); return; }
     const dup=findByNo(no); if(dup && dup[0]!==id){ toast(`${no} はすでに ${dup[1].rack} に登録されています`); return; }
-    try{ await write("updateItem", {id, no, name}); editingId=null; toast("保存しました"); renderAll(); }catch(err){ handleWriteErr(err); }
+    editingId=null; enqueue("updateItem", {id: String(id).startsWith("tmp-")?"":id, oldNo: v.no, no, name}); toast("保存しました");
   }
   if(act==="storeHere"){ curRack = b.dataset.rack; location.hash="#store"; renderRackSelect(); renderStore(); }
   if(act==="askDel"){
@@ -885,20 +1054,12 @@ $("#qModeOne").onclick=()=>setQMode(false);
 $("#qModeMulti").onclick=()=>setQMode(true);
 $("#selAllHits").onclick=()=>{ shownHits.filter(([,v])=>!v.soldAt).forEach(([id])=>picked.add(id)); renderSearch(); };
 $("#selClear").onclick=()=>{ picked.clear(); renderSearch(); };
-async function setSoldMany(ids, sold){
-  ids=ids.filter(id=>{ const v=items.get(id); return v && !!v.soldAt!==sold; }); if(!ids.length) return;
-  const backup=ids.map(id=>[id,items.get(id)]);
-  for(const id of ids){ const {soldAt,...rest}=items.get(id); items.set(id, sold? {...rest, soldAt:Date.now()} : rest); }
-  picked.clear(); renderAll();
-  let done=0;
-  try{
-    for(const id of ids){ $("#sync").textContent=`保存中… ${done+1}/${ids.length}`; busy++; try{ await api("setSold",{id, sold}); } finally{ busy--; } done++; }
-    toast(sold? `${done}点を売れたにしました（ピックタブに並びます）` : `${done}点を出品中に戻しました`);
-  }catch(err){
-    backup.slice(done).forEach(([id,v])=>items.set(id,v)); renderAll();
-    handleWriteErr(err); toast(`${done}点まで反映しました。残りはもう一度お試しください`);
-  }
-  setBusy(0);
+function setSoldMany(ids, sold){
+  ids = ids.filter(id=>{ const v=items.get(id); return v && !!v.soldAt!==sold; }); if(!ids.length) return;
+  const refs = ids.map(refOf);
+  picked.clear();
+  enqueue("setSoldMany", {refs, sold});
+  toast(sold ? `${ids.length}点を売れたにしました（ピックタブに並びます）` : `${ids.length}点を出品中に戻しました`);
 }
 $("#selSold").onclick=()=>setSoldMany([...picked], true);
 $("#selUnsold").onclick=()=>setSoldMany([...picked], false);
@@ -910,22 +1071,17 @@ document.addEventListener("change", e=>{
 });
 document.addEventListener("change", async e=>{
   const id=e.target.dataset && e.target.dataset.sold; if(!id) return;
-  const v=items.get(id); if(!v || !online) return;
-  const {soldAt, ...rest} = v;
-  try{
-    if(e.target.checked){ items.set(id,{...rest, soldAt:Date.now()}); renderAll(); await write("setSold",{id, sold:true}); toast(`${v.no} を売却済みにしました`); }
-    else { items.set(id,rest); renderAll(); await write("setSold",{id, sold:false}); toast(`${v.no} を出品中に戻しました`); }
-  }catch(err){ items.set(id, v); renderAll(); handleWriteErr(err); }
+  const v=items.get(id); if(!v) return;
+  enqueue("setSoldMany", {refs:[refOf(id)], sold: e.target.checked});
+  toast(e.target.checked ? `${v.no} を売却済みにしました` : `${v.no} を出品中に戻しました`);
 });
 let removedMsg="ラックから削除しました";
 async function removeItems(ids, msg){
   removedMsg = msg || "ラックから削除しました";
   const removed=ids.filter(id=>items.has(id)).map(id=>[id,{...items.get(id)}]); if(!removed.length) return;
-  try{
-    await write("deleteItems", {ids: removed.map(([id])=>id)});
-    lastRemoved=removed; clearTimeout(undoTimer); undoTimer=setTimeout(()=>{ lastRemoved=null; renderSoldBar(); },10000);
-  }catch(err){ handleWriteErr(err); }
-  renderAll();
+  const refs = removed.map(([id])=>refOf(id));
+  lastRemoved=removed; clearTimeout(undoTimer); undoTimer=setTimeout(()=>{ lastRemoved=null; renderSoldBar(); },10000);
+  enqueue("deleteItems", {refs, reason: msg ? "取り出し" : "削除"});
 }
 document.addEventListener("input", e=>{
   if(e.target.classList.contains("ed-no")) editDraft.no=e.target.value;
@@ -933,14 +1089,10 @@ document.addEventListener("input", e=>{
 });
 $("#soldClear").onclick=()=>{ lastRemoved=null; renderAll(); };
 $("#soldGo").onclick=async ()=>{
-  if(!online || !lastRemoved) return;
-  const btn=$("#soldGo"); btn.disabled=true;
-  try{
-    const back=lastRemoved; lastRemoved=null; clearTimeout(undoTimer);
-    await write("restoreItems", {items: back.map(([id,v])=>({id, ...v}))});
-    toast(`${back.length}点をラックに戻しました`);
-  }catch(err){ handleWriteErr(err); }
-  btn.disabled=false; renderAll();
+  if(!lastRemoved) return;
+  const back=lastRemoved; lastRemoved=null; clearTimeout(undoTimer);
+  enqueue("restoreItems", {items: back.map(([id,v])=>({id, ...v}))});
+  toast(`${back.length}点をラックに戻しました`);
 };
 
 function rackRange(){
@@ -1096,19 +1248,139 @@ function handleWriteErr(err){
   refresh();
 }
 
+/* ---------- 操作履歴 ---------- */
+async function loadHistory(){
+  const box=$("#histList"); box.innerHTML=`<div class="empty">読み込み中…</div>`;
+  try{
+    const rows = await api("history", {limit:100, no: $("#histQ").value.trim()});
+    box.innerHTML = rows.length ? rows.map(r=>`<div class="item"><div class="body">
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span class="hist-op">${esc(r.op)}</span>${r.no?`<span class="no">${esc(r.no)}</span>`:""}${r.rack?`<span class="code-chip" style="font-size:13px;padding:1px 7px">${esc(r.rack)}</span>`:""}</div>
+        ${r.name||r.detail?`<div class="nm">${esc([r.name,r.detail].filter(Boolean).join("　"))}</div>`:""}
+        <div class="when">${fmtTime(r.at)} ・${esc(r.who)}</div></div></div>`).join("")
+      : `<div class="empty">記録がありません。</div>`;
+  }catch(err){
+    box.innerHTML = `<div class="empty">${err.code==="unknown_action" ? "データ側（Apps Script）を新しい版に更新すると表示されます。" : err.code==="network" ? "通信できませんでした。電波の良い場所で開き直してください。" : "読み込めませんでした。"}</div>`;
+  }
+}
+$("#histBox").addEventListener("toggle", ()=>{ if($("#histBox").open) loadHistory(); });
+let histT=null; $("#histQ").addEventListener("input", ()=>{ clearTimeout(histT); histT=setTimeout(loadHistory, 500); });
+
+/* ---------- 続けて読み取るカメラ ---------- */
+let scanStream=null, scanTimer=null, scanLast={t:"",at:0}, scanMode="store", scanSession=[], detector=null, audioCtx=null;
+try{ if("BarcodeDetector" in window) detector = new BarcodeDetector({formats:["qr_code"]}); }catch(_){ detector=null; }
+const scanCanvas=document.createElement("canvas"); const scanCtx=scanCanvas.getContext("2d",{willReadFrequently:true});
+function beep(ok){
+  try{
+    audioCtx = audioCtx || new (window.AudioContext||window.webkitAudioContext)();
+    const o=audioCtx.createOscillator(), g=audioCtx.createGain(); o.connect(g); g.connect(audioCtx.destination);
+    o.frequency.value = ok ? 1320 : 330; g.gain.value = .08; o.start(); o.stop(audioCtx.currentTime + (ok? .08 : .25));
+  }catch(_){}
+  try{ navigator.vibrate && navigator.vibrate(ok? 40 : [60,40,60]); }catch(_){}
+  const f=$("#scanFrame"); f.classList.remove("ok","ng"); void f.offsetWidth; f.classList.add(ok?"ok":"ng"); setTimeout(()=>f.classList.remove("ok","ng"), 500);
+}
+function scanMsg(t){ $("#scanMsg").textContent=t; }
+function renderScanUI(){
+  $("#scanRack").textContent = scanMode==="store" ? (curRack || "未選択") : "読み取りのみ";
+  $("#scanLog").innerHTML = scanSession.slice(0,30).map(x=>`<li><b>${esc(x.no)}</b><span>${esc(x.text)}</span></li>`).join("");
+}
+async function openScanner(mode){
+  scanMode = mode; scanSession = []; scanLast={t:"",at:0};
+  try{ audioCtx = audioCtx || new (window.AudioContext||window.webkitAudioContext)(); audioCtx.resume && audioCtx.resume(); }catch(_){}
+  if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){ openCamera(mode==="find"?"view":mode); return; }
+  try{ scanStream = await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:"environment"}, width:{ideal:1280}, height:{ideal:720}}, audio:false}); }
+  catch(err){ toast("カメラを使えませんでした。写真で読み取ります"); openCamera(mode==="find"?"view":mode); return; }
+  const v=$("#scanVideo"); v.srcObject=scanStream; $("#scanner").hidden=false;
+  try{ await v.play(); }catch(_){}
+  scanMsg(mode==="store" ? (curRack ? "商品のQRを枠に入れると、このラックに収納します（別のラックのQRで切り替え）" : "まずラックのQRを枠に入れてください")
+        : "ラックか商品のQRを枠に入れてください");
+  renderScanUI(); clearTimeout(scanTimer); scanLoop();
+}
+function closeScanner(){
+  clearTimeout(scanTimer); scanTimer=null;
+  if(scanStream){ scanStream.getTracks().forEach(t=>t.stop()); scanStream=null; }
+  $("#scanVideo").srcObject=null; $("#scanner").hidden=true;
+  if(scanMode==="store" && scanSession.length) toast(`${scanSession.length}点を読み取りました`);
+  renderAll();
+}
+$("#scanClose").onclick = closeScanner;
+$("#scanPhoto").onclick = ()=>{ const m=scanMode; closeScanner(); openCamera(m==="find"?"view":m); };
+document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState!=="visible" && !$("#scanner").hidden) closeScanner(); });
+async function scanLoop(){
+  if($("#scanner").hidden) return;
+  const v=$("#scanVideo"); let txt=null;
+  if(v.readyState>=2 && v.videoWidth){
+    try{
+      if(detector){ const c=await detector.detect(v); if(c && c[0]) txt=c[0].rawValue; }
+      else if(typeof jsQR==="function"){
+        const w=v.videoWidth, hh=v.videoHeight, side=Math.min(w,hh)*0.8, sx=(w-side)/2, sy=(hh-side)/2, out=Math.min(560, side);
+        scanCanvas.width=scanCanvas.height=out; scanCtx.drawImage(v, sx, sy, side, side, 0, 0, out, out);
+        const d=scanCtx.getImageData(0,0,out,out); const r=jsQR(d.data, out, out, {inversionAttempts:"dontInvert"});
+        if(r && r.data) txt=r.data;
+      }
+    }catch(_){}
+  }
+  if(txt) onScan(txt);
+  scanTimer=setTimeout(scanLoop, txt? 350 : 120);
+}
+function itemNoFromText(t){
+  t=String(t||"").trim(); const i=t.toLowerCase().indexOf("#item-");
+  if(i>=0) t=decodeURIComponent(t.slice(i+6));
+  return t.slice(0,40);
+}
+function onScan(txt){
+  const now=Date.now(); if(txt===scanLast.t && now-scanLast.at<2500) return; scanLast={t:txt,at:now};
+  if(isRackText(txt)){
+    const code=parseRack(txt);
+    if(!code || typeof code==="object"){ beep(false); scanMsg(`「${code&&code.unknown||txt}」は登録されていないラックです`); return; }
+    beep(true);
+    if(scanMode==="store"){
+      curRack=code; platePfx=rackPfx(code); renderRackSelect(); renderStore(); renderScanUI();
+      scanMsg(`ラック ${code} を選びました。続けて商品のQRを読むと、ここに収納します`); return;
+    }
+    closeScanner(); detailRack=code; location.hash="#racks"; renderRackGrid(); renderDetail();
+    setTimeout(()=>$("#rackDetail").scrollIntoView({behavior:"smooth"}), 120); return;
+  }
+  const no=itemNoFromText(txt); if(!no){ beep(false); return; }
+  if(scanMode!=="store"){
+    beep(true); closeScanner(); location.hash="#search"; setQMode(false); $("#q").value=no; renderSearch(); return;
+  }
+  if(!curRack){ beep(false); scanMsg("先にラックのQRを読んでください"); return; }
+  const [r] = enqueue("storeItems", {rack: curRack, list:[{no, name:""}]});
+  const text = r==="same" ? "すでにこのラックにあります" : r==="new" ? `${curRack} に収納` : r==="updated" ? `${curRack} に収納（出品中に戻しました）` : `${r.slice(6)} → ${curRack} に移動`;
+  beep(r!=="same"); scanSession.unshift({no, text}); scanMsg(`${no}：${text}`); renderScanUI();
+}
+
 /* ---------- 暗証番号 ---------- */
+function knownNames(){ const s=new Set(); for(const v of items.values()) if(v.by) s.add(v.by); if(who) s.add(who); return [...s].sort((a,b)=>a.localeCompare(b,"ja")); }
+function renderWhoList(){
+  $("#whoName").textContent = who || "名前";
+  const names = knownNames();
+  $("#whoList").innerHTML = names.map(n=>`<option value="${esc(n)}">`).join("");
+  $("#whoChips").innerHTML = names.map(n=>`<button type="button" data-who="${esc(n)}">${esc(n)}</button>`).join("");
+}
+$("#whoChips").addEventListener("click", e=>{ const b=e.target.closest("[data-who]"); if(b){ $("#whoIn").value=b.dataset.who; } });
+function showWho(){
+  $("#lock").hidden = false; $("#passRow").hidden = true; $("#lockT").textContent = "使う人の名前";
+  $("#lockMsg").textContent = "このスマホを使う人の名前を選ぶか入力してください。収納・売れた・取り出しなどの操作に、名前が記録されます。";
+  $("#whoIn").value = who; renderWhoList(); setTimeout(()=>$("#whoIn").focus(), 100);
+}
+$("#whoBtn").onclick = showWho;
 function showLock(err){
   online = false;
-  $("#lock").hidden = false;
+  $("#lock").hidden = false; $("#passRow").hidden = false; $("#lockT").textContent = "暗証番号"; $("#whoIn").value = who; renderWhoList();
   $("#lockMsg").textContent = err==="passcode_not_set" ? "データ側で暗証番号がまだ設定されていません。Apps Scriptの PASSCODE を書き換えて、もう一度デプロイしてください。"
     : err==="passcode" && pass ? "暗証番号が違います。もう一度入力してください。" : "社内の暗証番号を入力してください。一度入力すると、このスマホでは次から入力不要です。";
   setTimeout(()=>$("#passIn").focus(), 100);
 }
 $("#lockForm").addEventListener("submit", async e=>{
   e.preventDefault();
+  const nm = $("#whoIn").value.trim().slice(0,20);
+  if(!nm){ $("#lockMsg").textContent = "使う人の名前を入れてください。"; $("#whoIn").focus(); return; }
+  who = nm; try{ localStorage.setItem("rekil-who", who); }catch(_){} renderWhoList();
+  if($("#passRow").hidden){ $("#lock").hidden = true; toast(`${who} さんとして記録します`); return; }
   pass = $("#passIn").value.trim(); if(!pass) return;
   $("#lockGo").disabled = true; $("#lockGo").textContent = "確認中…";
-  try{ await api("list"); try{ localStorage.setItem("rekil-pass", pass); }catch(_){} $("#lock").hidden = true; $("#passIn").value=""; toast("接続しました"); }
+  try{ await api("list"); try{ localStorage.setItem("rekil-pass", pass); }catch(_){} $("#lock").hidden = true; $("#passIn").value=""; toast("接続しました"); flush(); }
   catch(err){
     const c = err && err.code || "";
     if(c==="passcode" || c==="passcode_not_set") {}
@@ -1121,8 +1393,10 @@ $("#lockForm").addEventListener("submit", async e=>{
 
 /* ---------- 同期 ---------- */
 let refreshing = false;
-async function refresh(){
-  if(refreshing || busy>0 || !pass) return; refreshing = true;
+async function refresh(force){
+  if(!pass) return;
+  if(queue.length){ flush(); return; }
+  if(refreshing || flushing || (busy>0 && !force)) return; refreshing = true;
   try{ await api("list"); }
   catch(err){ if(err.code==="network"){ $("#sync").textContent = online? "通信待ち（最新でない可能性）" : "未接続"; } }
   refreshing = false;
@@ -1134,12 +1408,12 @@ document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState=
 /* ---------- 新しい版の自動反映 ----------
    GitHub Pagesやスマホが古い画面を覚えていても、開いたとき・画面に戻ったときに
    最新版があるか確認し、あれば自動で読み直す */
-const APP_VERSION = "2026-11-13-3";
+const APP_VERSION = "2026-11-13-5";
 async function checkUpdate(){
   try{
     const r = await fetch(location.pathname + "?v=" + Date.now(), {cache:"no-store"});
     const t = await r.text(); const m = t.match(/const APP_VERSION = "([^"]+)"/);
-    if(m && m[1] !== APP_VERSION && busy===0){
+    if(m && m[1] !== APP_VERSION && busy===0 && !flushing){
       try{ sessionStorage.setItem("rekil-updated", m[1]); }catch(_){}
       location.replace(location.pathname + "?v=" + encodeURIComponent(m[1]) + location.hash);
     }
@@ -1150,10 +1424,11 @@ checkUpdate();
 document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState==="visible") checkUpdate(); });
 
 /* ---------- boot ---------- */
-showView(); renderAll(); updatePreview();
+try{ const c = JSON.parse(localStorage.getItem("rekil-cache")||"null"); if(c && c.racks && pass) applyData(c, true); }catch(_){}
+showView(); renderAll(); updatePreview(); renderWhoList();
 if(!API_URL){ $("#sync").textContent="未設定"; toast("データの接続先がまだ設定されていません"); }
 else if(!pass) showLock();
-else { $("#sync").textContent="接続中…"; refresh(); }
+else { if(!queue.length) $("#sync").textContent="接続中…"; if(!who) showWho(); refresh(); }
 </script>
 
 </body></html>
