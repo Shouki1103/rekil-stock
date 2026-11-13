@@ -5,15 +5,15 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="管理番号シール">
-<meta name="theme-color" content="#2a5bd7">
+<meta name="theme-color" content="#0d1014">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="icon" href="icon-192.png">
 <title>ReKiL 管理番号シール</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=IBM+Plex+Mono:wght@500;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
   :root{--ink:#e8ebee;--sub:#9aa4af;--line:#2f3740;--bg:#14181d;--card:#1d232a;--acc:#f5c026;--accink:#14181d;--acc2:#3a3320;--ok:#4cc27e;--warn:#ff7a6b;color-scheme:dark}
@@ -96,13 +96,44 @@
     #printArea img{display:block;page-break-after:always;break-after:page}
     #printArea img:last-child{page-break-after:auto;break-after:auto}
   }
+
+/* ===== ReKiL Stock と同じ見た目 ===== */
+:root{--bg:#14181d;--surface:#1d232a;--card:#1d232a;--line:#2f3740;--ink:#e8ebee;--sub:#9aa4af;--acc:#f5c026;--accink:#14181d;--steel:#0d1014;
+  --font-body:"Zen Kaku Gothic New","Hiragino Sans","Yu Gothic",system-ui,sans-serif;--font-code:"IBM Plex Mono",ui-monospace,Menlo,monospace}
+html,body{background:var(--bg);color:var(--ink)}
+body{font-family:var(--font-body);font-size:15px;line-height:1.6}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--steel)}
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--steel);border-bottom:none;
+  padding:12px max(16px,env(safe-area-inset-left,0px)) 12px max(16px,env(safe-area-inset-left,0px))!important;display:flex;align-items:center;gap:12px;flex-wrap:nowrap}
+header h1{display:flex;align-items:center;gap:10px;font-weight:900;font-size:17px;letter-spacing:.04em;color:#fff;margin:0;white-space:nowrap}
+header h1 i{display:inline-block;width:12px;height:22px;background:repeating-linear-gradient(-45deg,var(--acc) 0 5px,#1d2228 5px 10px);border-radius:2px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px}
+.card h2{font-size:16px;font-weight:900}
+label{font-size:12px;font-weight:700;color:var(--sub);letter-spacing:.06em}
+input,select,textarea{padding:11px 12px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);min-height:46px}
+button{font-weight:700;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);min-height:40px}
+button.primary{background:var(--acc);color:var(--accink);border-color:var(--acc)}
+input[type=checkbox]{min-height:0;width:20px;height:20px;padding:0;accent-color:var(--acc)}
+.chk{font-size:14px;letter-spacing:0;color:var(--ink)}
+#oNum{font-family:var(--font-code);font-weight:700;letter-spacing:.04em}
+.lblbox,.sheetbox{background:var(--steel)}
+nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--surface);border-top:1px solid var(--line);
+  display:grid;grid-template-columns:repeat(6,1fr);padding-bottom:env(safe-area-inset-bottom,0px)}
+nav.tabs a{display:flex;flex-direction:column;align-items:center;gap:2px;padding:9px 4px 10px;color:var(--sub);text-decoration:none;font-size:12px;font-weight:700}
+nav.tabs a svg{width:22px;height:22px}
+nav.tabs a[aria-current="page"]{color:var(--ink)}
+nav.tabs a[aria-current="page"]::after{content:"";width:22px;height:3px;background:var(--acc);border-radius:2px}
+body{padding-bottom:calc(70px + env(safe-area-inset-bottom,0px))}
+@media (max-width:700px){
+  #modeOne{padding:12px 12px calc(230px + env(safe-area-inset-bottom,0px))!important}
+  .issuebar{bottom:calc(64px + env(safe-area-inset-bottom,0px))!important;background:var(--bg)!important;padding:10px 14px!important}
+}
 </style>
 <style id="pageSize"></style>
 </head>
 <body>
 <header>
-  <a href="../" style="text-decoration:none;color:var(--acc);font-size:14px;font-weight:700">‹ ReKiL Stock</a>
-  <h1>管理番号シール</h1>
+  <h1><i></i>管理番号シール</h1>
   <span>管理番号を入れて枚数を選び「発行する」で、ラベルを1枚ずつ印刷します</span><a href="../portal/" style="margin-left:auto;font-size:12px;color:var(--acc);text-decoration:none">ポータル ›</a>
 </header>
 
@@ -231,6 +262,14 @@ A-0003"></textarea>
     </div>
   </div>
 </div>
+<nav class="tabs" aria-label="メニュー">
+  <a href="../#store"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7V4h3M21 7V4h-3M3 17v3h3M21 17v3h-3"/><path d="M8 12h8M12 8v8"/></svg>収納</a>
+  <a href="../#search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/></svg>探す</a>
+  <a href="../#pickup"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16l-1.5 12h-13z"/><path d="M9 7V5a3 3 0 0 1 6 0v2"/><path d="M9 13l2 2 4-4"/></svg>ピック</a>
+  <a href="../#racks"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 3v18M20 3v18M4 8h16M4 14h16M4 20h16"/></svg>ラック</a>
+  <a href="../#labels"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="6" height="6"/><rect x="14" y="4" width="6" height="6"/><rect x="4" y="14" width="6" height="6"/><path d="M14 14h2v2h-2zM18 18h2v2h-2zM14 18h2M18 14h2"/></svg>QR発行</a>
+  <a href="./" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12V5a2 2 0 0 1 2-2h7l9 9-9 9-9-9z"/><circle cx="8" cy="8" r="1.5"/></svg>シール</a>
+</nav>
 <div id="printArea"></div>
 
 <script>
@@ -566,7 +605,7 @@ $("oShare").onclick=async()=>{
 };
 
 // 新しい版があれば自動で読み直す
-const SEAL_VERSION = "2026-11-13-2";
+const SEAL_VERSION = "2026-11-13-3";
 async function checkUpdate(){ try{ const r=await fetch(location.pathname+"?v="+Date.now(),{cache:"no-store"}); const t=await r.text(); const m=t.match(/const SEAL_VERSION = "([^"]+)"/); if(m && m[1]!==SEAL_VERSION) location.replace(location.pathname+"?v="+encodeURIComponent(m[1])); }catch(_){} }
 if(location.protocol.startsWith("http")){ checkUpdate(); document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="visible") checkUpdate(); }); }
 
