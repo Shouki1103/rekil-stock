@@ -148,7 +148,7 @@ label{display:block;font-size:12px;color:var(--sub);margin:10px 0 4px}
 <script>
 /* ▼ Apps Script をデプロイしたときの「ウェブアプリのURL」 */
 const API_URL = "https://script.google.com/macros/s/AKfycbw7kz9QQt6CMQvwIC4IhtSekntc4xGCUAWuop6U7LO_3U6FMRo--X6wKI0F6hSx3n3Vng/exec";
-const APP_VERSION = "2026-11-13-2";
+const APP_VERSION = "2026-11-13-3";
 let selMode=false,selected=new Set(),shownIds=[];
 const DEF_AUC=["オークネット","エコリング","JDS","JBA","コメ兵","モノバンク","プライム","浜屋","大吉","JWA","トレファク","ペンギン","アプレ","リバオク"];
 const DEF_STAFF=["俊輔","祥貴"],DEF_WHO="俊輔";
@@ -160,6 +160,11 @@ let items=[], online=false, busy=0, pass="", settings={auctions:DEF_AUC.slice(),
 
 try{pass=localStorage.getItem("rekil-shitami-pass")||localStorage.getItem("rekil-pass")||""}catch(e){}
 try{const c=JSON.parse(localStorage.getItem("shitami-data")||"null");if(c){items=c.items||[];if(c.settings)settings=c.settings}}catch(e){}
+// 押した直後に画面へ反映し、裏で保存する（保存待ちの変更は受信データより優先）
+const pending=new Map(); // id -> {rec} or {del:true}
+function applyPending(list){if(!pending.size)return list;let out=list.filter(i=>!(pending.get(i.id)||{}).del);
+  for(const [id,p] of pending){if(p.del)continue;const k=out.findIndex(i=>i.id===id);if(k>=0)out[k]=p.rec}return out}
+function cacheLocal(){try{localStorage.setItem("shitami-data",JSON.stringify({items,settings}))}catch(e){}}
 class ApiError extends Error{constructor(c){super(c);this.code=c}}
 function setSync(){const el=$("sync");if(el)el.textContent=!API_URL?"未設定":busy?"同期中…":online?"接続済み":"未接続"}
 async function api(action,params={}){
@@ -169,7 +174,7 @@ async function api(action,params={}){
     let res;try{res=await fetch(API_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({action,pass,...params})})}catch(e){throw new ApiError("network")}
     let j;try{j=await res.json()}catch(e){throw new ApiError("bad_response")}
     if(!j.ok){if(j.error==="passcode")showLock();throw new ApiError(j.error||"error")}
-    if(j.data){items=j.data.items||[];settings={auctions:(j.data.settings?.auctions?.length?j.data.settings.auctions:DEF_AUC.slice()),staff:(j.data.settings?.staff?.length?j.data.settings.staff:DEF_STAFF.slice())};try{localStorage.setItem("shitami-data",JSON.stringify({items,settings}))}catch(e){}}
+    if(j.data){items=applyPending(j.data.items||[]);settings={auctions:(j.data.settings?.auctions?.length?j.data.settings.auctions:DEF_AUC.slice()),staff:(j.data.settings?.staff?.length?j.data.settings.staff:DEF_STAFF.slice())};try{localStorage.setItem("shitami-data",JSON.stringify({items,settings}))}catch(e){}}
     online=true;return j.result;
   }finally{busy--;setSync();render();if($("setting").classList.contains("open"))renderSettings()}
 }
@@ -255,7 +260,10 @@ async function save(){
 async function setStatus(id,s){
   const it=items.find(x=>x.id===id);if(!it)return;
   const now=Date.now();const r={...it,status:s,updatedAt:now,doneAt:it.doneAt||now,bidAt:s==="bid"?now:""};
-  try{await api("save",{record:r});toast(s==="bid"?"指値登録済にしました":"指値待ちに戻しました")}catch(e){handleErr(e)}
+  const prev=it;pending.set(id,{rec:r});items=items.map(x=>x.id===id?r:x);cacheLocal();render();
+  toast(s==="bid"?"指値登録済にしました":"指値待ちに戻しました");
+  try{await api("save",{record:r});if(pending.get(id)?.rec===r)pending.delete(id)}
+  catch(e){if(pending.get(id)?.rec===r){pending.delete(id);items=items.map(x=>x.id===id?prev:x);cacheLocal();render()}handleErr(e)}
 }
 let delId=null;
 function askDel(id){const it=items.find(x=>x.id===id);delId=id;delMany=null;$("cMsg").textContent=`${dayLabel(it.date)} ${it.auction} を削除しますか？`;$("confirm").classList.add("open")}
@@ -264,7 +272,8 @@ let delMany=null;
 $("cYes").onclick=async()=>{$("confirm").classList.remove("open");
   if(delMany){const ids=delMany;delMany=null;
     try{await api("removeMany",{ids});toast(`${ids.length}件削除しました`);selected.clear();selMode=false;render()}catch(e){handleErr(e)}return}
-  try{await api("remove",{id:delId});toast("削除しました")}catch(e){handleErr(e)}};
+  const id=delId,prev=items.slice();pending.set(id,{del:true});items=items.filter(x=>x.id!==id);cacheLocal();render();toast("削除しました");
+  try{await api("remove",{id});pending.delete(id)}catch(e){pending.delete(id);items=prev;cacheLocal();render();handleErr(e)}};
 function selSync(){
   $("selbar").hidden=!selMode;$("addBtn").style.display=selMode||readOnly?"none":"";
   $("selBtn").textContent=selMode?"選択中":"選択";
