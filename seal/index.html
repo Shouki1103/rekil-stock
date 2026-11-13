@@ -16,26 +16,26 @@
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
-  :root{--ink:#1d1d1f;--sub:#6b6b70;--line:#e3e3e6;--bg:#f6f6f7;--acc:#2a5bd7;--acc2:#e8eefc;--ok:#1f8a4c;--warn:#b54708}
+  :root{--ink:#e8ebee;--sub:#9aa4af;--line:#2f3740;--bg:#14181d;--card:#1d232a;--acc:#f5c026;--accink:#14181d;--acc2:#3a3320;--ok:#4cc27e;--warn:#ff7a6b;color-scheme:dark}
   *{box-sizing:border-box}
   body{margin:0;font-family:"Noto Sans JP",system-ui,sans-serif;color:var(--ink);background:var(--bg);font-size:14px}
-  header{padding:calc(14px + env(safe-area-inset-top)) 20px 14px;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  header{padding:calc(14px + env(safe-area-inset-top)) 20px 14px;background:#0d1014;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px;flex-wrap:wrap}
   header h1{font-size:18px;margin:0}
   header span{color:var(--sub);font-size:12px}
   .wrap{display:grid;grid-template-columns:minmax(300px,420px) 1fr;gap:16px;padding:16px;max-width:1400px;margin:0 auto}
   @media (max-width:860px){.wrap{grid-template-columns:1fr}}
-  .card{background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;margin-bottom:14px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px;margin-bottom:14px}
   .card h2{font-size:14px;margin:0 0 10px;display:flex;align-items:center;gap:6px}
-  .card h2 .n{background:var(--acc);color:#fff;border-radius:50%;width:20px;height:20px;display:inline-flex;align-items:center;justify-content:center;font-size:12px}
+  .card h2 .n{background:var(--acc);color:var(--accink);border-radius:50%;width:20px;height:20px;display:inline-flex;align-items:center;justify-content:center;font-size:12px}
   label{display:block;font-size:12px;color:var(--sub);margin:6px 0 3px}
-  input,select,textarea{width:100%;font:inherit;padding:7px 8px;border:1px solid var(--line);border-radius:6px;background:#fff}
+  input,select,textarea{width:100%;font:inherit;padding:7px 8px;border:1px solid var(--line);border-radius:6px;background:#0d1014;color:var(--ink)}
   textarea{min-height:170px;font-family:ui-monospace,Menlo,Consolas,"Noto Sans JP",monospace;font-size:13px;line-height:1.5}
   .row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
   .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
   .row4{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
-  button{font:inherit;border:1px solid var(--line);background:#fff;padding:8px 12px;border-radius:7px;cursor:pointer}
-  button:hover{background:var(--bg)}
-  button.primary{background:var(--acc);color:#fff;border-color:var(--acc);font-weight:700}
+  button{font:inherit;border:1px solid var(--line);background:#262d35;color:var(--ink);padding:8px 12px;border-radius:7px;cursor:pointer}
+  button:hover{filter:brightness(1.15)}
+  button.primary{background:var(--acc);color:var(--accink);border-color:var(--acc);font-weight:700}
   button.primary:hover{filter:brightness(1.07)}
   button:disabled{opacity:.5;cursor:not-allowed}
   .btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
@@ -47,26 +47,48 @@
   .status.ok{color:var(--ok)} .status.err{color:var(--warn)}
   .preview-head{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:8px}
   .pager{display:flex;align-items:center;gap:6px}
-  .sheetbox{background:#d9d9de;border-radius:10px;padding:14px;display:flex;justify-content:center;overflow:auto}
+  .sheetbox{background:#0d1014;border-radius:10px;padding:14px;display:flex;justify-content:center;overflow:auto}
   canvas#sheet{background:#fff;box-shadow:0 2px 10px rgba(0,0,0,.18);max-width:100%;height:auto;cursor:pointer}
   .summary{font-size:13px;color:var(--sub)}
   .summary b{color:var(--ink)}
   .pill{display:inline-block;background:var(--acc2);color:var(--acc);border-radius:20px;padding:2px 10px;font-size:12px;margin-left:4px}
-  @media (max-width:600px){header{padding:10px 14px}header span{display:none}.wrap{padding:10px;gap:10px}.tabs{padding:8px 10px 0}.tab{padding:8px 10px;font-size:12px}}
   .tabs{display:flex;gap:6px;padding:12px 16px 0;max-width:1400px;margin:0 auto}
-  .tab{border:1px solid var(--line);border-bottom:none;border-radius:8px 8px 0 0;padding:9px 16px;background:#eceef2;cursor:pointer;font-weight:700;color:var(--sub)}
-  .tab.on{background:#fff;color:var(--ink)}
+  .tab{border:1px solid var(--line);border-bottom:none;border-radius:8px 8px 0 0;padding:9px 16px;background:#0d1014;cursor:pointer;font-weight:700;color:var(--sub)}
+  .tab.on{background:var(--card);color:var(--ink)}
   .hide{display:none!important}
   .big{font-size:22px;font-weight:700;padding:10px 12px}
   .qty{display:flex;align-items:center;gap:6px}
   .qty button{width:44px;height:44px;font-size:20px;padding:0}
   .qty input{width:90px;text-align:center;font-size:20px;font-weight:700}
   button.issue{width:100%;font-size:20px;padding:14px;margin-top:12px}
-  .lblbox{background:#d9d9de;border-radius:10px;padding:24px;display:flex;justify-content:center;align-items:center;min-height:200px}
+  .lblbox{background:#0d1014;border-radius:10px;padding:24px;display:flex;justify-content:center;align-items:center;min-height:200px}
   canvas#lbl{background:#fff;box-shadow:0 2px 10px rgba(0,0,0,.18);max-width:100%;height:auto}
   table.hist{width:100%;border-collapse:collapse;font-size:13px}
   table.hist td,table.hist th{border-bottom:1px solid var(--line);padding:6px 4px;text-align:left}
   table.hist th{color:var(--sub);font-weight:500}
+
+  input,select,textarea{font-size:16px}
+  .tag-m{display:none}
+  @media (max-width:700px){
+    header{padding:calc(10px + env(safe-area-inset-top)) 14px 10px;gap:8px;flex-wrap:nowrap}
+    header h1{font-size:16px;white-space:nowrap}
+    header span, header a[href="../portal/"]{display:none}
+    .tabs{display:none}
+    #modeSheet{display:none!important}
+    #modeOne{display:flex;flex-direction:column;gap:10px;padding:10px 10px calc(150px + env(safe-area-inset-bottom))}
+    #modeOne>div{display:contents}
+    #modeOne .card{margin:0;padding:12px}
+    #cPrev{order:1} #cInput{order:2} #cHist{order:3} #cSize{order:4}
+    #cPrev h2,#cInput h2,#oModeHint{display:none}
+    .lblbox{min-height:0;padding:10px}
+    #oNum{font-size:26px;padding:10px 12px;text-align:center}
+    .qty{justify-content:center}
+    .issuebar{position:fixed;left:0;right:0;bottom:0;z-index:5;background:#0d1014;border-top:1px solid var(--line);padding:10px 14px calc(10px + env(safe-area-inset-bottom))}
+    .issuebar .issue{margin-top:0}
+    .issuebar #oShare{margin-top:8px}
+    #oStatus{text-align:center}
+    table.hist th:nth-child(1),table.hist td:nth-child(1){display:none}
+  }
   #printArea{display:none}
   @media print{
     body>*:not(#printArea){display:none!important}
@@ -80,7 +102,7 @@
 <body>
 <header>
   <a href="../" style="text-decoration:none;color:var(--acc);font-size:14px;font-weight:700">‹ ReKiL Stock</a>
-  <h1>🏷 ReKiL 管理番号シール</h1>
+  <h1>管理番号シール</h1>
   <span>管理番号を入れて枚数を選び「発行する」で、ラベルを1枚ずつ印刷します</span><a href="../portal/" style="margin-left:auto;font-size:12px;color:var(--acc);text-decoration:none">ポータル ›</a>
 </header>
 
@@ -88,7 +110,7 @@
 
 <div class="wrap" id="modeOne">
   <div>
-    <div class="card">
+    <div class="card" id="cSize">
       <h2><span class="n">1</span>ラベルのサイズ</h2>
       <select id="lsize"></select>
       <div class="row" id="lcustom" style="display:none">
@@ -97,7 +119,7 @@
       </div>
       <div class="hint">プリンターの設定（用紙サイズ）も同じラベルにしておいてください。</div>
     </div>
-    <div class="card">
+    <div class="card" id="cInput">
       <h2><span class="n">2</span>内容と枚数</h2>
       <label>管理番号</label>
       <input id="oNum" class="big" value="A-001" autocomplete="off">
@@ -107,18 +129,18 @@
       <div class="qty"><button id="qMinus">−</button><input id="oQty" type="number" min="1" max="100" value="1"><button id="qPlus">＋</button><span class="hint" style="margin:0">枚</span></div>
       <label class="chk"><input type="checkbox" id="oNext">発行したら次の番号にする（A-001 → A-002）</label>
       <label class="chk"><input type="checkbox" id="oKeepText">テキストは発行後も残す</label>
-      <button class="primary issue" id="oIssue">発行する</button>
-      <button class="issue hide" id="oShare" style="font-size:15px;padding:10px;margin-top:8px">📤 共有で印刷（ブラザーのアプリなど）</button>
+      <div class="issuebar"><button class="primary issue" id="oIssue">発行する</button>
+      <button class="issue hide" id="oShare" style="font-size:15px;padding:10px;margin-top:8px">📤 共有で印刷（ブラザーのアプリなど）</button></div>
       <div class="status" id="oStatus"></div>
     </div>
   </div>
   <div>
-    <div class="card">
+    <div class="card" id="cPrev">
       <h2>プレビュー</h2>
       <div class="lblbox"><canvas id="lbl"></canvas></div>
       <div class="hint" id="oModeHint"></div>
     </div>
-    <div class="card">
+    <div class="card" id="cHist">
       <h2>発行履歴（この端末のみ・最新50件）</h2>
       <table class="hist"><thead><tr><th>日時</th><th>管理番号</th><th>テキスト</th><th>枚数</th><th></th></tr></thead><tbody id="hist"></tbody></table>
       <div class="hint" id="histEmpty">まだ発行していません</div>
@@ -542,6 +564,11 @@ $("oShare").onclick=async()=>{
     $("oQty").value=1; oRefresh(); oStatus("共有しました","ok");
   }catch(e){ if(e && e.name==="AbortError") oStatus("キャンセルしました"); else oStatus("共有できませんでした："+(e&&e.message?e.message:e),"err"); }
 };
+
+// 新しい版があれば自動で読み直す
+const SEAL_VERSION = "2026-11-13-2";
+async function checkUpdate(){ try{ const r=await fetch(location.pathname+"?v="+Date.now(),{cache:"no-store"}); const t=await r.text(); const m=t.match(/const SEAL_VERSION = "([^"]+)"/); if(m && m[1]!==SEAL_VERSION) location.replace(location.pathname+"?v="+encodeURIComponent(m[1])); }catch(_){} }
+if(location.protocol.startsWith("http")){ checkUpdate(); document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="visible") checkUpdate(); }); }
 
 restore(); refresh(); oRefresh();
 document.fonts && document.fonts.ready.then(()=>{refresh();oRefresh();});
