@@ -1430,7 +1430,7 @@ document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState=
 /* ---------- 新しい版の自動反映 ----------
    GitHub Pagesやスマホが古い画面を覚えていても、開いたとき・画面に戻ったときに
    最新版があるか確認し、あれば自動で読み直す */
-const APP_VERSION = "2026-11-13-7";
+const APP_VERSION = "2026-11-13-8";
 async function checkUpdate(){
   try{
     const r = await fetch(location.pathname + "?v=" + Date.now(), {cache:"no-store"});
