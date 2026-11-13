@@ -131,6 +131,8 @@ input,select{font:inherit;width:100%;padding:11px 12px;border:1px solid var(--li
 .pk-h .pk-n{color:var(--muted);font-size:13px;font-weight:700}
 .pk-h button{margin-left:auto}
 .pk-go{flex:none;min-width:92px}
+.pk-acts{flex:none;display:flex;flex-direction:column;gap:6px;align-items:stretch}
+.pk-cancel{font-size:12px;min-height:32px;padding:4px 8px;color:var(--muted)}
 .labsize{display:flex;flex-direction:column;gap:8px}
 .labsize label{display:flex;align-items:flex-start;gap:10px;padding:12px;border:1px solid var(--line);border-radius:10px;background:var(--surface);cursor:pointer}
 .labsize input{width:20px;height:20px;min-height:0;margin-top:3px;accent-color:var(--accent)}
@@ -268,7 +270,7 @@ input,select{font:inherit;width:100%;padding:11px 12px;border:1px solid var(--li
     <div style="display:flex;flex-direction:column;gap:16px">
       <div>
         <h2>ピックアップ待ち</h2>
-        <p class="lead">「売れた」にした商品が、ラック番号順に並びます。棚から取り出したら「取り出した」を押すと、こことラックから消えます。</p>
+        <p class="lead">「売れた」にした商品が、ラック番号順に並びます。棚から取り出したら「取り出した」を押すと、こことラックから消えます。キャンセルになったときは「キャンセル（在庫に戻す）」で出品中に戻せます。</p>
       </div>
       <div class="picksum" id="pickSum"></div>
       <div class="grp" id="pickList"></div>
@@ -713,7 +715,10 @@ function renderPickup(){
         ${l.length>1?`<button type="button" class="small" data-act="pickRack" data-rack="${esc(c)}">${l.length}点まとめて取り出した</button>`:""}</div>
       <div class="list">${l.map(([id,v])=>`<div class="item" data-id="${esc(id)}">
         <div class="body"><div class="no">${esc(v.no)}</div>${v.name?`<div class="nm">${esc(v.name)}</div>`:""}<div class="when">${fmtTime(v.soldAt)} 売却${v.by?` ・${esc(v.by)}`:""}</div></div>
-        <button type="button" class="primary small pk-go" data-act="pickOne" data-id="${esc(id)}">取り出した</button>
+        <div class="pk-acts">
+          <button type="button" class="primary small pk-go" data-act="pickOne" data-id="${esc(id)}">取り出した</button>
+          <button type="button" class="small ghost pk-cancel" data-act="unsellOne" data-id="${esc(id)}">キャンセル（在庫に戻す）</button>
+        </div>
       </div>`).join("")}</div></div>`;
   }).join("");
 }
@@ -1019,6 +1024,7 @@ document.addEventListener("click", async e=>{
   if(act==="exportRack") exportCsv([b.dataset.rack]);
   if(act==="delItem") await removeItems([b.dataset.id]);
   if(act==="pickOne") await removeItems([b.dataset.id], "取り出し済みにしました");
+  if(act==="unsellOne"){ const v=items.get(b.dataset.id); if(v){ enqueue("setSoldMany", {refs:[refOf(b.dataset.id)], sold:false}); toast(`${v.no} を在庫（出品中）に戻しました`); } }
   if(act==="pickRack"){ const ids=itemsIn(b.dataset.rack).filter(([,v])=>v.soldAt).map(([id])=>id); await removeItems(ids, "取り出し済みにしました"); }
   if(act==="purgeSold"){
     const ids=itemsIn(b.dataset.rack).filter(([,v])=>v.soldAt).map(([id])=>id);
@@ -1423,7 +1429,7 @@ document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState=
 /* ---------- 新しい版の自動反映 ----------
    GitHub Pagesやスマホが古い画面を覚えていても、開いたとき・画面に戻ったときに
    最新版があるか確認し、あれば自動で読み直す */
-const APP_VERSION = "2026-11-13-6";
+const APP_VERSION = "2026-11-13-7";
 async function checkUpdate(){
   try{
     const r = await fetch(location.pathname + "?v=" + Date.now(), {cache:"no-store"});
