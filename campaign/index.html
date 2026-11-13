@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="eBayキャンペーン">
+<meta name="theme-color" content="#111214">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-192.png">
+<title>ReKiL eBayキャンペーン管理</title>
+<style>
+:root{--bg:#111214;--card:#1c1d21;--field:#25272c;--ink:#f2f2f3;--sub:#9a9ca3;--line:#2f3137;--acc:#4f8cff;--warn:#d98a2b;--ok:#3fa66b;--danger:#ff6b61;color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Noto Sans JP",sans-serif;font-size:15px;padding:0 env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding:14px 14px 10px;border-bottom:1px solid var(--line)}
+h1{font-size:18px;margin:0 0 10px;display:flex;justify-content:space-between;align-items:center}
+.sync{font-size:11px;color:var(--sub);font-weight:400}
+.tabs{display:flex;gap:6px}
+.tabs button{flex:1;padding:9px;border:1px solid var(--line);border-radius:10px;background:var(--field);color:var(--sub);font:inherit;font-weight:700;cursor:pointer}
+.tabs button.on{background:var(--acc);border-color:var(--acc);color:#fff}
+main{padding:12px 14px 100px;max-width:760px;margin:0 auto}
+h2{font-size:14px;color:var(--sub);margin:16px 0 8px;font-weight:700}
+.todo{background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.trow{display:flex;gap:10px;align-items:center;padding:10px 12px;border-bottom:1px solid var(--line)}
+.trow:last-child{border-bottom:0}
+.trow .t{flex:1;min-width:0}
+.trow .t b{display:block;font-size:14px}
+.trow .t span{font-size:12px;color:var(--sub)}
+.due{font-size:12px;font-weight:700;white-space:nowrap;padding:3px 8px;border-radius:99px;background:var(--field)}
+.due.over{background:var(--danger);color:#111}.due.soon{background:var(--warn);color:#111}
+.chk{flex:none;width:26px;height:26px;border:2px solid var(--sub);border-radius:7px;background:none;cursor:pointer;color:#111;font-weight:900;display:flex;align-items:center;justify-content:center}
+.chk.on{background:var(--ok);border-color:var(--ok)}
+.card{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--acc);border-radius:12px;padding:14px;margin-bottom:12px}
+.card.end{border-left-color:var(--sub)}
+.row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.name{font-weight:700;font-size:17px;flex:1;min-width:0}
+.pill{font-size:12px;padding:3px 10px;border-radius:99px;background:var(--field);border:1px solid var(--line);white-space:nowrap}
+.meta{font-size:13px;color:var(--sub);margin-top:4px}
+.code{display:inline-flex;align-items:center;gap:6px;background:var(--field);border:1px solid var(--line);border-radius:8px;padding:3px 8px;font-family:ui-monospace,Menlo,monospace;font-size:13px;margin-top:6px}
+.code button{border:0;background:var(--acc);color:#fff;border-radius:6px;padding:2px 8px;font-size:11px;cursor:pointer}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:10px}
+.cell{background:var(--field);border-radius:8px;padding:6px 8px}
+.cell span{display:block;font-size:11px;color:var(--sub)}
+.cell b{font-size:15px}
+.cell.cb b{color:var(--ok)}
+.bar{height:6px;background:var(--field);border-radius:99px;margin-top:12px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--ok)}
+.steps{margin-top:8px}
+.step{display:flex;gap:10px;align-items:center;padding:7px 0;border-top:1px solid var(--line)}
+.step .t{flex:1;min-width:0;font-size:14px}
+.step .t small{display:block;color:var(--sub);font-size:12px}
+.step.done .t{color:var(--sub);text-decoration:line-through}
+.step .e{border:0;background:none;color:var(--sub);cursor:pointer;font-size:13px}
+details{margin-top:8px}
+summary{cursor:pointer;color:var(--acc);font-size:13px}
+.note{font-size:13px;white-space:pre-wrap;color:#d6d7da;margin-top:6px}
+.acts{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+.btn{border:1px solid var(--line);background:var(--field);color:var(--ink);border-radius:10px;padding:9px 14px;cursor:pointer;font:inherit;font-size:14px}
+.btn.main{background:var(--acc);border-color:var(--acc);color:#fff;font-weight:700}
+.btn.del{color:var(--danger)}
+.btn.ghost{color:var(--sub)}
+a.lnk{color:var(--acc)}
+.fab{position:fixed;right:18px;bottom:calc(18px + env(safe-area-inset-bottom));background:var(--acc);color:#fff;border:0;border-radius:99px;padding:14px 20px;font-size:16px;font-weight:700;box-shadow:0 4px 18px rgba(0,0,0,.6);cursor:pointer}
+.empty{text-align:center;color:var(--sub);padding:30px 10px}
+.sheet{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:flex-end;justify-content:center;z-index:20}
+.sheet.open{display:flex}
+.panel{background:var(--card);width:100%;max-width:560px;border-radius:16px 16px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom));max-height:92vh;overflow:auto}
+.panel h3{margin:0 0 6px;font-size:17px}
+.panel h4{margin:14px 0 2px;font-size:13px;color:var(--acc)}
+label{display:block;font-size:12px;color:var(--sub);margin:8px 0 3px}
+.panel input,.panel textarea,.panel select{width:100%;padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--field);color:var(--ink);font-size:16px;font-family:inherit}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.foot{display:flex;gap:8px;margin-top:16px}
+.foot .btn{flex:1;padding:12px}
+.toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:#f2f2f3;color:#111;padding:8px 14px;border-radius:8px;font-size:13px;display:none;z-index:40}
+#lock{position:fixed;inset:0;background:var(--bg);z-index:50;display:flex;align-items:center;justify-content:center;padding:20px}
+#lock form{width:100%;max-width:340px}
+#lock input{width:100%;padding:12px;border:1px solid var(--line);border-radius:10px;background:var(--field);color:var(--ink);font-size:18px;margin:10px 0}
+#lock .btn{width:100%;padding:12px}
+</style>
+</head>
+<body>
+<header>
+  <h1>eBayキャンペーン管理 <span class="sync" id="sync"></span></h1>
+  <div class="tabs">
+    <button data-f="active" class="on">進行中</button>
+    <button data-f="end">終了</button>
+    <button data-f="all">すべて</button>
+  </div>
+</header>
+<main>
+  <h2>次にやること</h2>
+  <div class="todo" id="todo"></div>
+  <h2 id="listTitle">キャンペーン</h2>
+  <div id="list"><div class="empty">読み込み中…</div></div>
+  <h2>キャッシュバック合計（全キャンペーン）</h2>
+  <div class="grid" id="total"></div>
+</main>
+<button class="fab" id="addBtn">＋ キャンペーン</button>
+
+<!-- キャンペーン編集 -->
+<div class="sheet" id="cEdit"><div class="panel">
+  <h3 id="cTitle">キャンペーンを追加</h3>
+  <h4>基本</h4>
+  <label>キャンペーン名</label><input id="f_name">
+  <div class="two"><div><label>ID（eBayのキャンペーンID）</label><input id="f_id"></div><div><label>状態</label><input id="f_status" placeholder="例：申込済・クーポン未作成"></div></div>
+  <div class="two"><div><label>申込期限</label><input id="f_apply_deadline" type="date"></div><div><label>CB入金予定</label><input id="f_cashback_due" placeholder="例：2027年2月中"></div></div>
+  <div class="two"><div><label>開始（日本時間）</label><input id="f_start_jst" type="datetime-local"></div><div><label>終了（日本時間）</label><input id="f_end_jst" type="datetime-local"></div></div>
+  <label>クーポンコード</label><input id="f_coupon_code">
+  <label>内容（割引・負担など）</label><input id="f_offer">
+  <h4>条件・数字</h4>
+  <div class="two"><div><label>CB率（例 0.4）</label><input id="f_cashback_rate" inputmode="decimal"></div><div><label>CB上限($)</label><input id="f_cashback_cap_usd" inputmode="decimal"></div></div>
+  <div class="two"><div><label>予算($)</label><input id="f_budget_usd" inputmode="decimal"></div><div><label>最低価格($)</label><input id="f_min_price_usd" inputmode="decimal"></div></div>
+  <div class="two"><div><label>対象点数</label><input id="f_target_items" inputmode="numeric"></div><div><label>除外点数</label><input id="f_excluded_items" inputmode="numeric"></div></div>
+  <label>条件</label><textarea id="f_conditions" rows="2"></textarea>
+  <label>問い合わせタグ</label><input id="f_inquiry_tag">
+  <h4>結果</h4>
+  <div class="two"><div><label>注文数</label><input id="f_orders" inputmode="numeric"></div><div><label>売上($)</label><input id="f_sales_usd" inputmode="decimal"></div></div>
+  <div class="two"><div><label>割引額($)</label><input id="f_discount_usd" inputmode="decimal"></div><div><label>手数料($)</label><input id="f_fees_usd" inputmode="decimal"></div></div>
+  <div class="two"><div><label>CB見込($)</label><input id="f_cashback_expected_usd" inputmode="decimal"></div><div><label>CB入金額($)</label><input id="f_cashback_received_usd" inputmode="decimal"></div></div>
+  <div class="two"><div><label>CB入金日</label><input id="f_cashback_received_date" type="date"></div><div><label>販促結果PDFのリンク</label><input id="f_result_pdf"></div></div>
+  <label>メモ</label><textarea id="f_note" rows="3"></textarea>
+  <div class="foot"><button class="btn" id="cCancel">キャンセル</button><button class="btn main" id="cSave">保存</button></div>
+</div></div>
+
+<!-- 作業編集 -->
+<div class="sheet" id="sEdit"><div class="panel">
+  <h3 id="sTitle">作業を追加</h3>
+  <label>作業内容</label><input id="s_step">
+  <div class="two"><div><label>期限</label><input id="s_due" type="date"></div><div><label>順番</label><input id="s_step_no" inputmode="numeric"></div></div>
+  <div class="two"><div><label>状態</label><select id="s_status"><option>予定</option><option>完了</option></select></div><div><label>完了日</label><input id="s_done" type="date"></div></div>
+  <label>メモ</label><textarea id="s_memo" rows="2"></textarea>
+  <div class="foot"><button class="btn del" id="sDel">削除</button><button class="btn" id="sCancel">キャンセル</button><button class="btn main" id="sSave">保存</button></div>
+</div></div>
+
+<div class="sheet" id="confirm"><div class="panel">
+  <h3 id="cfMsg">削除しますか？</h3>
+  <div class="foot"><button class="btn" id="cfNo">やめる</button><button class="btn del" id="cfYes">削除する</button></div>
+</div></div>
+<div class="toast" id="toast"></div>
+<div id="lock" hidden><form id="lockForm">
+  <h1>eBayキャンペーン管理</h1>
+  <p class="meta" id="lockMsg"></p>
+  <input id="passIn" type="password" inputmode="numeric" autocomplete="current-password" placeholder="暗証番号">
+  <button class="btn main" id="lockGo" type="submit">開く</button>
+</form></div>
+
+<script>
+/* ▼ Apps Script をデプロイしたときの「ウェブアプリのURL」 */
+const API_URL = "";
+const APP_VERSION = "2026-11-13-1";
+
+const $=id=>document.getElementById(id);
+const C_FIELDS=["id","name","status","apply_deadline","start_jst","end_jst","coupon_code","offer","cashback_rate","cashback_cap_usd","budget_usd","min_price_usd","target_items","excluded_items","conditions","cashback_due","inquiry_tag","orders","sales_usd","discount_usd","fees_usd","cashback_expected_usd","cashback_received_usd","cashback_received_date","note","result_pdf"];
+const NUM=new Set(["cashback_rate","cashback_cap_usd","budget_usd","min_price_usd","target_items","excluded_items","orders","sales_usd","discount_usd","fees_usd","cashback_expected_usd","cashback_received_usd"]);
+let campaigns=[],steps=[],filter="active",pass="",online=false,busy=0,editingC=null,editingS=null,stepFor=null,confirmFn=null;
+try{pass=localStorage.getItem("rekil-campaign-pass")||localStorage.getItem("rekil-shitami-pass")||localStorage.getItem("rekil-pass")||""}catch(e){}
+try{const c=JSON.parse(localStorage.getItem("campaign-data")||"null");if(c){campaigns=c.campaigns||[];steps=c.steps||[]}}catch(e){}
+
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const today=()=>new Date(Date.now()+9*3600e3).toISOString().slice(0,10);
+const WD="日月火水木金土";
+const md=d=>{if(!d)return"";const x=new Date(String(d).slice(0,10)+"T12:00:00Z");return `${x.getUTCMonth()+1}/${x.getUTCDate()}(${WD[x.getUTCDay()]})`};
+const dt=s=>{if(!s)return"";const t=String(s).slice(11,16);return md(s)+(t?" "+t:"")};
+const days=d=>Math.round((Date.parse(String(d).slice(0,10)+"T00:00:00Z")-Date.parse(today()+"T00:00:00Z"))/864e5);
+const usd=v=>v===""||v==null?"—":"$"+Number(v).toLocaleString("en-US",{maximumFractionDigits:2});
+const num=v=>v===""||v==null?"—":Number(v).toLocaleString("ja-JP");
+function toast(m){const t=$("toast");t.textContent=m;t.style.display="block";clearTimeout(t._h);t._h=setTimeout(()=>t.style.display="none",2200)}
+
+class ApiError extends Error{constructor(c){super(c);this.code=c}}
+function setSync(){$("sync").textContent=!API_URL?"未設定":busy?"同期中…":online?"接続済み":"未接続"}
+async function api(action,params={}){
+  if(!API_URL)throw new ApiError("no_api");
+  busy++;setSync();
+  try{
+    let res;try{res=await fetch(API_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({action,pass,...params})})}catch(e){throw new ApiError("network")}
+    let j;try{j=await res.json()}catch(e){throw new ApiError("bad_response")}
+    if(!j.ok){if(j.error==="passcode")showLock();throw new ApiError(j.error||"error")}
+    if(j.data){campaigns=j.data.campaigns||[];steps=j.data.steps||[];try{localStorage.setItem("campaign-data",JSON.stringify({campaigns,steps}))}catch(e){}}
+    online=true;return j.result;
+  }finally{busy--;setSync();render()}
+}
+function handleErr(e){const c=e?.code;if(c==="passcode")return;toast(c==="network"?"通信できませんでした。電波の良い場所でもう一度お試しください":c==="no_api"?"データ側がまだ設定されていません":`保存できませんでした（${c}）`)}
+
+const stepsOf=id=>steps.filter(s=>s.campaign_id===id).sort((a,b)=>(+a.step_no||0)-(+b.step_no||0));
+const isDone=s=>s.status==="完了";
+const isActive=c=>{const st=stepsOf(c.id);return st.length?st.some(s=>!isDone(s)):!/終了|完了/.test(c.status||"")||/待ち/.test(c.status||"")};
+
+function render(){
+  document.querySelectorAll(".tabs button").forEach(b=>b.classList.toggle("on",b.dataset.f===filter));
+  // 次にやること
+  const nameOf=id=>(campaigns.find(c=>c.id===id)||{}).name||id;
+  const todo=steps.filter(s=>!isDone(s)&&s.due).sort((a,b)=>String(a.due).localeCompare(String(b.due))).slice(0,8);
+  $("todo").innerHTML=todo.length?todo.map(s=>{const n=days(s.due);const cls=n<0?"over":n<=3?"soon":"";const lbl=n<0?`${-n}日超過`:n===0?"今日":n===1?"明日":`あと${n}日`;
+    return `<div class="trow"><button class="chk" data-done="${esc(s.sid)}" aria-label="完了にする"></button><div class="t"><b>${esc(s.step)}</b><span>${esc(nameOf(s.campaign_id))}・期限 ${md(s.due)}</span></div><span class="due ${cls}">${lbl}</span></div>`}).join(""):'<div class="empty" style="padding:16px">予定の作業はありません</div>';
+  // キャンペーン一覧
+  let list=campaigns.filter(c=>filter==="all"||(filter==="active"?isActive(c):!isActive(c)));
+  list.sort((a,b)=>String(b.start_jst||"").localeCompare(String(a.start_jst||"")));
+  $("listTitle").textContent=`キャンペーン（${list.length}件）`;
+  $("list").innerHTML=list.length?list.map(card).join(""):'<div class="empty">該当するキャンペーンはありません</div>';
+  // 合計
+  const sum=k=>campaigns.reduce((t,c)=>t+(Number(c[k])||0),0);
+  $("total").innerHTML=`<div class="cell"><span>売上</span><b>${usd(sum("sales_usd"))}</b></div><div class="cell cb"><span>CB見込</span><b>${usd(sum("cashback_expected_usd"))}</b></div><div class="cell cb"><span>CB入金済み</span><b>${usd(sum("cashback_received_usd"))}</b></div>`;
+}
+function card(c){
+  const st=stepsOf(c.id),d=st.filter(isDone).length,pct=st.length?Math.round(d/st.length*100):0;
+  const cell=(l,v,cls="")=>`<div class="cell ${cls}"><span>${l}</span><b>${v}</b></div>`;
+  return `<div class="card ${isActive(c)?"":"end"}">
+  <div class="row"><span class="name">${esc(c.name)}</span><span class="pill">${esc(c.status||"")}</span></div>
+  <div class="meta">${c.start_jst?`期間 ${dt(c.start_jst)} 〜 ${dt(c.end_jst)}`:""}${c.apply_deadline?`　申込期限 ${md(c.apply_deadline)}`:""}</div>
+  <div class="meta">${esc(c.offer||"")}</div>
+  ${c.coupon_code?`<div class="code">${esc(c.coupon_code)}<button data-copy="${esc(c.coupon_code)}">コピー</button></div>`:""}
+  <div class="grid">${cell("対象点数",num(c.target_items))}${cell("除外点数",num(c.excluded_items))}${cell("最低価格",usd(c.min_price_usd))}
+  ${cell("注文数",num(c.orders))}${cell("売上",usd(c.sales_usd))}${cell("割引額",usd(c.discount_usd))}
+  ${cell("手数料",usd(c.fees_usd))}${cell("CB見込",usd(c.cashback_expected_usd),"cb")}${cell("CB入金",usd(c.cashback_received_usd)+(c.cashback_received_date?`<br><small style="font-size:11px;color:var(--sub)">${md(c.cashback_received_date)}</small>`:""),"cb")}</div>
+  <div class="bar"><i style="width:${pct}%"></i></div>
+  <div class="meta">作業 ${d}/${st.length} 完了${c.cashback_due?`　CB入金予定：${esc(c.cashback_due)}`:""}</div>
+  <div class="steps">${st.map(s=>`<div class="step ${isDone(s)?"done":""}"><button class="chk ${isDone(s)?"on":""}" data-toggle="${esc(s.sid)}">${isDone(s)?"✓":""}</button><div class="t">${esc(s.step)}<small>期限 ${md(s.due)}${s.done?`・完了 ${md(s.done)}`:""}${s.memo?`・${esc(s.memo)}`:""}</small></div><button class="e" data-estep="${esc(s.sid)}">編集</button></div>`).join("")}</div>
+  <details><summary>条件・メモを見る</summary>
+    ${c.conditions?`<div class="note"><b>条件：</b>${esc(c.conditions)}</div>`:""}
+    ${c.note?`<div class="note"><b>メモ：</b>${esc(c.note)}</div>`:""}
+    <div class="note">ID：${esc(c.id)}　CB率：${c.cashback_rate!==""&&c.cashback_rate!=null?Math.round(c.cashback_rate*100)+"%":"—"}　CB上限：${usd(c.cashback_cap_usd)}　予算：${usd(c.budget_usd)}${c.inquiry_tag?`　問い合わせタグ：${esc(c.inquiry_tag)}`:""}</div>
+    ${c.result_pdf?`<div class="note"><a class="lnk" href="${esc(c.result_pdf)}" target="_blank" rel="noopener">販促結果PDFを開く</a></div>`:""}
+  </details>
+  <div class="acts"><button class="btn" data-addstep="${esc(c.id)}">＋ 作業</button><button class="btn ghost" data-editc="${esc(c.id)}">編集</button><button class="btn del" data-delc="${esc(c.id)}">削除</button></div>
+</div>`;
+}
+
+/* 操作 */
+document.querySelector(".tabs").onclick=e=>{const b=e.target.closest("button[data-f]");if(b){filter=b.dataset.f;render()}};
+document.body.addEventListener("click",async e=>{
+  const t=e.target.closest("[data-done],[data-toggle],[data-estep],[data-addstep],[data-editc],[data-delc],[data-copy]");if(!t)return;
+  if(t.dataset.copy){try{await navigator.clipboard.writeText(t.dataset.copy);toast("コピーしました")}catch(_){toast("コピーできませんでした")}return}
+  const sid=t.dataset.done||t.dataset.toggle;
+  if(sid){const s=steps.find(x=>x.sid===sid);if(!s)return;const r={...s};if(isDone(s)){r.status="予定";r.done=""}else{r.status="完了";r.done=today()}
+    try{await api("saveStep",{record:r});toast(r.status==="完了"?"完了にしました":"予定に戻しました")}catch(err){handleErr(err)}return}
+  if(t.dataset.estep)return openStep(steps.find(x=>x.sid===t.dataset.estep),null);
+  if(t.dataset.addstep)return openStep(null,t.dataset.addstep);
+  if(t.dataset.editc)return openC(campaigns.find(x=>x.id===t.dataset.editc));
+  if(t.dataset.delc){const c=campaigns.find(x=>x.id===t.dataset.delc);ask(`「${c.name}」と、その作業をすべて削除しますか？（元に戻せません）`,async()=>{try{await api("deleteCampaign",{id:c.id});toast("削除しました")}catch(err){handleErr(err)}})}
+});
+function ask(msg,fn){$("cfMsg").textContent=msg;confirmFn=fn;$("confirm").classList.add("open")}
+$("cfNo").onclick=()=>$("confirm").classList.remove("open");
+$("cfYes").onclick=()=>{$("confirm").classList.remove("open");const f=confirmFn;confirmFn=null;f&&f()};
+
+function toInput(k,v){if(v==null)return"";if(k==="start_jst"||k==="end_jst")return String(v).replace(" ","T").slice(0,16);return String(v)}
+function openC(c){editingC=c||null;$("cTitle").textContent=c?"キャンペーンを編集":"キャンペーンを追加";
+  C_FIELDS.forEach(k=>{const el=$("f_"+k);if(el)el.value=c?toInput(k,c[k]):""});
+  $("f_id").disabled=!!c;$("cEdit").classList.add("open")}
+$("addBtn").onclick=()=>openC(null);
+$("cCancel").onclick=()=>$("cEdit").classList.remove("open");
+$("cSave").onclick=async()=>{
+  const r={};C_FIELDS.forEach(k=>{const el=$("f_"+k);if(!el)return;let v=el.value.trim();if((k==="start_jst"||k==="end_jst")&&v)v=v.replace("T"," ");if(NUM.has(k)&&v!=="")v=Number(v.replace(/[$,]/g,""));r[k]=v});
+  if(!r.name){toast("キャンペーン名を入れてください");return}
+  if(editingC)r.id=editingC.id;
+  const isNew=!editingC;
+  $("cSave").disabled=true;
+  try{const id=await api("saveCampaign",{record:r});$("cEdit").classList.remove("open");toast("保存しました");
+    if(isNew&&!steps.some(s=>s.campaign_id===id))await addDefaultSteps(id,r)}catch(err){handleErr(err)}
+  $("cSave").disabled=false};
+/* 新しいキャンペーンには、いつもの作業を自動で入れる */
+async function addDefaultSteps(id,c){
+  const addDays=(d,n)=>{if(!d)return"";const x=new Date(String(d).slice(0,10)+"T12:00:00Z");x.setUTCDate(x.getUTCDate()+n);return x.toISOString().slice(0,10)};
+  const start=c.start_jst?String(c.start_jst).slice(0,10):"",end=c.end_jst?String(c.end_jst).slice(0,10):"";
+  const list=[["キャンペーン申込",c.apply_deadline||""],["対象商品の精査（$500以上・前回同条件）・クーポン作成",addDays(start,-2)],["クーポンコードの有効確認をeBayに問い合わせ",addDays(start,-2)],["クーポン開始・購入者グループへ案内",start],["結果集計（売上・割引・手数料・CB見込）・販促結果PDF保存",end?addDays(end,30):""],["キャッシュバック入金確認",""]];
+  for(let i=0;i<list.length;i++){await api("saveStep",{record:{campaign_id:id,step_no:i+1,step:list[i][0],due:list[i][1],status:"予定",done:"",memo:""}})}
+}
+
+function openStep(s,cid){editingS=s||null;stepFor=s?s.campaign_id:cid;$("sTitle").textContent=s?"作業を編集":"作業を追加";
+  $("s_step").value=s?.step||"";$("s_due").value=s?.due||"";$("s_status").value=s?.status==="完了"?"完了":"予定";$("s_done").value=s?.done||"";$("s_memo").value=s?.memo||"";
+  $("s_step_no").value=s?.step_no||(stepsOf(stepFor).length+1);$("sDel").hidden=!s;$("sEdit").classList.add("open")}
+$("sCancel").onclick=()=>$("sEdit").classList.remove("open");
+$("sSave").onclick=async()=>{
+  const r={sid:editingS?.sid||"",campaign_id:stepFor,step_no:Number($("s_step_no").value)||1,step:$("s_step").value.trim(),due:$("s_due").value,status:$("s_status").value,done:$("s_done").value,memo:$("s_memo").value.trim()};
+  if(!r.step){toast("作業内容を入れてください");return}
+  if(r.status==="完了"&&!r.done)r.done=today();if(r.status!=="完了")r.done="";
+  try{await api("saveStep",{record:r});$("sEdit").classList.remove("open");toast("保存しました")}catch(err){handleErr(err)}};
+$("sDel").onclick=()=>{const s=editingS;$("sEdit").classList.remove("open");ask(`作業「${s.step}」を削除しますか？`,async()=>{try{await api("deleteStep",{id:s.sid});toast("削除しました")}catch(err){handleErr(err)}})};
+
+/* 暗証番号・同期 */
+function showLock(){online=false;$("lock").hidden=false;
+  $("lockMsg").textContent=pass?"暗証番号が違います。もう一度入力してください。":"社内の暗証番号を入力してください（ReKiL Stockと同じ番号）。一度入力すると、この端末では次から入力不要です。";
+  setTimeout(()=>$("passIn").focus(),100)}
+$("lockForm").addEventListener("submit",async e=>{e.preventDefault();pass=$("passIn").value.trim();if(!pass)return;
+  $("lockGo").disabled=true;$("lockGo").textContent="確認中…";
+  try{await api("list");try{localStorage.setItem("rekil-campaign-pass",pass)}catch(_){}$("lock").hidden=true;$("passIn").value="";toast("接続しました")}
+  catch(err){if(err.code==="network")$("lockMsg").textContent="データ側に接続できませんでした。電波を確認してください。";else if(err.code==="no_api")$("lockMsg").textContent="データ側（Apps Script）がまだ設定されていません。";else if(err.code!=="passcode")$("lockMsg").textContent=`データ側でエラーが起きました（${err.code}）`}
+  $("lockGo").disabled=false;$("lockGo").textContent="開く"});
+async function refresh(){if(!pass||busy||!API_URL)return;try{await api("list")}catch(err){if(err.code==="network"){online=false;setSync()}}}
+async function checkUpdate(){try{const r=await fetch(location.pathname+"?v="+Date.now(),{cache:"no-store"});const t=await r.text();const m=t.match(/const APP_VERSION = "([^"]+)"/);if(m&&m[1]!==APP_VERSION&&!busy)location.replace(location.pathname+"?v="+encodeURIComponent(m[1]))}catch(_){}}
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"){checkUpdate();refresh()}});
+setInterval(()=>{if(document.visibilityState==="visible"&&!document.querySelector(".sheet.open"))refresh()},60000);
+render();setSync();
+if(!API_URL){$("list").innerHTML='<div class="empty">データ側（Apps Script）の設定待ちです。</div>'}
+else if(!pass)showLock();else{checkUpdate();refresh()}
+</script>
+</body>
+</html>
