@@ -27,7 +27,7 @@ header{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var
 .sync{font-size:12px;color:#c9d1d9}
 main{max-width:640px;margin:0 auto;padding-block:16px 180px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:16px}
 nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--surface);border-top:1px solid var(--line);
-  display:grid;grid-template-columns:repeat(5,1fr);padding-bottom:env(safe-area-inset-bottom,0px);
+  display:grid;grid-template-columns:repeat(6,1fr);padding-bottom:env(safe-area-inset-bottom,0px);
   padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
 nav.tabs a{display:flex;flex-direction:column;align-items:center;gap:2px;padding:9px 4px 10px;color:var(--muted);text-decoration:none;font-size:12px;font-weight:700}
 nav.tabs a svg{width:22px;height:22px}
@@ -322,6 +322,7 @@ input,select{font:inherit;width:100%;padding:11px 12px;border:1px solid var(--li
   <a href="#pickup" data-tab="pickup"><span class="tabicon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16l-1.5 12h-13z"/><path d="M9 7V5a3 3 0 0 1 6 0v2"/><path d="M9 13l2 2 4-4"/></svg><b class="badge" id="pickBadge" hidden></b></span>ピック</a>
   <a href="#racks" data-tab="racks"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 3v18M20 3v18M4 8h16M4 14h16M4 20h16"/></svg>ラック</a>
   <a href="#labels" data-tab="labels"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="6" height="6"/><rect x="14" y="4" width="6" height="6"/><rect x="4" y="14" width="6" height="6"/><path d="M14 14h2v2h-2zM18 18h2v2h-2zM14 18h2M18 14h2"/></svg>QR発行</a>
+  <a href="seal/"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12V5a2 2 0 0 1 2-2h7l9 9-9 9-9-9z"/><circle cx="8" cy="8" r="1.5"/></svg>シール</a>
 </nav>
 
 <div class="soldbar selbar" id="selBar" hidden role="region" aria-label="選択した商品の操作">
@@ -1133,7 +1134,7 @@ document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState=
 /* ---------- 新しい版の自動反映 ----------
    GitHub Pagesやスマホが古い画面を覚えていても、開いたとき・画面に戻ったときに
    最新版があるか確認し、あれば自動で読み直す */
-const APP_VERSION = "2026-11-08-4";
+const APP_VERSION = "2026-11-13-1";
 async function checkUpdate(){
   try{
     const r = await fetch(location.pathname + "?v=" + Date.now(), {cache:"no-store"});
