@@ -149,7 +149,7 @@ textarea{min-height:70px;resize:vertical}
 <script>
 /* ▼ Apps Script をデプロイしたときの「ウェブアプリのURL」 */
 const API_URL = "https://script.google.com/macros/s/AKfycbzuakHA841y3KMQTn32E6L6UOebKO9LZGEqX1IHAAQ3Xkb5Y2tvp4ZlIOVnr1u9T5KD/exec";
-const APP_VERSION = "2026-11-15-3";
+const APP_VERSION = "2026-11-15-4";
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -344,6 +344,18 @@ $("#list").addEventListener("keydown", e=>{ if((e.key==="Enter"||e.key===" ") &&
 
 /* ---------- 追加・編集 ---------- */
 let editing = null, photos = [];
+/* 自分で追加した名前（オークション・仕入先・外注先など）も、次回から候補に出す */
+const ADDABLE = ["auction","vendor","supplier","site"];
+const SAME = {auction:["auction","vendor","supplier"], vendor:["vendor","supplier","auction"], supplier:["supplier","vendor","auction"], site:["site"]};
+function optionsFor(k, base, raw){
+  const used = new Set();
+  TABS.forEach(t=>(data[t]||[]).forEach(r=>(SAME[k]||[k]).forEach(f=>{ const v = String(r[f]||"").trim(); if(v) used.add(v); })));
+  if(k==="auction") AUCTIONS.forEach(a=>used.delete(a)); // オークションの候補には業者オークション以外を混ぜない
+  const extra = k==="auction" ? [...used].filter(v=>(data.shuppin||[]).some(r=>r.auction===v)) : [...used];
+  const list = [...base.filter(o=>o!=="その他"), ...extra.filter(v=>!base.includes(v)).sort((a,b)=>a.localeCompare(b,"ja")), ...base.filter(o=>o==="その他")];
+  if(raw && !list.includes(raw)) list.unshift(raw);
+  return list;
+}
 function openForm(r){
   const D = T[tab]; editing = r || null; photos = r ? String(r.photos||"").split(",").filter(Boolean) : [];
   $("#formT").textContent = (r ? "編集" : "追加") + "｜" + D.name;
@@ -355,7 +367,11 @@ function openForm(r){
     let input;
     if(type==="photos") input = `<div class="thumbs" id="fThumbs"></div><button type="button" class="photoBtn" id="photoBtn">＋ 写真を追加</button><input type="file" id="photoIn" accept="image/*" multiple hidden>`;
     else if(type==="textarea") input = `<textarea id="f_${k}">${v}</textarea>`;
-    else if(type==="select"){ const list = raw && !opts.includes(raw) ? [raw,...opts] : opts; input = `<select id="f_${k}"><option value="">選んでください</option>${list.map(o=>`<option ${o===raw?"selected":""}>${esc(o)}</option>`).join("")}</select>`; }
+    else if(type==="select"){
+      const list = optionsFor(k, opts, raw), add = ADDABLE.includes(k);
+      input = `<select id="f_${k}" data-k="${k}"><option value="">選んでください</option>${list.map(o=>`<option ${o===raw?"selected":""}>${esc(o)}</option>`).join("")}${add?`<option value="__new__">＋ 新しく入力する</option>`:""}</select>`
+        + (add ? `<input id="f_${k}_new" type="text" placeholder="新しい名前を入力（次回から選べます）" hidden>` : "");
+    }
     else input = `<input id="f_${k}" type="${type==="num"?"text":type}" ${type==="num"?'inputmode="numeric"':""} value="${v}">`;
     h += `<div class="f ${full?"full":""}"><span class="label">${esc(lab)}${req?"（必須）":""}</span>${input}</div>`;
   }
@@ -380,6 +396,11 @@ $("#sheet").addEventListener("click", e=>{ if(e.target.id==="sheet") closeForm()
 $("#fields").addEventListener("click", e=>{
   const x = e.target.closest("[data-x]"); if(x){ photos.splice(+x.dataset.x,1); drawThumbs(); return; }
   if(e.target.closest("#photoBtn")) $("#photoIn").click();
+});
+$("#fields").addEventListener("change", e=>{
+  const sel = e.target.closest("select[data-k]"); if(!sel) return;
+  const box = $("#f_"+sel.dataset.k+"_new"); if(!box) return;
+  box.hidden = sel.value!=="__new__"; if(!box.hidden) box.focus();
 });
 $("#fields").addEventListener("change", async e=>{
   if(e.target.id!=="photoIn") return;
@@ -411,6 +432,7 @@ $("#form").addEventListener("submit", async e=>{
   for(const [k,lab,type,,,req] of D.fields){
     if(type==="photos"){ item.photos = photos.join(","); continue; }
     let v = $("#f_"+k).value.trim(); if(type==="num") v = v.replace(/[,，円¥\s]/g,"");
+    if(v==="__new__"){ v = $("#f_"+k+"_new").value.trim(); if(!v){ toast(`${lab}の新しい名前を入れてください`); $("#f_"+k+"_new").focus(); return; } }
     if(req && !v){ toast(`${lab}を入れてください`); $("#f_"+k).focus(); return; }
     item[k] = v;
   }
