@@ -180,7 +180,7 @@ ul.pv li.bad input.p{border-color:var(--danger)}
 <script>
 /* ▼ Apps Script をデプロイしたときの「ウェブアプリのURL」 */
 const API_URL = "https://script.google.com/macros/s/AKfycbwMrGyfC24OulRxZ5xkpKnA0rPlK1Fi0wWacCv17PgV7FsUF7CPBVEKj9O5TVpwHW6y/exec";
-const APP_VERSION = "2026-11-09-1";
+const APP_VERSION = "2026-11-14-1";
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -526,6 +526,23 @@ async function refresh(){
 }
 setInterval(()=>{ if(document.visibilityState==="visible"){ if(queue.length) flush(); else refresh(); } }, 30000);
 window.addEventListener("online", flush);
+
+/* アプリを閉じる・ホームに戻る瞬間に、送信待ちをまとめて送り出す。
+   sendBeacon は画面が閉じた後もスマホ側が送信を続けてくれる仕組み。
+   届いたかどうかはここでは分からないので送信待ちには残し、次に開いたときに確認する
+   （データ側は同じ記帳IDを二重に入れないので、重複はしない） */
+let lastBeacon = 0;
+function beaconQueue(){
+  if(!queue.length || !pass || !API_URL || !navigator.sendBeacon) return;
+  if(Date.now() - lastBeacon < 3000) return;
+  lastBeacon = Date.now();
+  try{
+    const body = new Blob([JSON.stringify({action:"addMany", pass, date:viewDate, items:queue.slice(0,20)})], {type:"text/plain;charset=utf-8"});
+    navigator.sendBeacon(API_URL, body);
+  }catch(_){}
+}
+document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState==="hidden") beaconQueue(); });
+window.addEventListener("pagehide", beaconQueue);
 
 /* ---------- 新しい版の自動反映 ---------- */
 async function checkUpdate(){
