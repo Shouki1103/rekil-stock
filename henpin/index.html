@@ -149,7 +149,7 @@ textarea{min-height:70px;resize:vertical}
 <script>
 /* ▼ Apps Script をデプロイしたときの「ウェブアプリのURL」 */
 const API_URL = "https://script.google.com/macros/s/AKfycbzuakHA841y3KMQTn32E6L6UOebKO9LZGEqX1IHAAQ3Xkb5Y2tvp4ZlIOVnr1u9T5KD/exec";
-const APP_VERSION = "2026-11-15-5";
+const APP_VERSION = "2026-11-15-6";
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -245,7 +245,7 @@ function toast(msg){
   const t = document.createElement("div"); t.className = "toast"; t.textContent = msg; t.setAttribute("role","status");
   document.body.appendChild(t); setTimeout(()=>t.remove(), 2400);
 }
-function status(){ $("#sync").textContent = !API_URL ? "未設定" : busy ? "同期中…" : online ? "接続済み" : "未接続"; }
+function status(){ $("#sync").textContent = (!API_URL ? "未設定" : busy ? "保存中…" : online ? "接続済み" : "未接続") + "  ver " + APP_VERSION.slice(5); }
 const errMsg = c => c==="network" ? "通信できませんでした。電波の良い場所でもう一度お試しください" : c==="no_api" ? "データ側がまだ設定されていません" : `保存できませんでした（${c}）`;
 
 /* ---------- 期限 ---------- */
