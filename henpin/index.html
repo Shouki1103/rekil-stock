@@ -149,7 +149,7 @@ textarea{min-height:70px;resize:vertical}
 <script>
 /* ▼ Apps Script をデプロイしたときの「ウェブアプリのURL」 */
 const API_URL = "https://script.google.com/macros/s/AKfycbzuakHA841y3KMQTn32E6L6UOebKO9LZGEqX1IHAAQ3Xkb5Y2tvp4ZlIOVnr1u9T5KD/exec";
-const APP_VERSION = "2026-11-15-4";
+const APP_VERSION = "2026-11-15-5";
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -184,7 +184,7 @@ const T = {
       ["tracking","返送の追跡番号","text"],["refund","返金額(円)","num"],["memo","メモ","textarea",1]]},
   frima:{name:"フリマの返品", add:"＋ フリマ返品を追加",
     flow:["返品依頼","協議中","返送待ち","受取・検品","返金完了"], closed:["返金完了","返品不可"], extra:["返品不可"],
-    fields:[["item","商品名","text",1,null,1],["site","販路","select",0,["メルカリ","ヤフオク","ラクマ","その他"]],["orderId","取引ID","text"],
+    fields:[["item","商品名","text",1,null,1],["site","販路","select",0,["メルカリ","メルカリShops","ヤフオク","Yahoo!フリマ","ラクマ","eBay","Catawiki","業販","その他"]],["orderId","取引ID","text"],
       ["buyer","購入者","text"],["price","販売額(円)","num"],["reason","返品理由","textarea",1],
       ["applyDate","依頼日","date",0,null,0,"today"],["deadline","次の対応期限","date"],
       ["tracking","返送の追跡番号","text"],["memo","メモ","textarea",1]]},
