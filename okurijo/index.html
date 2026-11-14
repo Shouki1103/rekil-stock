@@ -50,6 +50,12 @@ main{max-width:600px;margin:0 auto;padding:12px max(16px,env(safe-area-inset-rig
 .toggle{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);cursor:pointer;user-select:none}
 .toggle input{width:20px;height:20px;min-height:0;accent-color:var(--accent)}
 .summary{font-size:13px;color:var(--muted)}
+.search{position:relative;display:flex;align-items:center}
+.search svg{position:absolute;left:12px;color:var(--muted);pointer-events:none}
+.search input{width:100%;font:inherit;font-size:16px;padding:10px 64px 10px 38px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--fg)}
+.search input:focus{outline:none;border-color:var(--accent)}
+.search .clr{position:absolute;right:6px;min-height:34px;padding:4px 10px;font-size:13px;background:none;border:0;color:var(--muted);cursor:pointer}
+mark{background:var(--accent);color:var(--accent-ink);border-radius:3px;padding:0 1px}
 .day{background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden}
 .day h2{margin:0;padding:10px 14px;font-size:15px;font-weight:900;display:flex;justify-content:space-between;align-items:baseline;border-bottom:1px solid var(--line);background:#20272f}
 .day h2 small{font-weight:500;color:var(--muted);font-size:12px}
@@ -119,6 +125,7 @@ details summary{cursor:pointer;color:var(--muted);font-size:13px;font-weight:700
 
 <main>
   <div class="chips" id="vendorChips" aria-label="業者で絞り込み" hidden></div>
+  <label class="search" for="q"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/></svg><input id="q" type="search" placeholder="名前・送り状番号・evtn・業者名で検索" autocomplete="off" aria-label="検索"><button type="button" class="clr" id="qClr" hidden>クリア</button></label>
   <div class="bar">
     <span class="summary" id="summary"></span>
     <label class="toggle"><input type="checkbox" id="onlyTodo">未登録だけ表示</label>
@@ -189,7 +196,7 @@ details summary{cursor:pointer;color:var(--muted);font-size:13px;font-weight:700
 <script>
 /* ▼ Apps Script をデプロイしたときの「ウェブアプリのURL」 */
 const API_URL = "https://script.google.com/macros/s/AKfycbwa-V3TqAAmz3S1-zreAI3Jkp0d4f0aGikswIQnTdmxsgFpggUxE0bjl1-sR0DZumSwsQ/exec";
-const APP_VERSION = "2026-11-09-2";
+const APP_VERSION = "2026-11-15-1";
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -204,6 +211,9 @@ const CH_NAME = {ebay:"eBay", yahoo:"ヤフオク", gyohan:"業販"};
 let pass = "";
 try{ pass = localStorage.getItem("rekil-okuri-pass") || localStorage.getItem("rekil-pass") || localStorage.getItem("rekil-shiire-pass") || ""; }catch(_){}
 let rows = ls.get("okuri-rows", []), vendors = ls.get("okuri-vendors", []);
+let q = "";
+const norm = s => String(s ?? "").normalize("NFKC").toLowerCase().replace(/[\s\-ー－]/g, "");
+const hit = r => { const k = norm(q); return !k || [r.name, r.tracking, r.evtn, r.vendor].some(v => norm(v).includes(k)); };
 let ch = ls.get("okuri-tab", "ebay"), vendorFilter = "", onlyTodo = ls.get("okuri-onlytodo", false), online = false, busy = 0;
 
 class ApiError extends Error{ constructor(c){ super(c); this.code = c; } }
@@ -248,15 +258,17 @@ function render(){
 
   let list = rows.filter(r=>r.channel===ch);
   if(ch==="gyohan" && vendorFilter) list = list.filter(r=>(r.vendor||"（業者未設定）")===vendorFilter);
+  if(q) list = list.filter(hit);
   const total = list.length, todo = list.filter(r=>!r.done).length;
   if(onlyTodo) list = list.filter(r=>!r.done);
-  $("#summary").textContent = `${CH_NAME[ch]}：${total}件（未登録 ${todo}件）`;
+  $("#qClr").hidden = !q;
+  $("#summary").textContent = q ? `${CH_NAME[ch]}で「${q}」：${total}件（未登録 ${todo}件）` : `${CH_NAME[ch]}：${total}件（未登録 ${todo}件）`;
 
   const byDate = {};
   list.forEach(r=>{ (byDate[r.date] = byDate[r.date] || []).push(r); });
   const dates = Object.keys(byDate).sort().reverse();
   $("#empty").hidden = dates.length>0;
-  $("#empty").textContent = onlyTodo && total ? "未登録の送り状はありません。" : "まだありません。下の「＋ 送り状を追加」から登録できます。";
+  $("#empty").textContent = q ? `${CH_NAME[ch]}に「${q}」は見つかりません。ほかのタブも確認してください。` : onlyTodo && total ? "未登録の送り状はありません。" : "まだありません。下の「＋ 送り状を追加」から登録できます。";
   $("#days").innerHTML = dates.map(d=>{
     const dt = new Date(d+"T00:00:00+09:00"), w = dt.getUTCDay ? new Date(d+"T12:00:00Z").getUTCDay() : 0;
     const [y,m,dd] = d.split("-").map(Number);
@@ -283,6 +295,8 @@ function render(){
 
 $(".tabs").addEventListener("click", e=>{ const b = e.target.closest("[data-ch]"); if(!b) return; ch = b.dataset.ch; vendorFilter = ""; ls.set("okuri-tab", ch); render(); window.scrollTo({top:0}); });
 $("#vendorChips").addEventListener("click", e=>{ const b = e.target.closest("[data-v]"); if(!b) return; vendorFilter = b.dataset.v; render(); });
+$("#q").addEventListener("input", ()=>{ q = $("#q").value.trim(); render(); });
+$("#qClr").addEventListener("click", ()=>{ $("#q").value = ""; q = ""; render(); $("#q").focus(); });
 $("#onlyTodo").addEventListener("change", ()=>{ onlyTodo = $("#onlyTodo").checked; ls.set("okuri-onlytodo", onlyTodo); render(); });
 
 $("#days").addEventListener("click", async e=>{
