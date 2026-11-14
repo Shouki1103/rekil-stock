@@ -83,13 +83,16 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 .fab{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:8;width:min(600px,calc(100% - 32px));box-shadow:0 8px 28px #000a}
 .empty{color:var(--muted);font-size:14px;margin:8px 0;text-align:center;line-height:1.8}
 .toast{position:fixed;left:50%;bottom:calc(92px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:#f2f4f6;color:#111;padding:10px 16px;border-radius:8px;font-weight:700;z-index:60;max-width:calc(100% - 32px);box-shadow:0 6px 24px #0008}
-.sheet{position:fixed;inset:0;z-index:30;background:#000a;display:flex;align-items:flex-end;justify-content:center}
-.sheet form{background:var(--surface);width:100%;max-width:640px;max-height:92vh;overflow:auto;border-radius:14px 14px 0 0;padding:16px max(16px,env(safe-area-inset-right,0px)) calc(16px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:12px}
-.sheet h3{margin:0;font-size:18px;display:flex;justify-content:space-between;align-items:center}
+.sheet{position:fixed;inset:0;z-index:30;background:#000a;display:flex;align-items:flex-end;justify-content:center;overscroll-behavior:contain}
+.sheet form{background:var(--surface);width:100%;max-width:640px;max-height:calc(100% - env(safe-area-inset-top,0px) - 12px);max-height:calc(100dvh - env(safe-area-inset-top,0px) - 12px);overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;border-radius:14px 14px 0 0;padding:0 max(16px,env(safe-area-inset-right,0px)) calc(16px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:12px}
+.sheet h3{margin:0 -16px;padding:12px 16px;font-size:18px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:2;background:var(--surface);border-bottom:1px solid var(--line)}
+.sheet h3 #close{color:var(--fg);border-color:var(--line);min-width:88px}
 .fields{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .f{display:flex;flex-direction:column;gap:5px;min-width:0}.f.full{grid-column:1/-1}
 .label{font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.06em}
-input,select,textarea{font:inherit;font-size:16px;width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--fg);min-height:48px}
+input,select,textarea{font:inherit;font-size:16px;width:100%;max-width:100%;min-width:0;display:block;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--fg);min-height:48px}
+input[type="date"]{-webkit-appearance:none;appearance:none;text-align:left}
+input[type="date"]::-webkit-date-and-time-value{text-align:left}
 textarea{min-height:70px;resize:vertical}
 .photoBtn{border-style:dashed;width:max-content;min-height:44px}
 .note{font-size:13px;color:var(--muted);margin:0}
@@ -126,7 +129,7 @@ textarea{min-height:70px;resize:vertical}
 
 <div class="sheet" id="sheet" hidden>
   <form id="form" autocomplete="off" novalidate>
-    <h3><span id="formT">追加</span><button type="button" class="ghost" id="close" aria-label="閉じる">✕</button></h3>
+    <h3><span id="formT">追加</span><button type="button" id="close">✕ 閉じる</button></h3>
     <div class="fields" id="fields"></div>
     <button class="primary" id="save" type="submit">保存する</button>
     <button type="button" class="ghost danger" id="del" hidden>削除</button>
@@ -146,7 +149,7 @@ textarea{min-height:70px;resize:vertical}
 <script>
 /* ▼ Apps Script をデプロイしたときの「ウェブアプリのURL」 */
 const API_URL = "https://script.google.com/macros/s/AKfycbzuakHA841y3KMQTn32E6L6UOebKO9LZGEqX1IHAAQ3Xkb5Y2tvp4ZlIOVnr1u9T5KD/exec";
-const APP_VERSION = "2026-11-09-3";
+const APP_VERSION = "2026-11-15-1";
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -337,13 +340,20 @@ function openForm(r){
   $("#fields").innerHTML = h;
   drawThumbs();
   $("#del").hidden = !r; $("#save").textContent = r ? "変更を保存" : "登録する";
-  $("#sheet").hidden = false;
+  $("#sheet").hidden = false; document.body.style.overflow = "hidden";
+  $("#form").scrollTop = 0;
+  try{ if(!(history.state && history.state.sheet)) history.pushState({sheet:1}, ""); }catch(_){}
 }
-function closeForm(){ $("#sheet").hidden = true; editing = null; }
+function closeForm(fromBack){
+  if($("#sheet").hidden) return;
+  $("#sheet").hidden = true; editing = null; document.body.style.overflow = "";
+  if(!fromBack && history.state && history.state.sheet) history.back();
+}
+window.addEventListener("popstate", ()=>{ if(!$("#sheet").hidden) closeForm(true); });
 function drawThumbs(){ const t = $("#fThumbs"); if(!t) return;
   t.innerHTML = photos.map((p,i)=>`<span class="thumb"><img src="${photoUrl(p)}" alt="写真${i+1}"><button type="button" class="x" data-x="${i}" aria-label="写真を外す">×</button></span>`).join(""); }
 $("#addBtn").addEventListener("click", ()=>openForm(null));
-$("#close").addEventListener("click", closeForm);
+$("#close").addEventListener("click", ()=>closeForm());
 $("#sheet").addEventListener("click", e=>{ if(e.target.id==="sheet") closeForm(); });
 $("#fields").addEventListener("click", e=>{
   const x = e.target.closest("[data-x]"); if(x){ photos.splice(+x.dataset.x,1); drawThumbs(); return; }
