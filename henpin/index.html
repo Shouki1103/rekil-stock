@@ -149,7 +149,7 @@ textarea{min-height:70px;resize:vertical}
 <script>
 /* ▼ Apps Script をデプロイしたときの「ウェブアプリのURL」 */
 const API_URL = "https://script.google.com/macros/s/AKfycbzuakHA841y3KMQTn32E6L6UOebKO9LZGEqX1IHAAQ3Xkb5Y2tvp4ZlIOVnr1u9T5KD/exec";
-const APP_VERSION = "2026-11-15-2";
+const APP_VERSION = "2026-11-15-3";
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -204,8 +204,11 @@ let tab = ls.get("henpin-tab", "shuppin"); if(!T[tab]) tab = "shuppin";
 let filter = "対応中", online = false, busy = 0;
 
 class ApiError extends Error{ constructor(c){ super(c); this.code = c; } }
+let writes = 0;   // 送信中の保存・削除の数（すべて終わるまで画面の表示を優先する）
 async function api(action, params={}){
   if(!API_URL) throw new ApiError("no_api");
+  const isWrite = action==="save" || action==="remove";
+  if(isWrite) writes++;
   busy++; status();
   try{
     let res;
@@ -213,10 +216,29 @@ async function api(action, params={}){
     catch(_){ throw new ApiError("network"); }
     let j; try{ j = await res.json(); }catch(_){ throw new ApiError("bad_response"); }
     if(!j.ok){ if(j.error==="passcode") showLock(); throw new ApiError(j.error||"error"); }
-    if(j.data){ data = j.data; ls.set("henpin-data", data); }
+    // ほかの保存がまだ送信中なら、その画面の変更を消さないよう最新データの反映は最後の1件のときだけ
+    if(j.data && writes === (isWrite ? 1 : 0)){ data = j.data; ls.set("henpin-data", data); }
     online = true;
     return j.result;
-  }finally{ busy--; render(); }
+  }finally{ if(isWrite) writes--; busy--; render(); }
+}
+/* 画面を先に書き換えてから、裏で保存する（失敗したら元に戻す） */
+const newId = () => new Date(Date.now()+9*3600e3).toISOString().replace(/\D/g,"").slice(0,14) + "-" + Math.random().toString(36).slice(2,6);
+function applyLocal(t, item, remove){
+  const list = (data[t] = (data[t]||[]).slice());
+  const i = list.findIndex(x=>x.id===item.id);
+  if(remove){ if(i>=0) list.splice(i,1); }
+  else if(i>=0) list[i] = Object.assign({}, list[i], item);
+  else list.push(Object.assign({created: new Date().toISOString()}, item));
+  ls.set("henpin-data", data); render();
+}
+function saveFast(t, item, okMsg, remove){
+  const before = JSON.parse(JSON.stringify(data[t]||[]));
+  applyLocal(t, item, remove);
+  toast(okMsg);
+  api(remove ? "remove" : "save", remove ? {table:t, id:item.id} : {table:t, item})
+    .catch(err=>{ data[t] = before; ls.set("henpin-data", data); render();
+      toast(err.code==="network" ? "通信できず保存されませんでした。もう一度お試しください" : `保存できませんでした（${err.code}）。元に戻しました`); });
 }
 function toast(msg){
   document.querySelectorAll(".toast").forEach(t=>t.remove());
@@ -313,7 +335,7 @@ $("#list").addEventListener("click", async e=>{
     e.stopPropagation();
     const r = (data[tab]||[]).find(x=>x.id===q.dataset.id); if(!r) return;
     const item = {id:r.id, status:q.dataset.q}; if(q.dataset.q==="受取済み" && !r.recv) item.recv = today();
-    try{ await api("save", {table:tab, item}); toast(`${q.dataset.q}にしました`); }catch(err){ toast(errMsg(err.code)); }
+    saveFast(tab, item, `${q.dataset.q}にしました`);
     return;
   }
   const c = e.target.closest(".card"); if(c) openForm((data[tab]||[]).find(x=>x.id===c.dataset.id));
@@ -393,17 +415,17 @@ $("#form").addEventListener("submit", async e=>{
     item[k] = v;
   }
   if(tab==="repair" && item.status==="受取済み" && !item.recv) item.recv = today();
-  const btn = $("#save"); btn.disabled = true;
-  try{ await api("save", {table:tab, item}); toast(editing ? "保存しました" : "登録しました"); closeForm(); }
-  catch(err){ toast(errMsg(err.code)); }
-  btn.disabled = false;
+  if(!editing) item.id = newId();
+  const msg = editing ? "保存しました" : "登録しました";
+  closeForm();
+  saveFast(tab, item, msg);
 });
 $("#del").addEventListener("click", async ()=>{
   if(!editing) return;
   const nm = tab==="shuppin" ? `${md(editing.kaisai)} ${editing.auction}` : editing.item;
   if(!confirm(`「${nm}」を削除します。よろしいですか？`)) return;
-  try{ await api("remove", {table:tab, id:editing.id}); toast("削除しました"); closeForm(); }
-  catch(err){ toast(`削除できませんでした（${err.code}）`); }
+  const id = editing.id; closeForm();
+  saveFast(tab, {id}, "削除しました", true);
 });
 
 /* ---------- 暗証番号 ---------- */
@@ -429,7 +451,7 @@ $("#lockForm").addEventListener("submit", async e=>{
 });
 
 /* ---------- 同期・更新 ---------- */
-async function refresh(){ if(!pass || busy || !API_URL) return; try{ await api("list"); }catch(err){ if(err.code==="network"){ online = false; status(); } } }
+async function refresh(){ if(!pass || busy || writes || !API_URL) return; try{ await api("list"); }catch(err){ if(err.code==="network"){ online = false; status(); } } }
 async function checkUpdate(){
   try{
     const r = await fetch(location.pathname + "?v=" + Date.now(), {cache:"no-store"});
