@@ -204,7 +204,7 @@ details summary{cursor:pointer;color:var(--muted);font-size:13px;font-weight:700
 <script>
 /* ▼ Apps Script をデプロイしたときの「ウェブアプリのURL」 */
 const API_URL = "https://script.google.com/macros/s/AKfycbwa-V3TqAAmz3S1-zreAI3Jkp0d4f0aGikswIQnTdmxsgFpggUxE0bjl1-sR0DZumSwsQ/exec";
-const APP_VERSION = "2026-11-15-3";
+const APP_VERSION = "2026-11-15-4";
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -224,6 +224,10 @@ const norm = s => String(s ?? "").normalize("NFKC").toLowerCase().replace(/[\s\-
 const hit = r => { const k = norm(q); return !k || [r.name, r.tracking, r.evtn, r.vendor].some(v => norm(v).includes(k)); };
 let ch = ls.get("okuri-tab", "ebay"), vendorFilter = "", onlyTodo = ls.get("okuri-onlytodo", false), online = false, busy = 0;
 
+// チェックの送信待ち（サーバーの古い一覧で上書きされないように保持）
+const pendingDone = {};
+function applyPending(){ rows.forEach(r=>{ if(r.tracking in pendingDone) r.done = pendingDone[r.tracking]; }); }
+let doneChain = Promise.resolve();
 class ApiError extends Error{ constructor(c){ super(c); this.code = c; } }
 async function api(action, params={}){
   busy++; status();
@@ -234,7 +238,7 @@ async function api(action, params={}){
     }catch(_){ throw new ApiError("network"); }
     let j; try{ j = await res.json(); }catch(_){ throw new ApiError("bad_response"); }
     if(!j.ok){ if(j.error==="passcode") showLock(); throw new ApiError(j.error||"error"); }
-    if(j.rows){ rows = j.rows; ls.set("okuri-rows", rows); }
+    if(j.rows){ rows = j.rows; applyPending(); ls.set("okuri-rows", rows); }
     if(j.vendors){ vendors = j.vendors; ls.set("okuri-vendors", vendors); }
     online = true;
     return j.result;
@@ -322,9 +326,21 @@ $("#days").addEventListener("click", async e=>{
 $("#days").addEventListener("change", async e=>{
   const cb = e.target.closest("[data-done]"); if(!cb) return;
   const t = cb.dataset.done, done = cb.checked;
+  pendingDone[t] = done;
   const r = rows.find(x=>x.tracking===t); if(r){ r.done = done; render(); }
-  try{ await api("setDone", {tracking:t, done}); }
-  catch(err){ if(r){ r.done = !done; render(); } toast(err.code==="network" ? "通信できませんでした。もう一度押してください" : `保存できませんでした（${err.code}）`); }
+  // 1件ずつ順番に送る（同時に送ると片方が元に戻るため）
+  doneChain = doneChain.then(async ()=>{
+    if(pendingDone[t] !== done) return; // 送る前にまた押し直された
+    try{
+      await api("setDone", {tracking:t, done});
+      if(pendingDone[t] === done) delete pendingDone[t];
+    }catch(err){
+      if(pendingDone[t] === done) delete pendingDone[t];
+      const x = rows.find(y=>y.tracking===t); if(x){ x.done = !done; render(); }
+      toast(err.code==="network" ? "通信できませんでした。もう一度押してください" : `保存できませんでした（${err.code}）`);
+    }
+  });
+  await doneChain;
 });
 
 /* ---------- 追加・編集 ---------- */
@@ -522,7 +538,7 @@ $("#lockForm").addEventListener("submit", async e=>{
 });
 
 /* ---------- 同期・更新 ---------- */
-async function refresh(){ if(!pass || busy) return; try{ await api("list"); }catch(err){ if(err.code==="network"){ online = false; status(); } } }
+async function refresh(){ if(!pass || busy || Object.keys(pendingDone).length) return; try{ await api("list"); }catch(err){ if(err.code==="network"){ online = false; status(); } } }
 async function checkUpdate(){
   try{
     const r = await fetch(location.pathname + "?v=" + Date.now(), {cache:"no-store"});
