@@ -83,7 +83,10 @@ button.ghost{background:transparent;border-color:transparent;color:var(--muted)}
 button.danger{color:var(--danger)}
 button:disabled{opacity:.45;cursor:default}
 button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
-.fab{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:8;width:min(560px,calc(100% - 32px));box-shadow:0 8px 28px #000a}
+.fab{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:8;width:min(560px,calc(100% - 32px));display:grid;grid-template-columns:1.6fr 1fr;gap:8px}
+.fab button{box-shadow:0 8px 28px #000a}
+.fab button.sub{min-height:56px;font-size:15px;background:var(--surface)}
+#busyBar{position:fixed;left:50%;transform:translateX(-50%);top:calc(12px + env(safe-area-inset-top,0px));z-index:61;background:var(--accent);color:var(--accent-ink);font-weight:700;padding:8px 16px;border-radius:999px;box-shadow:0 6px 24px #0008}
 .empty{color:var(--muted);font-size:14px;margin:8px 0;text-align:center}
 .toast{position:fixed;left:50%;bottom:calc(92px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:#f2f4f6;color:#111;padding:10px 16px;border-radius:8px;font-weight:700;z-index:60;max-width:calc(100% - 32px);box-shadow:0 6px 24px #0008}
 /* 追加・編集シート */
@@ -134,7 +137,12 @@ details summary{cursor:pointer;color:var(--muted);font-size:13px;font-weight:700
   <p class="empty" id="empty" hidden>まだありません。下の「＋ 送り状を追加」から登録できます。</p>
 </main>
 
-<button class="primary fab" id="addBtn" type="button">＋ 送り状を追加</button>
+<div class="fab">
+  <button class="primary" id="snapBtn" type="button"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>撮って登録</button>
+  <button class="sub" id="addBtn" type="button">＋ 手入力</button>
+</div>
+<input type="file" id="snapIn" accept="image/*" multiple hidden>
+<div id="busyBar" role="status" hidden></div>
 
 <!-- 追加・編集 -->
 <div class="sheet" id="sheet" hidden>
@@ -142,8 +150,8 @@ details summary{cursor:pointer;color:var(--muted);font-size:13px;font-weight:700
     <h3><span id="formT">送り状を追加</span><button type="button" class="ghost" id="close" aria-label="閉じる">✕</button></h3>
     <div id="photoBox">
       <button type="button" id="photoBtn" class="photo"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>送り状を撮る・選ぶ</button>
-      <input type="file" id="photoIn" accept="image/*" hidden>
-      <p class="note" style="margin-top:6px">送り状番号・お届け先・evtnを読み取って下に入れます。登録前に必ず確認してください。</p>
+      <input type="file" id="photoIn" accept="image/*" multiple hidden>
+      <p class="note" style="margin-top:6px">送り状番号・お届け先・evtn・受付日を読み取り、そろっていればそのまま登録します。何枚かまとめて選べます。</p>
     </div>
     <div>
       <span class="label">販路</span>
@@ -196,7 +204,7 @@ details summary{cursor:pointer;color:var(--muted);font-size:13px;font-weight:700
 <script>
 /* ▼ Apps Script をデプロイしたときの「ウェブアプリのURL」 */
 const API_URL = "https://script.google.com/macros/s/AKfycbwa-V3TqAAmz3S1-zreAI3Jkp0d4f0aGikswIQnTdmxsgFpggUxE0bjl1-sR0DZumSwsQ/exec";
-const APP_VERSION = "2026-11-15-1";
+const APP_VERSION = "2026-11-15-2";
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -393,53 +401,90 @@ $("#del").addEventListener("click", async ()=>{
 });
 
 /* ---------- 写真から読み取り ---------- */
-$("#photoBtn").addEventListener("click", ()=>$("#photoIn").click());
-$("#photoIn").addEventListener("change", async ()=>{
-  const f = $("#photoIn").files[0]; $("#photoIn").value = ""; if(!f) return;
-  const btn = $("#photoBtn"), label = btn.innerHTML;
-  btn.disabled = true; btn.textContent = "読み取り中…（10〜20秒）";
-  try{
-    const image = await shrink(f, 2000);
-    const r = await api("ocr", {image});
-    const text = (r && r.text) || "";
-    $("#ocrText").textContent = text || "（文字が見つかりませんでした）"; $("#ocrRaw").hidden = false;
-    applyOcr(text);
-  }catch(err){
-    const c = err && err.code || "";
-    toast(c==="network" ? "通信できませんでした。電波の良い場所でもう一度お試しください" : `読み取りできませんでした（${c}）`);
-  }
-  btn.disabled = false; btn.innerHTML = label;
-});
-function applyOcr(text){
-  const flat = text.replace(/[‐－―ー−—–]/g,"-").replace(/[０-９]/g, d=>String.fromCharCode(d.charCodeAt(0)-0xFEE0));
-  // 送り状番号：4-4-4 の形を優先、なければ12桁の数字
+const MY_TEL = "09075150197";
+function parseLabel(text){
+  const flat = String(text||"").normalize("NFKC").replace(/[‐－―−—–]/g,"-");
+  const lines = flat.split(/\r?\n/).map(s=>s.replace(/\s+/g," ").trim()).filter(Boolean);
+  // 送り状番号：4-4-4 の形を優先、なければ12桁の数字（バーコード下の a…a も拾う）
   const set = new Set();
   (flat.match(/\b\d{4}\s*-\s*\d{4}\s*-\s*\d{4}\b/g)||[]).forEach(s=>set.add(s.replace(/\D/g,"")));
   (flat.match(/(?<!\d)\d{12}(?!\d)/g)||[]).forEach(s=>set.add(s));
-  const trks = [...set].filter(t=>!rows.some(r=>r.tracking===t));
-  const allT = [...set];
-  if(allT.length){ $("#fTrk").value = trks[0] || allT[0]; }
-  $("#trkCands").innerHTML = allT.length>1 ? allT.map(t=>`<button type="button" data-t="${t}">${t}${rows.some(r=>r.tracking===t)?"（登録済み）":""}</button>`).join("") : "";
+  const trks = [...set].filter(t=>!t.startsWith("0"));
   // evtn
-  const ev = flat.match(/evtn\s*[:：#]?\s*([a-z0-9]{6,8})/i);
-  if(ev) $("#fEv").value = ev[1].toLowerCase();
-  // 名前の候補：「様」の前、英字の氏名らしい行
-  const lines = flat.split(/\r?\n/).map(s=>s.replace(/\s+/g," ").trim()).filter(Boolean);
+  const evm = flat.match(/evtn\s*[:;#]?\s*([a-z0-9]{6,8})/i);
+  const evtn = evm ? evm[1].toLowerCase() : "";
+  // 受付日
+  const dm = flat.match(/受付日\s*(\d{4})\s*年\s*(\d{1,2})\s*月\s*(\d{1,2})\s*日/);
+  const date = dm ? `${dm[1]}-${String(dm[2]).padStart(2,"0")}-${String(dm[3]).padStart(2,"0")}` : "";
+  // お届け先の名前
+  const SENDER = /櫻井|祥貴|ReKiL|依頼主|^Re$/i;
+  const NOISE = /(TEL|Unit|evtn|Rapid|東京都|大田区|平和島|静岡|島田|東町|ヤマト|運輸|午前中|午後|時|お届け|受付|送り状|問い合わせ|衣料|服飾|品名|発店|宅急便|発払|配達|貼付|控|BW2|〒|\d{3}-\d{4}|\d{5,})/i;
+  const clean = s=>String(s||"").replace(/^.*C\s*\/\s*O\s*/i,"").replace(/[様樣]/g,"").replace(/\s+/g," ").trim();
+  const ok = s=>{ const c = clean(s); return c.length>=2 && c.length<=40 && !SENDER.test(c) && !NOISE.test(c) && /[A-Za-z぀-ヿ一-鿿]/.test(c); };
   const names = [];
-  lines.forEach(l=>{
-    const m = l.match(/^(.{2,40}?)\s*様/); if(m && !/ReKiL|櫻井|依頼主|ご依頼/.test(m[1])) names.push(m[1].trim());
-  });
-  lines.forEach(l=>{ if(/^[A-Za-z][A-Za-z.'\-]+( [A-Za-z][A-Za-z.'\-]+){1,3}$/.test(l) && !/(Japan|JAPAN|Yamato|YAMATO|Street|Road|Ave|Suite|Apt|Inc|LLC|Shizuoka|Shimada|ReKiL)/.test(l)) names.push(l); });
-  const uniq = [...new Set(names)].slice(0,6);
-  if(uniq.length && !$("#fName").value) $("#fName").value = uniq[0];
-  $("#nameCands").innerHTML = uniq.length>1 ? uniq.map(n=>`<button type="button" data-n="${esc(n)}">${esc(n)}</button>`).join("") : "";
-  // 販路の推定：依頼主がReならヤフオク、evtnがあればeBay、業者名が入っていれば業販
-  const hitV = vendors.find(v=>v.length>=2 && flat.includes(v));
-  if(hitV){ setFch("gyohan"); $("#fVendor").value = hitV; vendorCheck(); }
-  else if(ev) setFch("ebay");
-  else if(/(^|\n)\s*Re\s*($|\n|様)/.test(flat)) setFch("yahoo");
-  toast(allT.length ? "読み取りました。内容を確認してください" : "送り状番号を見つけられませんでした。手で入れてください");
+  const push = s=>{ const c = clean(s); if(ok(c) && !names.includes(c)) names.push(c); };
+  // 1) C/O の後ろ〜「様」まで
+  (flat.match(/C\s*\/\s*O\s*\n?\s*([^\n]{2,40})/gi)||[]).forEach(m=>push(m.replace(/^C\s*\/\s*O\s*/i,"").split(/[様樣]/)[0]));
+  // 2) 自分（依頼主）の電話番号の直前の行
+  lines.forEach((l,i)=>{ if(l.replace(/\D/g,"").includes(MY_TEL)){ for(let j=i-1;j>=Math.max(0,i-3);j--){ if(ok(lines[j])){ push(lines[j]); break; } } } });
+  // 3) 「様」の付いた行
+  lines.forEach(l=>{ const m = l.match(/^(.{2,40}?)\s*[様樣]/); if(m) push(m[1]); });
+  // 4) 英字の氏名らしい行
+  lines.forEach(l=>{ if(/^[A-Za-z][A-Za-z.'\-]*( [A-Za-z][A-Za-z.'\-]*){1,3}$/.test(l)) push(l); });
+  // 販路：登録済みの業者名があれば業販、依頼主がReならヤフオク、それ以外はeBay
+  const vendor = vendors.find(v=>v.length>=2 && flat.includes(v)) || "";
+  const isRe = /(^|\n)\s*Re\s*[様樣]?\s*($|\n)/.test(flat);
+  const chn = vendor ? "gyohan" : isRe && !evtn ? "yahoo" : "ebay";
+  return {trks, tracking: trks.find(t=>!rows.some(r=>r.tracking===t)) || trks[0] || "", evtn, date, names, name: names[0]||"", vendor, chn, text: flat};
 }
+function fillForm(p){
+  setFch(p.chn);
+  if(p.tracking) $("#fTrk").value = p.tracking;
+  $("#trkCands").innerHTML = p.trks.length>1 ? p.trks.map(t=>`<button type="button" data-t="${t}">${t}${rows.some(r=>r.tracking===t)?"（登録済み）":""}</button>`).join("") : "";
+  if(p.evtn) $("#fEv").value = p.evtn;
+  if(p.date) $("#fDate").value = p.date;
+  if(p.name) $("#fName").value = p.name;
+  $("#nameCands").innerHTML = p.names.length>1 ? p.names.slice(0,6).map(n=>`<button type="button" data-n="${esc(n)}">${esc(n)}</button>`).join("") : "";
+  if(p.vendor){ $("#fVendor").value = p.vendor; vendorCheck(); }
+  $("#ocrText").textContent = p.text || "（文字が見つかりませんでした）"; $("#ocrRaw").hidden = false;
+}
+function busyMsg(m){ $("#busyBar").textContent = m||""; $("#busyBar").hidden = !m; }
+// 写真をまとめて読み取り、そろっているものはそのまま登録。足りないものは入力画面で確認
+async function readPhotos(files){
+  files = [...files]; if(!files.length) return;
+  const added = [], dup = [], need = [];
+  for(let i=0;i<files.length;i++){
+    busyMsg(`読み取り中… ${files.length>1?`${i+1}/${files.length}枚`:""}`);
+    let p;
+    try{ p = parseLabel(((await api("ocr", {image: await shrink(files[i], 2000)}))||{}).text); }
+    catch(err){ need.push({error: err && err.code || "error"}); continue; }
+    if(!p.tracking){ need.push(p); continue; }
+    if(rows.some(r=>r.tracking===p.tracking)){ dup.push(p.tracking); continue; }
+    if(!p.name || (p.chn==="gyohan" && !p.vendor)){ need.push(p); continue; }
+    try{
+      busyMsg(`登録中… ${p.name}`);
+      const r = await api("add", {item:{tracking:p.tracking, name:p.name, evtn:p.chn==="ebay"?p.evtn:"", date:p.date||today(), channel:p.chn, vendor:p.chn==="gyohan"?p.vendor:""}});
+      if(r && r.dup) dup.push(p.tracking); else added.push(p);
+    }catch(err){ p.error = err && err.code; need.push(p); }
+  }
+  busyMsg("");
+  if(added.length){ const last = added[added.length-1]; if(ch!==last.chn){ ch = last.chn; ls.set("okuri-tab", ch); } render(); }
+  const msg = [added.length?`${added.length}件登録しました（${added.map(a=>a.name).join("、")}）`:"", dup.length?`${dup.length}件は登録済みでした`:""].filter(Boolean).join("。");
+  if(need.length){
+    const p = need[0];
+    if(!$("#sheet").hidden && editing) closeForm();
+    if($("#sheet").hidden) openForm(null);
+    if(p.text!=null) fillForm(p);
+    toast((msg?msg+"。":"") + (p.error==="network" ? "通信できなかった写真があります。もう一度お試しください" : p.tracking ? "名前を読み取れなかった送り状があります。入れて登録してください" : "送り状番号を読み取れない写真がありました。手で入れてください"));
+  }else{
+    closeForm();
+    toast(msg || "登録できる送り状が見つかりませんでした");
+  }
+}
+$("#photoBtn").addEventListener("click", ()=>$("#photoIn").click());
+$("#photoIn").addEventListener("change", ()=>{ const f = $("#photoIn").files; readPhotos(f).finally(()=>{ $("#photoIn").value = ""; }); });
+$("#snapBtn").addEventListener("click", ()=>$("#snapIn").click());
+$("#snapIn").addEventListener("change", ()=>{ const f = $("#snapIn").files; readPhotos(f).finally(()=>{ $("#snapIn").value = ""; }); });
 function shrink(file, max){
   return new Promise((ok, ng)=>{
     const img = new Image(), url = URL.createObjectURL(file);
