@@ -204,7 +204,7 @@ details summary{cursor:pointer;color:var(--muted);font-size:13px;font-weight:700
 <script>
 /* ▼ Apps Script をデプロイしたときの「ウェブアプリのURL」 */
 const API_URL = "https://script.google.com/macros/s/AKfycbwa-V3TqAAmz3S1-zreAI3Jkp0d4f0aGikswIQnTdmxsgFpggUxE0bjl1-sR0DZumSwsQ/exec";
-const APP_VERSION = "2026-11-15-2";
+const APP_VERSION = "2026-11-15-3";
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -419,7 +419,7 @@ function parseLabel(text){
   // お届け先の名前
   const SENDER = /櫻井|祥貴|ReKiL|依頼主|^Re$/i;
   const NOISE = /(TEL|Unit|evtn|Rapid|東京都|大田区|平和島|静岡|島田|東町|ヤマト|運輸|午前中|午後|時|お届け|受付|送り状|問い合わせ|衣料|服飾|品名|発店|宅急便|発払|配達|貼付|控|BW2|〒|\d{3}-\d{4}|\d{5,})/i;
-  const clean = s=>String(s||"").replace(/^.*C\s*\/\s*O\s*/i,"").replace(/[様樣]/g,"").replace(/\s+/g," ").trim();
+  const clean = s=>String(s||"").replace(/^.*C\s*\/\s*O\s*/i,"").replace(/[様樣]/g,"").replace(/\s+/g," ").replace(/^[^A-Za-z0-9\u3040-\u30ff\u4e00-\u9fff]+|[^A-Za-z0-9\u3040-\u30ff\u4e00-\u9fff.]+$/g,"").trim();
   const ok = s=>{ const c = clean(s); return c.length>=2 && c.length<=40 && !SENDER.test(c) && !NOISE.test(c) && /[A-Za-z぀-ヿ一-鿿]/.test(c); };
   const names = [];
   const push = s=>{ const c = clean(s); if(ok(c) && !names.includes(c)) names.push(c); };
@@ -431,10 +431,11 @@ function parseLabel(text){
   lines.forEach(l=>{ const m = l.match(/^(.{2,40}?)\s*[様樣]/); if(m) push(m[1]); });
   // 4) 英字の氏名らしい行
   lines.forEach(l=>{ if(/^[A-Za-z][A-Za-z.'\-]*( [A-Za-z][A-Za-z.'\-]*){1,3}$/.test(l)) push(l); });
-  // 販路：登録済みの業者名があれば業販、依頼主がReならヤフオク、それ以外はeBay
-  const vendor = vendors.find(v=>v.length>=2 && flat.includes(v)) || "";
-  const isRe = /(^|\n)\s*Re\s*[様樣]?\s*($|\n)/.test(flat);
-  const chn = vendor ? "gyohan" : isRe && !evtn ? "yahoo" : "ebay";
+  // 販路：お届け先が平和島（Rapid HH）ならeBay、依頼主が「Re.」ならヤフオク、それ以外は業販
+  const isEbay = /平和島|Rapid\s*HH|evtn/i.test(flat);
+  const isRe = /(^|\n)\s*Re\s*\.?\s*[様樣]?\s*($|\n)/.test(flat);
+  const chn = isEbay ? "ebay" : isRe ? "yahoo" : "gyohan";
+  const vendor = chn==="gyohan" ? (vendors.find(v=>v.length>=2 && flat.toLowerCase().includes(v.toLowerCase())) || "") : "";
   return {trks, tracking: trks.find(t=>!rows.some(r=>r.tracking===t)) || trks[0] || "", evtn, date, names, name: names[0]||"", vendor, chn, text: flat};
 }
 function fillForm(p){
@@ -445,7 +446,7 @@ function fillForm(p){
   if(p.date) $("#fDate").value = p.date;
   if(p.name) $("#fName").value = p.name;
   $("#nameCands").innerHTML = p.names.length>1 ? p.names.slice(0,6).map(n=>`<button type="button" data-n="${esc(n)}">${esc(n)}</button>`).join("") : "";
-  if(p.vendor){ $("#fVendor").value = p.vendor; vendorCheck(); }
+  if(p.chn==="gyohan"){ $("#fVendor").value = p.vendor || p.name || ""; vendorCheck(); }
   $("#ocrText").textContent = p.text || "（文字が見つかりませんでした）"; $("#ocrRaw").hidden = false;
 }
 function busyMsg(m){ $("#busyBar").textContent = m||""; $("#busyBar").hidden = !m; }
