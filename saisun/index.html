@@ -1,0 +1,503 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="採寸帳">
+<meta name="theme-color" content="#f3f2ee" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#17181a" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-192.png">
+<title>ReKiL 採寸帳</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: one narrow column, tab bar on top; editor opens as a bottom sheet. Accent = tape-measure yellow. */
+:root{
+  --bg:#f3f2ee; --surface:#ffffff; --ink:#1f2124; --muted:#6b6e73; --line:#dcdad3;
+  --tape:#f2c230; --tape-ink:#2a2306; --ok:#2f7d52; --danger:#b23a2e; --chip:#ebe9e2;
+  --f-body:"Zen Kaku Gothic New",system-ui,-apple-system,"Hiragino Sans","Yu Gothic",sans-serif;
+  --f-num:"JetBrains Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#17181a; --surface:#222427; --ink:#ecebe7; --muted:#9a9ca1; --line:#34363a;
+  --tape:#f2c230; --tape-ink:#2a2306; --ok:#5cbf86; --danger:#e8705f; --chip:#2c2e32; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#17181a; --surface:#222427; --ink:#ecebe7; --muted:#9a9ca1; --line:#34363a;
+  --tape:#f2c230; --tape-ink:#2a2306; --ok:#5cbf86; --danger:#e8705f; --chip:#2c2e32; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.6}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+.wrap{max-width:720px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:12px 96px}
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding-block:10px 0;border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:baseline;gap:10px}
+.brand h1{font-size:20px;margin:0;font-weight:700;letter-spacing:.02em}
+.brand{min-width:0}.brand h1{white-space:nowrap}.brand .hint{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}.sync{white-space:nowrap}
+@media (max-width:480px){.brand .hint{display:none}}
+.ruler{height:8px;margin-top:8px;background:
+  repeating-linear-gradient(90deg,var(--tape-ink) 0 1px,transparent 1px 10px),var(--tape);
+  background-size:10px 4px,100% 100%;background-repeat:repeat-x,no-repeat;border-radius:2px}
+.tabs{display:flex;gap:4px;margin-top:8px}
+.tab{flex:1;appearance:none;border:0;background:none;color:var(--muted);font:inherit;font-weight:700;padding:10px 0;border-bottom:3px solid transparent;cursor:pointer}
+.tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--tape)}
+.status{font-size:12px;color:var(--muted);margin:8px 0 0;min-height:1em}
+.bar{display:flex;gap:8px;align-items:center;margin:14px 0}
+input,select,textarea{font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:9px 10px;width:100%;min-width:0}
+textarea{resize:vertical}
+input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid var(--tape);outline-offset:1px}
+.btn{appearance:none;border:1px solid var(--line);background:var(--surface);color:var(--ink);font:inherit;font-weight:700;border-radius:8px;padding:9px 14px;cursor:pointer;white-space:nowrap}
+.btn.primary{background:var(--tape);color:var(--tape-ink);border-color:var(--tape)}
+.btn.danger{color:var(--danger)}
+.btn.sm{padding:5px 10px;font-size:13px}
+.list{display:flex;flex-direction:column;gap:8px}
+.item{display:grid;grid-template-columns:64px 1fr auto;gap:12px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px}
+.thumb{width:64px;height:64px;border-radius:6px;background:var(--chip);object-fit:cover;display:grid;place-items:center;color:var(--muted);font-size:11px}
+.item .body{min-width:0;cursor:pointer}
+.item .name{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.meas{font-family:var(--f-num);font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tag{display:inline-block;font-size:11px;background:var(--chip);border-radius:4px;padding:0 6px;margin-top:2px}
+.copies{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.btn:disabled{opacity:.45;cursor:default}
+.check{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:11px;color:var(--muted);cursor:pointer;user-select:none}
+.check input{width:26px;height:26px;accent-color:var(--ok);cursor:pointer}
+.done .item{opacity:.72}
+.done .name{text-decoration:line-through;text-decoration-color:var(--muted)}
+.sect{display:flex;align-items:center;gap:8px;margin:26px 0 10px;font-weight:700;font-size:14px;color:var(--muted)}
+.sect::after{content:"";flex:1;height:1px;background:var(--line)}
+button.sect{appearance:none;border:0;background:none;width:100%;font-family:inherit;cursor:pointer;padding:6px 0;text-align:left}
+.caret{font-size:10px;transition:transform .15s}
+.sect[aria-expanded="true"] .caret{transform:rotate(90deg)}
+.count{font-family:var(--f-num);font-size:12px;background:var(--chip);border-radius:10px;padding:0 8px}
+.empty{color:var(--muted);font-size:14px;padding:18px;border:1px dashed var(--line);border-radius:10px;text-align:center}
+.tpl{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px;cursor:pointer}
+.tpl h3{margin:0;font-size:15px}
+.tpl .fields{font-size:12px;color:var(--muted);margin-top:2px}
+.tpl pre{margin:6px 0 0;font:inherit;font-size:13px;color:var(--muted);white-space:pre-wrap;max-height:4.8em;overflow:hidden}
+/* sheet */
+.scrim{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:20;display:flex;align-items:flex-end;justify-content:center}
+.sheet{background:var(--bg);width:100%;max-width:720px;max-height:92%;overflow:auto;border-radius:14px 14px 0 0;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:14px calc(20px + env(safe-area-inset-bottom,0px))}
+.sheet h2{margin:0 0 12px;font-size:17px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.field{display:flex;flex-direction:column;gap:4px;margin-bottom:12px}
+.field>label{font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.04em}
+.photo{display:flex;gap:12px;align-items:center}
+.photo .thumb{width:96px;height:96px}
+.mrows{display:flex;flex-direction:column;gap:6px}
+.mrow{display:grid;grid-template-columns:1fr 110px 26px 30px;gap:6px;align-items:center}
+.mrow .unit{font-family:var(--f-num);font-size:12px;color:var(--muted)}
+.mrow input.v{font-family:var(--f-num);text-align:right;font-variant-numeric:tabular-nums}
+.x{appearance:none;border:0;background:none;color:var(--muted);font-size:18px;cursor:pointer;padding:0}
+.out{white-space:pre-wrap;background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--tape);border-radius:8px;padding:10px 12px;font-size:14px;min-height:4em}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.spacer{flex:1}
+.hint{font-size:12px;color:var(--muted)}
+.confirm{background:var(--surface);border:1px solid var(--danger);border-radius:8px;padding:10px;margin-top:10px}
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 16px;border-radius:20px;font-size:14px;z-index:40}
+@media (max-width:420px){.mrow{grid-template-columns:1fr 84px 22px 26px}}
+@media (prefers-reduced-motion:no-preference){.sheet{animation:up .18s ease-out}@keyframes up{from{transform:translateY(24px);opacity:.6}}}
+html,body{margin:0}
+[hidden]{display:none!important}
+:root{padding-top:env(safe-area-inset-top,0px)}
+#lock{position:fixed;inset:0;z-index:50;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:24px}
+#lock form{width:100%;max-width:360px;display:flex;flex-direction:column;gap:12px}
+#lock h2{margin:0;font-size:20px}
+.sync{font-size:11px;color:var(--muted);margin-left:auto;font-family:var(--f-num)}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <div class="brand"><h1>採寸帳</h1><span class="hint">ReKiL 仕入商品の採寸と出品文</span><span class="sync" id="sync"></span></div>
+    <div class="ruler" aria-hidden="true"></div>
+    <div class="tabs" role="tablist">
+      <button class="tab" id="tab-items" role="tab" aria-selected="true">採寸一覧</button>
+      <button class="tab" id="tab-tpls" role="tab" aria-selected="false">定型文</button>
+    </div>
+  </header>
+  <p class="status" id="status">読み込み中…</p>
+
+  <section id="view-items">
+    <div class="bar">
+      <input id="q" type="search" placeholder="商品名・管理番号で検索">
+      <button class="btn primary" id="new-item">＋ 採寸を追加</button>
+    </div>
+    <div class="list" id="todo"></div>
+    <div class="done">
+      <button class="sect" id="done-toggle" aria-expanded="false" aria-controls="done"><span class="caret" aria-hidden="true">▶</span>下書き済み <span class="count" id="done-count">0</span></button>
+      <p class="hint" style="margin:-4px 0 10px">チェックから30日たった商品は、写真ごと自動で削除されます。</p>
+      <div class="list" id="done" hidden></div>
+    </div>
+  </section>
+
+  <section id="view-tpls" hidden>
+    <div class="bar"><span class="hint spacer">{商品名} {ギミック} {付属品} {素材} {状態} {カラー} {管理番号} や {縦} など採寸項目名を本文に入れると、自動で置き換わります。空欄の採寸は行ごと消えます。</span>
+      <button class="btn primary" id="new-tpl">＋ 定型文を追加</button></div>
+    <div class="list" id="tpls"></div>
+  </section>
+</div>
+
+<div id="sheet-root"></div>
+<div id="toast-root"></div>
+<div id="lock" hidden><form id="lockForm">
+  <h2>採寸帳</h2>
+  <p class="hint" id="lockMsg">社内の暗証番号を入力してください（ReKiL Stockと同じ番号）。一度入力すると、この端末では次から入力不要です。</p>
+  <input id="passIn" type="password" inputmode="numeric" autocomplete="current-password" aria-label="暗証番号">
+  <button class="btn primary" id="lockGo">開く</button>
+</form></div>
+
+<script>
+(() => {
+const $ = (s, r = document) => r.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+/* ▼ Apps Script をデプロイしたときの「ウェブアプリのURL」 */
+const API_URL = "";
+const APP_VERSION = "2026-11-17-1";
+const CACHE = "saisun-data";
+let items = [], tpls = [], query = "";
+let pass = ""; try{ pass = localStorage.getItem("rekil-saisun-pass") || localStorage.getItem("rekil-pass") || ""; }catch(_){}
+try{ const c = JSON.parse(localStorage.getItem(CACHE)||"null"); if(c){ items = c.items||[]; tpls = c.templates||[]; } }catch(_){}
+let busy = 0, writes = 0, online = false;
+class ApiError extends Error{ constructor(c){ super(c); this.code = c; } }
+function keep(){ try{ localStorage.setItem(CACHE, JSON.stringify({items, templates:tpls})); }catch(_){} }
+function sync(){ const el=$("#sync"); if(el) el.textContent = (!API_URL?"未設定":busy?"保存中…":online?"接続済み":"未接続")+"  ver "+APP_VERSION.slice(5); }
+async function api(action, params={}){
+  if(!API_URL) throw new ApiError("no_api");
+  const isWrite = action!=="list";
+  if(isWrite) writes++; busy++; sync();
+  try{
+    let res;
+    try{ res = await fetch(API_URL, {method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"}, body: JSON.stringify({action, pass, ...params})}); }
+    catch(_){ throw new ApiError("network"); }
+    let j; try{ j = await res.json(); }catch(_){ throw new ApiError("bad_response"); }
+    if(!j.ok){ if(j.error==="passcode") showLock(); throw new ApiError(j.error||"error"); }
+    if(j.data && writes === (isWrite?1:0)){ items = j.data.items||[]; tpls = j.data.templates||[]; keep(); drawItems(); drawTpls(); }
+    if(j.purged) toast(`下書き済みから30日たった${j.purged}件を削除しました`);
+    online = true; return j.result;
+  }finally{ if(isWrite) writes--; busy--; sync(); }
+}
+const newId = () => new Date(Date.now()+9*3600e3).toISOString().replace(/\D/g,"").slice(0,14)+"-"+Math.random().toString(36).slice(2,6);
+/* 画面を先に書き換えてから裏で保存し、失敗したら元に戻す */
+function saveFast(kind, obj, okMsg, remove, extra={}){
+  const list = kind==="item" ? items : tpls, before = JSON.parse(JSON.stringify(list));
+  const i = list.findIndex(x=>x.id===obj.id);
+  if(remove){ if(i>=0) list.splice(i,1); } else if(i>=0) list[i] = obj; else list.push(obj);
+  keep(); drawItems(); drawTpls(); if(okMsg) toast(okMsg);
+  const action = (remove?"remove":"save") + (kind==="item"?"Item":"Tpl");
+  return api(action, remove ? {id:obj.id} : {[kind==="item"?"item":"tpl"]: obj, ...extra}).catch(err=>{
+    if(kind==="item") items.splice(0, items.length, ...before); else tpls.splice(0, tpls.length, ...before);
+    keep(); drawItems(); drawTpls();
+    toast(err.code==="network" ? "通信できず保存されませんでした。もう一度お試しください" : `保存できませんでした（${err.code}）。元に戻しました`);
+  });
+}
+
+function toast(msg){ const r=$("#toast-root"); r.innerHTML=`<div class="toast">${esc(msg)}</div>`; clearTimeout(toast.t); toast.t=setTimeout(()=>r.innerHTML="",1800); }
+function setStatus(t){ $("#status").textContent=t; }
+
+/* ---------- tabs ---------- */
+function showTab(which){
+  $("#tab-items").setAttribute("aria-selected", which==="items");
+  $("#tab-tpls").setAttribute("aria-selected", which==="tpls");
+  $("#view-items").hidden = which!=="items";
+  $("#view-tpls").hidden = which!=="tpls";
+  try{ localStorage.setItem("saisun-tab", which); }catch(e){}
+}
+$("#tab-items").onclick=()=>showTab("items");
+$("#tab-tpls").onclick=()=>showTab("tpls");
+try{ if(localStorage.getItem("saisun-tab")==="tpls") showTab("tpls"); }catch(e){}
+
+/* ---------- template rendering ---------- */
+function measText(m){ return (m||[]).filter(r=>r.label && String(r.value).trim()!=="").map(r=>`${r.label}：${r.value}${r.unit===""?"":(r.unit||"cm")}`).join("\n"); }
+function render(tpl, it){
+  if(!tpl) return measText(it.measures);
+  const s = tpl.body || "";
+  const map = {"商品名": it.name||"", "採寸": measText(it.measures), "メモ": it.memo||""};
+  TEXT_FIELDS.forEach(f=>{ map[f.label] = String(it[f.key]??"").trim(); });
+  if(!map["付属品"]) map["付属品"] = "なし";
+  map["状態"] = it.condition ?? "目立った傷や汚れなし";
+  map["管理番号"] = String(it.kanri??"").trim();
+  const empty = new Set();
+  (it.measures||[]).forEach(r=>{ if(!r.label) return;
+    if(String(r.value??"").trim()===""){ empty.add(r.label); map[r.label]=""; }
+    else map[r.label] = `${String(r.value).trim()}${r.unit===""?"":(r.unit||"cm")}`; });
+  // 採寸が空欄の項目は、その行ごと消す（1行に複数ある場合は、空の項目と直前の見出しだけ消す）
+  const lines = s.split("\n").flatMap(line=>{
+    const keys = [...line.matchAll(/\{([^{}]+)\}/g)].map(m=>m[1]);
+    const sizeKeys = keys.filter(k=>empty.has(k) || (map[k]!==undefined && (it.measures||[]).some(r=>r.label===k)));
+    if(!sizeKeys.length) return [line];
+    const blanks = sizeKeys.filter(k=>empty.has(k));
+    if(!blanks.length) return [line];
+    if(blanks.length===sizeKeys.length) return [];
+    let l = line; blanks.forEach(k=>{ l = l.replace(new RegExp("[\\s　]*[^\\s　{}]*[\\s　]*\\{"+k.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")+"\\}"),""); });
+    return [l];
+  });
+  return lines.join("\n").replace(/\{([^{}]+)\}/g,(m,k)=> k in map ? map[k] : m);
+}
+const tplById = id => tpls.find(t=>t.id===id);
+const sortedTpls = () => tpls.slice().sort((a,b)=>(a.order??0)-(b.order??0)||(a.createdAt||0)-(b.createdAt||0));
+const CONDITIONS = ["新品、未使用","未使用に近い","目立った傷や汚れなし","やや傷や汚れあり","傷や汚れあり","全体的に状態が悪い"];
+const TEXT_FIELDS = [
+  {key:"gimmick", label:"ギミック", ph:"例：内ポケット×2、マグネット開閉"},
+  {key:"accessories", label:"付属品", ph:"空欄なら「なし」になります"},
+  {key:"material", label:"素材", ph:"例：PVC×レザー"},
+  {key:"color", label:"カラー", ph:"例：ブラウン"},
+];
+/* "ケースサイズ(mm)" → mm、"盤カラー(なし)" → 単位なし、指定なし → cm */
+function parseField(f){ const m = String(f).match(/^(.+?)\s*[（(]\s*([^()（）]*)\s*[)）]$/);
+  if(!m) return {label:String(f).trim(), unit:"cm"};
+  const u = m[2]; return {label:m[1].trim(), unit: (u==="なし"||u==="") ? "" : u}; }
+const fieldLabel = f => parseField(f).label;
+
+/* ---------- lists ---------- */
+const thumb = id => `https://drive.google.com/thumbnail?id=${encodeURIComponent(id)}&sz=w400`;
+function photoSrc(it){ return it.photoId ? thumb(it.photoId) : (it.photoUrl||""); }
+function itemCard(it){
+  const src = photoSrc(it), t = tplById(it.templateId);
+  const ms = (it.measures||[]).filter(r=>String(r.value).trim()!=="").map(r=>`${r.label}${r.value}`).join(" / ");
+  return `<div class="item" data-id="${esc(it.id)}">
+    ${src?`<img class="thumb" src="${esc(src)}" alt="" loading="lazy" decoding="async">`:`<div class="thumb">写真なし</div>`}
+    <div class="body" data-open="${esc(it.id)}">
+      <div class="name">${it.kanri?`<span class="meas">${esc(it.kanri)}</span> `:""}${esc(it.name||"（商品名なし）")}</div>
+      <div class="meas">${esc(ms||"採寸未入力")}</div>
+      ${t?`<span class="tag">${esc(t.name)}</span>`:""}
+      <div class="copies">
+        <button class="btn sm" data-copy="body" data-cid="${esc(it.id)}">本文コピー</button>
+        <button class="btn sm" data-copy="meas" data-cid="${esc(it.id)}" ${ms?"":"disabled"}>採寸コピー</button>
+      </div>
+    </div>
+    <label class="check"><input type="checkbox" data-done="${esc(it.id)}" ${it.done?"checked":""}>下書き済</label>
+  </div>`;
+}
+function drawItems(){
+  const q = query.trim().toLowerCase();
+  const f = items.filter(i=>!q || ((i.name||"")+" "+(i.kanri||"")).toLowerCase().includes(q));
+  const todo = f.filter(i=>!i.done).sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+  const done = f.filter(i=>i.done).sort((a,b)=>(b.doneAt||0)-(a.doneAt||0));
+  $("#todo").innerHTML = todo.length? todo.map(itemCard).join("") : `<div class="empty">${q?"該当する商品がありません":"未下書きの採寸はありません。「＋ 採寸を追加」から写真と採寸を登録します。"}</div>`;
+  $("#done").innerHTML = done.length? done.map(itemCard).join("") : `<div class="empty">下書き済みにチェックした商品がここに移ります。</div>`;
+  $("#done-count").textContent = done.length;
+}
+function drawTpls(){
+  $("#tpls").innerHTML = tpls.length ? tpls.slice().sort((a,b)=>(a.order??0)-(b.order??0)||(a.createdAt||0)-(b.createdAt||0)).map(t=>`
+    <div class="tpl" data-tpl="${esc(t.id)}" tabindex="0">
+      <h3>${esc(t.name)}</h3>
+      <div class="fields">採寸項目：${esc((t.fields||[]).join("・")||"なし")}</div>
+      <pre>${esc(t.body)}</pre>
+    </div>`).join("") : `<div class="empty">定型文はまだありません。「＋ 定型文を追加」でバッグ用・靴用などを登録します。</div>`;
+}
+$("#q").addEventListener("input", e=>{ query=e.target.value; drawItems(); });
+
+document.addEventListener("click", e=>{
+  const cp = e.target.closest("[data-copy]");
+  if(cp){ e.stopPropagation(); const it = items.find(i=>i.id===cp.dataset.cid); if(!it) return;
+    const text = cp.dataset.copy==="body" ? render(tplById(it.templateId), it) : measText(it.measures);
+    copyFromList(text); return; }
+  const o = e.target.closest("[data-open]"); if(o){ openItem(items.find(i=>i.id===o.dataset.open)); return; }
+  const t = e.target.closest("[data-tpl]"); if(t){ openTpl(tplById(t.dataset.tpl)); return; }
+});
+document.addEventListener("keydown", e=>{ if(e.key==="Enter"){ const t=e.target.closest?.("[data-tpl]"); if(t) openTpl(tplById(t.dataset.tpl)); }});
+document.addEventListener("change", async e=>{
+  const c = e.target.closest("[data-done]"); if(!c) return;
+  const it = items.find(i=>i.id===c.dataset.done); if(!it) return;
+  const val = c.checked;
+  saveFast("item", {...it, done:val, doneAt: val?Date.now():null, updatedAt:Date.now()}, val?"下書き済みに移しました":"未下書きに戻しました");
+});
+
+/* ---------- sheet helpers ---------- */
+function closeSheet(){ $("#sheet-root").innerHTML=""; }
+function openSheet(html){
+  $("#sheet-root").innerHTML = `<div class="scrim" id="scrim"><div class="sheet" role="dialog" aria-modal="true">${html}</div></div>`;
+  $("#scrim").addEventListener("click", e=>{ if(e.target.id==="scrim") closeSheet(); });
+}
+/* 一覧からのコピー。コピーできない端末では、本文を選択した状態で表示する */
+function copyFromList(text){
+  if(!text){ toast("コピーする内容がありません"); return; }
+  const p = navigator.clipboard?.writeText(text);
+  (p || Promise.reject()).then(()=>toast("コピーしました")).catch(()=>{
+    openSheet(`<h2><span>長押しでコピーしてください</span><button class="btn sm" id="close">閉じる</button></h2><textarea id="cptext" rows="14" readonly>${esc(text)}</textarea>`);
+    $("#close").onclick = closeSheet; const ta=$("#cptext"); ta.focus(); ta.select();
+  });
+}
+async function copyText(text){
+  try{ await navigator.clipboard.writeText(text); toast("コピーしました"); }
+  catch(e){ const out=$("#out"); if(out){ const r=document.createRange(); r.selectNodeContents(out); const s=getSelection(); s.removeAllRanges(); s.addRange(r);} toast("選択しました。長押しでコピーしてください"); }
+}
+
+/* ---------- photo ---------- */
+function shrink(file, max, q){
+  return new Promise((res,rej)=>{
+    const img = new Image(), url = URL.createObjectURL(file);
+    img.onload = ()=>{ const k=Math.min(1,max/Math.max(img.width,img.height)); const c=document.createElement("canvas");
+      c.width=Math.round(img.width*k); c.height=Math.round(img.height*k); c.getContext("2d").drawImage(img,0,0,c.width,c.height);
+      URL.revokeObjectURL(url); c.toBlob(b=>b?res({blob:b, dataUrl:c.toDataURL("image/jpeg",q)}):rej(new Error("変換失敗")),"image/jpeg",q); };
+    img.onerror = ()=>{ URL.revokeObjectURL(url); rej(new Error("画像を読み込めません")); };
+    img.src = url;
+  });
+}
+
+/* ---------- item editor ---------- */
+function openItem(it){
+  const isNew = !it;
+  const d = isNew ? {name:"", kanri:"", memo:"", measures:[], templateId:"", photoId:"", photoUrl:"", condition:"目立った傷や汚れなし", done:false} : JSON.parse(JSON.stringify(it));
+  if(d.condition==null) d.condition="目立った傷や汚れなし";
+  let pendingPhoto = null;
+  openSheet(`
+    <h2><span>${isNew?"採寸を追加":"採寸を編集"}</span><button class="btn sm" id="close">閉じる</button></h2>
+    <div class="field"><label>写真（1枚）</label>
+      <div class="photo"><div id="ph"></div>
+        <div class="row"><label class="btn sm" for="file">写真を選ぶ</label><input id="file" type="file" accept="image/*" hidden>
+        <button class="btn sm" id="ph-del">外す</button></div></div></div>
+    <div class="field"><label for="name">商品名</label><input id="name" value="${esc(d.name)}" placeholder="例：LOUIS VUITTON ネヴァーフルMM モノグラム"></div>
+    <div class="field"><label for="tsel">定型文テンプレート</label>
+      <select id="tsel"><option value="">選択しない</option>${sortedTpls().map(t=>`<option value="${esc(t.id)}" ${t.id===d.templateId?"selected":""}>${esc(t.name)}</option>`).join("")}</select>
+      <span class="hint">選ぶと、そのテンプレートの採寸項目が並び、本文に採寸が入ります。</span></div>
+    <div class="field"><label>採寸（cm）</label><div class="mrows" id="mrows"></div>
+      <div class="row" style="margin-top:6px"><button class="btn sm" id="addrow">＋ 項目を追加</button></div></div>
+    <div class="field"><label for="cond">状態</label><select id="cond">${CONDITIONS.map(c=>`<option ${c===d.condition?"selected":""}>${esc(c)}</option>`).join("")}</select></div>
+    ${TEXT_FIELDS.map(f=>`<div class="field"><label for="tx-${f.key}">${f.label}</label><input id="tx-${f.key}" data-tx="${f.key}" value="${esc(d[f.key]||"")}" placeholder="${esc(f.ph)}"></div>`).join("")}
+    <div class="field"><label for="kanri">管理番号</label><input id="kanri" value="${esc(d.kanri||"")}" placeholder="例：R-1108-01"></div>
+    <div class="field"><label for="memo">メモ（出品文には入りません）</label><textarea id="memo" rows="2" placeholder="社内用のメモ">${esc(d.memo)}</textarea></div>
+    <div class="field"><label>出品文（テンプレート反映後）</label><div class="out" id="out"></div>
+      <div class="row" style="margin-top:6px"><button class="btn primary" id="copy">本文をコピー</button><button class="btn" id="copym">採寸だけコピー</button></div></div>
+    <div class="row" style="margin-top:8px">
+      ${isNew?"":`<label class="check" style="flex-direction:row;gap:6px;font-size:14px;color:var(--ink)"><input type="checkbox" id="f-done" ${d.done?"checked":""}>下書き済み</label>`}
+      <span class="spacer"></span>
+      ${isNew?"":`<button class="btn danger" id="del">削除</button>`}
+      <button class="btn primary" id="save">保存</button></div>
+    <div id="confirm"></div>`);
+
+  const drawPhoto = ()=>{ const src = pendingPhoto?.dataUrl || photoSrc(d);
+    $("#ph").innerHTML = src?`<img class="thumb" src="${esc(src)}" alt="">`:`<div class="thumb">写真なし</div>`; };
+  const drawRows = ()=>{
+    $("#mrows").innerHTML = d.measures.length ? d.measures.map((r,i)=>`<div class="mrow">
+      <input data-i="${i}" data-k="label" value="${esc(r.label)}" placeholder="項目" aria-label="項目名">
+      <input class="v" data-i="${i}" data-k="value" value="${esc(r.value)}" ${r.unit===""?'placeholder="入力"':'inputmode="decimal" placeholder="0"'} aria-label="${esc(r.label)}の数値">
+      <span class="unit">${esc(r.unit===""?"":(r.unit||"cm"))}</span>
+      <button class="x" data-rm="${i}" aria-label="削除">×</button></div>`).join("") : `<span class="hint">テンプレートを選ぶか「＋ 項目を追加」してください。</span>`;
+  };
+  const drawOut = ()=>{ $("#out").textContent = render(tplById(d.templateId), d) || "（採寸を入力するとここに出ます）"; };
+  drawPhoto(); drawRows(); drawOut();
+
+  $("#close").onclick = closeSheet;
+  $("#name").oninput = e=>{ d.name=e.target.value; drawOut(); };
+  $("#memo").oninput = e=>{ d.memo=e.target.value; drawOut(); };
+  $("#cond").onchange = e=>{ d.condition=e.target.value; drawOut(); };
+  $("#kanri").oninput = e=>{ d.kanri=e.target.value; drawOut(); };
+  document.querySelectorAll("[data-tx]").forEach(el=>el.oninput=e=>{ d[e.target.dataset.tx]=e.target.value; drawOut(); });
+  $("#tsel").onchange = e=>{
+    d.templateId = e.target.value; const t = tplById(d.templateId);
+    if(t){ const old = new Map(d.measures.map(r=>[r.label,r]));
+      const fs = (t.fields||[]).map(parseField);
+      const next = fs.map(f=>{ const o=old.get(f.label); return o ? {...o, unit:f.unit} : {label:f.label, value:"", unit:f.unit}; });
+      d.measures = next; drawRows(); }
+    drawOut();
+  };
+  $("#mrows").addEventListener("input", e=>{ const i=e.target.dataset.i; if(i==null) return; d.measures[i][e.target.dataset.k]=e.target.value; drawOut(); });
+  $("#mrows").addEventListener("click", e=>{ const i=e.target.dataset.rm; if(i==null) return; d.measures.splice(+i,1); drawRows(); drawOut(); });
+  $("#addrow").onclick = ()=>{ d.measures.push({label:"",value:"",unit:"cm"}); drawRows(); $("#mrows").querySelector(".mrow:last-child input")?.focus(); };
+  $("#file").onchange = async e=>{ const f=e.target.files[0]; if(!f) return;
+    try{ pendingPhoto = await shrink(f, 1400, .85); drawPhoto(); }catch(err){ toast(err.message); } };
+  $("#ph-del").onclick = ()=>{ pendingPhoto=null; d.photoId=""; d.photoUrl=""; drawPhoto(); };
+  $("#copy").onclick = ()=>copyText(render(tplById(d.templateId), d));
+  $("#copym").onclick = ()=>copyText(measText(d.measures));
+
+  if(!isNew) $("#del").onclick = ()=>{
+    $("#confirm").innerHTML = `<div class="confirm">「${esc(d.name||"この商品")}」を削除します。元に戻せません。<div class="row" style="margin-top:8px"><span class="spacer"></span><button class="btn sm" id="nc">やめる</button><button class="btn sm danger" id="yc">削除する</button></div></div>`;
+    $("#nc").onclick=()=>$("#confirm").innerHTML="";
+    $("#yc").onclick=()=>{ closeSheet(); saveFast("item", {id:it.id}, "削除しました", true); };
+  };
+
+  $("#save").onclick = async ()=>{
+    if(!API_URL){ toast("データ側がまだ設定されていません"); return; }
+    const btn=$("#save"); btn.disabled=true; btn.textContent="保存中…";
+    try{
+      if(pendingPhoto){ btn.textContent="写真を送信中…"; const r = await api("photo", {image: pendingPhoto.dataUrl.split(",")[1]}); d.photoId = r.id; d.photoUrl = ""; }
+      const doneEl = $("#f-done");
+      const done = doneEl ? doneEl.checked : false;
+      const body = { name:d.name.trim(), memo:d.memo, kanri:(d.kanri||"").trim(), condition:d.condition, gimmick:d.gimmick||"", accessories:d.accessories||"", material:d.material||"", color:d.color||"", templateId:d.templateId||"", measures:d.measures.filter(r=>r.label||String(r.value).trim()!==""),
+        photoId:d.photoId||"", photoUrl:d.photoUrl||"", draft: render(tplById(d.templateId), d),
+        done, doneAt: done ? (it?.doneAt || Date.now()) : null, createdAt: it?.createdAt || Date.now(), updatedAt: Date.now() };
+      body.id = isNew ? newId() : it.id;
+      closeSheet(); saveFast("item", body, isNew?"登録しました":"保存しました", false, (it?.photoId && it.photoId!==body.photoId) ? {oldPhotoId: it.photoId} : {});
+    }catch(err){ btn.disabled=false; btn.textContent="保存"; toast(err.code==="network"?"写真を送れませんでした。電波を確認してください":`写真を保存できませんでした（${err.code||"error"}）`); }
+  };
+}
+
+/* ---------- template editor ---------- */
+function openTpl(t){
+  const isNew=!t; const d = isNew?{name:"",fields:[],body:""}:{...t, fields:[...(t.fields||[])]};
+  openSheet(`
+    <h2><span>${isNew?"定型文を追加":"定型文を編集"}</span><button class="btn sm" id="close">閉じる</button></h2>
+    <div class="field"><label for="tn">テンプレート名</label><input id="tn" value="${esc(d.name)}" placeholder="例：バッグ（メルカリ）"></div>
+    <div class="field"><label for="tf">採寸項目（読点・カンマ・改行で区切る）</label><input id="tf" value="${esc(d.fields.join("、"))}" placeholder="例：縦、横、マチ、ハンドル高さ"><span class="hint">単位はcmが基本です。mmは「ケースサイズ(mm)」、文字を入れる項目は「盤カラー(なし)」のように書きます。</span></div>
+    <div class="field"><label for="tb">本文</label><textarea id="tb" rows="10" placeholder="{商品名}&#10;&#10;【サイズ】&#10;{採寸}">${esc(d.body)}</textarea>
+      <span class="hint">使える差し込み：{商品名} {採寸}（全項目を1行ずつ） {メモ} と、各採寸項目名（例：{縦}）。</span></div>
+    <div class="row"><span class="spacer"></span>${isNew?"":`<button class="btn danger" id="del">削除</button>`}<button class="btn primary" id="save">保存</button></div>
+    <div id="confirm"></div>`);
+  $("#close").onclick=closeSheet;
+  if(!isNew) $("#del").onclick=()=>{
+    const used = items.filter(i=>i.templateId===t.id).length;
+    $("#confirm").innerHTML=`<div class="confirm">「${esc(t.name)}」を削除します。${used?`使っている採寸が${used}件あります（採寸は残ります）。`:""}<div class="row" style="margin-top:8px"><span class="spacer"></span><button class="btn sm" id="nc">やめる</button><button class="btn sm danger" id="yc">削除する</button></div></div>`;
+    $("#nc").onclick=()=>$("#confirm").innerHTML="";
+    $("#yc").onclick=()=>{ closeSheet(); saveFast("tpl", {id:t.id}, "削除しました", true); };
+  };
+  $("#save").onclick=async()=>{
+    const name=$("#tn").value.trim(); if(!name){ toast("テンプレート名を入れてください"); $("#tn").focus(); return; }
+    const body={ name, fields: $("#tf").value.split(/[、,，\n]/).map(s=>s.trim()).filter(Boolean), body: $("#tb").value,
+      order: t?.order ?? tpls.length, createdAt: t?.createdAt || Date.now(), updatedAt: Date.now() };
+    body.id = isNew ? newId() : t.id;
+    closeSheet(); saveFast("tpl", body, isNew?"追加しました":"保存しました");
+  };
+}
+
+$("#new-item").onclick=()=>openItem(null);
+$("#new-tpl").onclick=()=>openTpl(null);
+
+/* ---------- 下書き済み：折りたたみ ---------- */
+function setDoneOpen(open){
+  $("#done-toggle").setAttribute("aria-expanded", open);
+  $("#done").hidden = !open;
+  try{ localStorage.setItem("saisun-done-open", open?"1":"0"); }catch(e){}
+}
+$("#done-toggle").onclick = ()=>setDoneOpen($("#done").hidden);
+try{ if(localStorage.getItem("saisun-done-open")==="1") setDoneOpen(true); }catch(e){}
+
+/* ---------- 暗証番号 ---------- */
+function showLock(){
+  online=false; $("#lock").hidden=false;
+  $("#lockMsg").textContent = pass ? "暗証番号が違います。もう一度入力してください。" : "社内の暗証番号を入力してください（ReKiL Stockと同じ番号）。一度入力すると、この端末では次から入力不要です。";
+  setTimeout(()=>$("#passIn").focus(),100);
+}
+$("#lockForm").addEventListener("submit", async e=>{
+  e.preventDefault(); pass=$("#passIn").value.trim(); if(!pass) return;
+  $("#lockGo").disabled=true; $("#lockGo").textContent="確認中…";
+  try{ await api("list"); try{ localStorage.setItem("rekil-saisun-pass", pass); }catch(_){} $("#lock").hidden=true; $("#passIn").value=""; toast("接続しました"); setStatus(""); }
+  catch(err){ if(err.code==="network") $("#lockMsg").textContent="データ側に接続できませんでした。電波を確認してください。";
+    else if(err.code!=="passcode") $("#lockMsg").textContent=`データ側でエラーが起きました（${err.code}）`; }
+  $("#lockGo").disabled=false; $("#lockGo").textContent="開く";
+});
+
+/* ---------- 同期・更新 ---------- */
+async function refresh(){ if(!pass||busy||writes||!API_URL) return;
+  try{ await api("list"); setStatus(""); }catch(err){ if(err.code==="network"){ online=false; sync(); setStatus("通信できません。表示は前回のデータです。"); } } }
+async function checkUpdate(){ try{
+  const r = await fetch(location.pathname+"?v="+Date.now(), {cache:"no-store"}); const t = await r.text();
+  const m = t.match(/const APP_VERSION = "([^"]+)"/);
+  if(m && m[1]!==APP_VERSION && !busy && !$("#sheet-root").innerHTML) location.replace(location.pathname+"?v="+encodeURIComponent(m[1]));
+}catch(_){} }
+document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState==="visible"){ checkUpdate(); refresh(); } });
+setInterval(()=>{ if(document.visibilityState==="visible" && !$("#sheet-root").innerHTML) refresh(); }, 60000);
+
+/* ---------- boot ---------- */
+drawItems(); drawTpls(); sync();
+if(!API_URL) setStatus("データ側（Apps Script）の設定待ちです。設定が終わると使えるようになります。");
+else if(!pass){ setStatus(""); showLock(); }
+else { setStatus(items.length||tpls.length ? "" : "読み込み中…"); checkUpdate(); refresh(); }
+})();
+</script>
+</body>
+</html>
