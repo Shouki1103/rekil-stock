@@ -5,10 +5,9 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="採寸帳">
-<meta name="theme-color" content="#f3f2ee" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#17181a" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#0d1014">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="icon" href="icon-192.png">
@@ -18,17 +17,12 @@
 <style>
 /* Layout: one narrow column, tab bar on top; editor opens as a bottom sheet. Accent = tape-measure yellow. */
 :root{
-  --bg:#f3f2ee; --surface:#ffffff; --ink:#1f2124; --muted:#6b6e73; --line:#dcdad3;
-  --tape:#f2c230; --tape-ink:#2a2306; --ok:#2f7d52; --danger:#b23a2e; --chip:#ebe9e2;
+  --bg:#14181d; --surface:#1d232a; --ink:#e8ebee; --muted:#9aa4af; --line:#2f3740;
+  --tape:#f2c230; --tape-ink:#2a2306; --ok:#3fd18b; --danger:#ff7a6b; --chip:#262d35; --steel:#0d1014;
   --f-body:"Zen Kaku Gothic New",system-ui,-apple-system,"Hiragino Sans","Yu Gothic",sans-serif;
   --f-num:"JetBrains Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+  color-scheme:dark;
 }
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
-  --bg:#17181a; --surface:#222427; --ink:#ecebe7; --muted:#9a9ca1; --line:#34363a;
-  --tape:#f2c230; --tape-ink:#2a2306; --ok:#5cbf86; --danger:#e8705f; --chip:#2c2e32; color-scheme:dark}}
-:root[data-theme="dark"]{
-  --bg:#17181a; --surface:#222427; --ink:#ecebe7; --muted:#9a9ca1; --line:#34363a;
-  --tape:#f2c230; --tape-ink:#2a2306; --ok:#5cbf86; --danger:#e8705f; --chip:#2c2e32; color-scheme:dark}
 *{box-sizing:border-box}
 body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.6}
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
@@ -156,7 +150,7 @@ const $ = (s, r = document) => r.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 /* ▼ Apps Script をデプロイしたときの「ウェブアプリのURL」 */
 const API_URL = "https://script.google.com/macros/s/AKfycbymxFtpBAd8KiZMjoAyHEl8Tz8GQRjaVLlpAZfm3KGTeOa4Ifz4IHGjO_PZpiTJfx31/exec";
-const APP_VERSION = "2026-11-17-2";
+const APP_VERSION = "2026-11-17-3";
 const CACHE = "saisun-data";
 let items = [], tpls = [], query = "";
 let pass = ""; try{ pass = localStorage.getItem("rekil-saisun-pass") || localStorage.getItem("rekil-pass") || ""; }catch(_){}
