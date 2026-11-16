@@ -25,7 +25,7 @@
 }
 *{box-sizing:border-box}
 html,body{margin:0;background:var(--bg);color:var(--fg)}
-body{font-family:var(--font);font-size:15px;line-height:1.6;padding-bottom:calc(32px + env(safe-area-inset-bottom,0px))}
+body{font-family:var(--font);font-size:15px;line-height:1.6;padding-top:env(safe-area-inset-top,0px);padding-bottom:calc(32px + env(safe-area-inset-bottom,0px))}
 [hidden]{display:none!important}
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--steel)}
 header{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--steel);border-bottom:1px solid var(--line);
@@ -131,7 +131,7 @@ th{color:var(--muted);font-weight:500;white-space:nowrap}
 
 <script src="data.js?v=2026-11-11-2"></script>
 <script>
-const APP_VERSION = "2026-11-11-2";
+const APP_VERSION = "2026-11-17-1";
 const D = window.PP_DATA;
 const $ = s => document.querySelector(s);
 const ls = { get(k,d){ try{ const v=localStorage.getItem(k); return v==null?d:JSON.parse(v);}catch(_){return d;} }, set(k,v){ try{localStorage.setItem(k,JSON.stringify(v));}catch(_){} } };
