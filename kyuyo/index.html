@@ -141,7 +141,7 @@ body{padding-top:env(safe-area-inset-top,0px)!important}
 <script>
 /* ▼ Apps Script をデプロイしたときの「ウェブアプリのURL」 */
 const API_URL = "https://script.google.com/macros/s/AKfycbwNWiqaeTw23PfypT3TgOCv5yzfKzFbipU4u9-N8RqWFOFwLfzuaNQdL6oO3yKhytNZ4g/exec";
-const APP_VERSION = "2026-11-17-20";
+const APP_VERSION = "2026-11-17-39";
 const FISCAL_START = 2025;   // 第1期 = 2025年4月〜2026年3月
 
 const $ = s => document.querySelector(s);
@@ -149,7 +149,7 @@ const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>'
 const ls = { get(k,d){ try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v);}catch(_){return d;} }, set(k,v){ try{localStorage.setItem(k,JSON.stringify(v));}catch(_){} } };
 const yen = n => '¥' + Math.round(n||0).toLocaleString('ja-JP');
 let pass = '';
-try{ pass = localStorage.getItem('rekil-kyuyo-pass') || localStorage.getItem('rekil-pass') || localStorage.getItem('rekil-shiire-pass') || localStorage.getItem('rekil-ebay-pass') || ''; }catch(_){}
+try{ pass = localStorage.getItem('rekil-kyuyo-pass') || ''; }catch(_){}
 
 let raw = null, rows = [], people = [];
 let mode = ls.get('ky-mode','fiscal'), yfilter = 'all', tab = ls.get('ky-tab','overview');
@@ -307,7 +307,7 @@ $('#ysel').addEventListener('change',e=>{ yfilter=e.target.value; render(); });
 function showLock(err){
   $('#lock').hidden=false;
   $('#lockMsg').textContent = err==='passcode_not_set' ? 'データ側で暗証番号がまだ設定されていません。Apps Scriptの PASSCODE を書き換えて、もう一度デプロイしてください。'
-    : err==='passcode' && pass ? '暗証番号が違います。もう一度入力してください。' : '社内の暗証番号を入力してください。一度入力すると、この端末では次から入力不要です。';
+    : err==='passcode' && pass ? '暗証番号が違います。もう一度入力してください。' : '給与専用の暗証番号を入力してください。一度入力すると、この端末では次から入力不要です。';
   setTimeout(()=>$('#passIn').focus(),100);
 }
 $('#lockForm').addEventListener('submit',async e=>{
