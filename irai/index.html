@@ -250,7 +250,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 <script>
 /* ▼ Apps Script をデプロイしたときの「ウェブアプリのURL」 */
 const API_URL = "https://script.google.com/macros/s/AKfycbyt_sbyLWtGgD8TODNx7kvs2gEOlisN6X8XWqFYGyVQVHkmqvrIRTo6RWZXgYSPjRCB/exec";
-const APP_VERSION = "2026-11-17-33";
+const APP_VERSION = "2026-11-17-34";
 
 const FIELDS=["code","brand","shape","bagType","model","mpn","serial","country","color","extMat","fabric","finish","form","pattern","handleMat","handleColor","handleStyle","liningColor","liningMat","hwColor","hwMat","closure","acc","w","h","d","handleDrop","strapDrop","size","rank","features","note"];
 const MODEL_SKIP=new Set(["code","serial","rank","note","acc"]);
@@ -526,7 +526,7 @@ setInterval(()=>{const want=ACC_SPLIT($("acc").value).join("、");const have=[..
 function multiInit(dd){const id=dd.dataset.for,hid=$(id),list=dd.querySelector(".acclist"),sum=dd.querySelector("summary"),oth=dd.querySelector(".mother input"),ob=dd.querySelector(".mother button");
   const boxes=()=>[...list.querySelectorAll(".accopt input")];
   const addOpt=v=>{let b=boxes().find(i=>i.value===v);if(!b){const l=document.createElement("label");l.className="accopt";l.innerHTML='<input type="checkbox">';b=l.firstChild;b.value=v;l.append(v);list.insertBefore(l,dd.querySelector(".mother"));}return b;};
-  const lock=()=>{const n=boxes().find(i=>i.value==="なし");if(!n)return;const on=n.checked;boxes().forEach(i=>{if(i!==n){i.disabled=on;if(on)i.checked=false;i.parentElement.style.opacity=on?".35":"";}});oth.disabled=on;ob.disabled=on;};
+  const lock=()=>{const n=boxes().find(i=>i.value==="なし"||i.value==="無地");if(!n)return;const on=n.checked;boxes().forEach(i=>{if(i!==n){i.disabled=on;if(on)i.checked=false;i.parentElement.style.opacity=on?".35":"";}});oth.disabled=on;ob.disabled=on;};
   const write=()=>{lock();hid.value=boxes().filter(i=>i.checked).map(i=>i.value).join("、");sum.textContent=hid.value||"（選ばない）";$("f").dispatchEvent(new Event("input",{bubbles:true}));};
   list.addEventListener("change",e=>{if(e.target.closest(".mother"))return;write();});
   const addOther=()=>{const v=oth.value.trim();if(!v)return;ACC_SPLIT(v).forEach(x=>addOpt(x).checked=true);oth.value="";write();};
