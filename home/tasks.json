@@ -1,0 +1,29 @@
+{
+ "note": "定期タスクの一覧。Claudeが内容を更新します。day=毎月の日付（\"end\"=月末）、dow=曜日(0=日)、daily=毎日",
+ "tasks": [
+  {"id":"mercari-del","day":1,"t":"メルカリ売却済み商品の削除"},
+  {"id":"okoku","day":1,"t":"買取王国 領収書の依頼"},
+  {"id":"kobutsu","day":3,"t":"古物台帳へメルカリ売却分を入力"},
+  {"id":"seikyu5","day":5,"t":"各オークションの請求書・精算書の保存（オークネット・エコリング・JDS・コメ兵・モノバンク・リバオク）","say":"明細やって"},
+  {"id":"online5","day":5,"t":"RAGTAG・トレファクオンラインの明細書保存"},
+  {"id":"ebay-tax","day":5,"t":"eBay請求書（Tax invoice）・OrangeConnexの保存"},
+  {"id":"henpin5","day":5,"t":"返品明細の保存（「返品明細やって」）"},
+  {"id":"tatekae","day":5,"t":"役員立替レシートの仕訳データ作成"},
+  {"id":"yushutsu5","day":5,"t":"輸出許可書の依頼・受け取り状況の確認"},
+  {"id":"card","day":10,"t":"クレジットカード明細の保存"},
+  {"id":"bank","day":10,"t":"銀行明細の保存"},
+  {"id":"mihaitatsu","day":10,"t":"eBay前月発送分の未配達チェック"},
+  {"id":"yamato","day":11,"t":"ヤマト運輸 請求書の保存"},
+  {"id":"zeirishi","day":15,"t":"税理士への毎月報告書類の作成"},
+  {"id":"yahoo","day":15,"t":"Yahoo・Amazonの領収証保存"},
+  {"id":"yushutsu15","day":15,"t":"輸出許可書の進捗確認"},
+  {"id":"shift","day":20,"t":"ReKiL給与シートのシフト入力"},
+  {"id":"paypay","day":21,"t":"PayPayクレジットの仕訳データ作成"},
+  {"id":"nittou","day":25,"t":"出張日当（旅費精算書）の作成"},
+  {"id":"claude","day":"end","t":"Claude月額料金の明細保存"},
+  {"id":"keiei","day":"end","t":"前月の経営分析PDF作成"},
+  {"id":"trefac","dow":0,"t":"トレファク・セカストの仕入記帳"},
+  {"id":"feedback","dow":5,"t":"eBayフィードバック依頼の送信"},
+  {"id":"saishuppin","daily":true,"t":"eBay再出品（5件）"}
+ ]
+}

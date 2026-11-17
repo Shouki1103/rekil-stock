@@ -113,6 +113,7 @@ details summary{cursor:pointer;color:var(--muted);font-size:13px;font-weight:700
 #lock form{width:100%;max-width:360px;display:flex;flex-direction:column;gap:12px}
 #lock h2{margin:0;font-size:20px}
 .bulkdone{width:100%;min-height:44px;border-radius:10px;border:1px solid var(--accent);background:transparent;color:var(--accent);font:inherit;font-weight:700;cursor:pointer}.bulkdone.arm{background:var(--accent);color:var(--accent-ink)}
+.csvbtn{width:100%;min-height:40px;border-radius:10px;border:1px dashed var(--line);background:transparent;color:var(--muted);font:inherit;font-size:13px;cursor:pointer}
 </style>
 </head>
 <body>
@@ -136,6 +137,7 @@ details summary{cursor:pointer;color:var(--muted);font-size:13px;font-weight:700
     <label class="toggle"><input type="checkbox" id="onlyTodo">未登録だけ表示</label>
   </div>
   <button type="button" class="bulkdone" id="bulkDone" hidden></button>
+  <button type="button" class="csvbtn" id="csvBtn">B2クラウドのCSVから取り込む</button>
   <div id="days"></div>
   <p class="empty" id="empty" hidden>まだありません。下の「＋ 送り状を追加」から登録できます。</p>
 </main>
@@ -145,6 +147,7 @@ details summary{cursor:pointer;color:var(--muted);font-size:13px;font-weight:700
   <button class="sub" id="addBtn" type="button">＋ 手入力</button>
 </div>
 <input type="file" id="snapIn" accept="image/*" multiple hidden>
+<input type="file" id="csvIn" accept=".csv,text/csv,text/plain" hidden>
 <div id="busyBar" role="status" hidden></div>
 
 <!-- 追加・編集 -->
@@ -207,7 +210,7 @@ details summary{cursor:pointer;color:var(--muted);font-size:13px;font-weight:700
 <script>
 /* ▼ Apps Script をデプロイしたときの「ウェブアプリのURL」 */
 const API_URL = "https://script.google.com/macros/s/AKfycbwa-V3TqAAmz3S1-zreAI3Jkp0d4f0aGikswIQnTdmxsgFpggUxE0bjl1-sR0DZumSwsQ/exec";
-const APP_VERSION = "2026-11-17-46";
+const APP_VERSION = "2026-11-17-52";
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -231,6 +234,7 @@ let ch = ls.get("okuri-tab", "ebay"), vendorFilter = "", onlyTodo = ls.get("okur
 const pendingDone = {};
 function applyPending(){ rows.forEach(r=>{ if(r.tracking in pendingDone) r.done = pendingDone[r.tracking]; }); }
 let doneChain = Promise.resolve(), bulkTargets = [];
+const rowsRef = () => rows; const rowsAdd = a => { rows.unshift(a); ls.set("okuri-rows", rows); };
 class ApiError extends Error{ constructor(c){ super(c); this.code = c; } }
 let writes = 0;
 async function api(action, params={}){
@@ -331,6 +335,38 @@ $("#days").addEventListener("click", async e=>{
   if(ed){ openForm(rows.find(r=>r.tracking===ed.dataset.edit)); }
 });
 
+
+/* B2クラウドの発行済みデータ（CSV）から取り込み：写真を撮らずに登録 */
+function parseCSV(t){ const rows=[]; let row=[], cur="", q=false;
+  for(let i=0;i<t.length;i++){ const c=t[i];
+    if(q){ if(c==='"'){ if(t[i+1]==='"'){ cur+='"'; i++; } else q=false; } else cur+=c; }
+    else if(c==='"') q=true; else if(c===','){ row.push(cur); cur=""; } else if(c==='\n'||c==='\r'){ if(c==='\r'&&t[i+1]==='\n') i++; row.push(cur); rows.push(row); row=[]; cur=""; } else cur+=c; }
+  if(cur||row.length){ row.push(cur); rows.push(row); } return rows.filter(r=>r.some(x=>x.trim())); }
+$("#csvBtn").onclick = () => $("#csvIn").click();
+$("#csvIn").onchange = async e => {
+  const f = e.target.files[0]; e.target.value = ""; if(!f) return;
+  const buf = await f.arrayBuffer(); let text = new TextDecoder("utf-8").decode(buf);
+  if(!/伝票|送り状|お届け/.test(text)){ try{ text = new TextDecoder("shift_jis").decode(buf); }catch(_){} }
+  const rows = parseCSV(text); if(rows.length<2){ toast("CSVを読めませんでした"); return; }
+  const h = rows[0].map(x=>x.normalize("NFKC").trim());
+  const col = re => h.findIndex(x=>re.test(x));
+  const cT = col(/伝票番号|送り状番号|問い?合わせ番号/), cN = col(/^お届け先名(?!.*カナ)|お届け先名$/), cA = col(/お届け先住所|お届け先.*住所/), cS = col(/ご?依頼主名(?!.*カナ)/), cD = col(/出荷予定日|発行日|出荷日/);
+  if(cT<0 || cN<0){ toast("伝票番号・お届け先名の列が見つかりませんでした"); return; }
+  const add = [];
+  rows.slice(1).forEach(r=>{
+    const trk = String(r[cT]||"").replace(/\D/g,""); if(trk.length<10 || add.some(x=>x.tracking===trk)) return;
+    const name = String(r[cN]||"").replace(/[様樣]/g,"").trim(), addr = cA>=0 ? String(r[cA]||"") : "", sender = cS>=0 ? String(r[cS]||"") : "";
+    const d = cD>=0 ? String(r[cD]||"").replace(/\//g,"-").replace(/-(\d)(?!\d)/g,"-0$1") : "";
+    const chn = /平和島|Rapid\s*HH/i.test(addr+" "+name) ? "ebay" : /^\s*Re\.?\s*$|^\s*Re\./i.test(sender) ? "yahoo" : "gyohan";
+    add.push({tracking:trk, name, evtn:"", date:/^\d{4}-\d{2}-\d{2}$/.test(d)?d:today(), channel:chn, vendor: chn==="gyohan" ? name : "", done:false});
+  });
+  const fresh = add.filter(a=>!rowsRef().some(x=>x.tracking===a.tracking));
+  if(!fresh.length){ toast("新しく登録する送り状はありませんでした"); return; }
+  if(!confirm(`${fresh.length}件を登録します（eBay ${fresh.filter(x=>x.channel==="ebay").length}・ヤフオク ${fresh.filter(x=>x.channel==="yahoo").length}・業販 ${fresh.filter(x=>x.channel==="gyohan").length}）。よろしいですか？`)) return;
+  fresh.forEach(a=>rowsAdd(a)); render(); toast(`${fresh.length}件を登録しました`);
+  let ng = 0; for(const a of fresh){ try{ await api("add", {item:{tracking:a.tracking, name:a.name, evtn:"", date:a.date, channel:a.channel, vendor:a.vendor}}); }catch(_){ ng++; } }
+  if(ng) toast(`${ng}件は保存できませんでした。もう一度取り込んでください`);
+};
 /* まとめて登録済みにする（表示中の未登録すべて） */
 $("#bulkDone").addEventListener("click", ()=>{
   const b = $("#bulkDone");
