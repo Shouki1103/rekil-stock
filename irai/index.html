@@ -132,8 +132,8 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
         <h2>基本情報</h2>
         <div class="grid">
           <label>管理番号<input id="code" required></label>
-          <label>ブランド<input id="brand" list="dl-brand"></label>
-          <label>バッグ形状<input id="shape" list="dl-shape"></label>
+          <label>ブランド<select id="brandSel"><option value="">（選ばない）</option><option>LOUIS VUITTON</option><option>Christian Dior</option><option>BOTTEGA VENETA</option><option>COACH</option><option>GUCCI</option><option>PRADA</option><option>FENDI</option><option>LOEWE</option><option>BALENCIAGA</option><option>HERMES</option><option>MIU MIU</option><option>CHANEL</option><option>Salvatore Ferragamo</option><option>BURBERRY</option><option>MARC JACOBS</option><option>Chloé</option><option>SAINT LAURENT</option><option>CELINE</option><option>GOYARD</option><option>GIVENCHY</option><option>MCM</option><option>FURLA</option><option value="__other">その他（手入力）</option></select><input id="brand" placeholder="ブランド名を入力" hidden></label>
+          <label>バッグ形状<select id="shapeSel"><option value="">（選ばない）</option><option>トート</option><option>ハンド</option><option>ショルダー</option><option>ポーチ</option><option>アクセサリーポーチ</option><option>2WAY</option><option>ボストン</option><option>ホーボー</option><option>ビジネス</option><option>サドル</option><option>ワンショルダー</option><option>チェーンショルダー</option><option>巾着</option><option>リュック</option><option>ウエスト</option><option>クラッチ</option><option>バニティ</option><option>バケツ</option><option value="__other">その他（手入力）</option></select><input id="shape" placeholder="形状を入力" hidden></label>
           <label>タイプ<select id="bagType"><option value="">（選ばない）</option><option>ハンドバッグ</option><option>ブリーフケース</option><option>クラッチ</option><option>ポーチ</option><option>サッチェル</option><option>リュック（バックパック）</option></select></label>
           <label>モデル名<input id="model"></label>
           <label>型番<input id="mpn"></label>
@@ -249,7 +249,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 <script>
 /* ▼ Apps Script をデプロイしたときの「ウェブアプリのURL」 */
 const API_URL = "https://script.google.com/macros/s/AKfycbyt_sbyLWtGgD8TODNx7kvs2gEOlisN6X8XWqFYGyVQVHkmqvrIRTo6RWZXgYSPjRCB/exec";
-const APP_VERSION = "2026-11-17-25";
+const APP_VERSION = "2026-11-17-26";
 
 const FIELDS=["code","brand","shape","bagType","model","mpn","serial","country","color","extMat","fabric","finish","form","pattern","handleMat","handleColor","handleStyle","liningColor","liningMat","hwColor","hwMat","closure","acc","w","h","d","handleDrop","strapDrop","size","rank","features","note"];
 const MODEL_SKIP=new Set(["code","serial","rank","note","acc"]);
@@ -503,12 +503,14 @@ if(!API_URL){showErr("データ側の接続先がまだ設定されていませ�
 else if(!pass){showLock();}
 else{refresh();}
 
-/* 製造国：よく使う国はプルダウン、それ以外は手入力 */
-const C_LIST=[...$("countrySel").options].map(o=>o.value).filter(v=>v&&v!=="__other");
-$("countrySel").addEventListener("change",()=>{const v=$("countrySel").value;if(v==="__other"){$("country").hidden=false;$("country").value="";$("country").focus();}else{$("country").hidden=true;$("country").value=v;}$("f").dispatchEvent(new Event("input",{bubbles:true}));});
-setInterval(()=>{const v=$("country").value.trim(),sel=$("countrySel");if(sel.value==="__other"){if(!v&&document.activeElement!==$("country")){sel.value="";$("country").hidden=true;}return;}
-  if(!v){if(sel.value!==""&&sel.value!=="__other")sel.value="";$("country").hidden=true;return;}
-  if(C_LIST.includes(v)){if(sel.value!==v)sel.value=v;$("country").hidden=true;}else{sel.value="__other";$("country").hidden=false;}},500);
+/* プルダウン＋その他（手入力）：ブランド・バッグ形状・製造国 */
+function combo(selId,inId,norm){const sel=$(selId),inp=$(inId);const L=[...sel.options].map(o=>o.value).filter(v=>v&&v!=="__other");
+  sel.addEventListener("change",()=>{const v=sel.value;if(v==="__other"){inp.hidden=false;inp.value="";inp.focus();}else{inp.hidden=true;inp.value=v;}$("f").dispatchEvent(new Event("input",{bubbles:true}));});
+  inp.addEventListener("change",()=>{if(norm){const n=norm(inp.value);if(n&&L.includes(n)){inp.value=n;}}});
+  setInterval(()=>{const v=inp.value.trim();if(sel.value==="__other"){if(!v&&document.activeElement!==inp){sel.value="";inp.hidden=true;}else if(v&&L.includes(v)&&document.activeElement!==inp){sel.value=v;inp.hidden=true;}return;}
+    if(!v){if(sel.value)sel.value="";inp.hidden=true;return;}
+    if(L.includes(v)){if(sel.value!==v)sel.value=v;inp.hidden=true;}else{sel.value="__other";inp.hidden=false;}},500);}
+combo("brandSel","brand",typeof normBrand==="function"?normBrand:null);combo("shapeSel","shape");combo("countrySel","country");
 /* 付属品：複数選択（値は「、」区切りの日本語で保存） */
 const ACC_SPLIT=v=>String(v||"").split(/[、,，・\s]+/).filter(Boolean);
 function accSync(){const v=ACC_SPLIT($("acc").value);const list=$("accList");
