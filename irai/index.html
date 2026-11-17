@@ -250,7 +250,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 <script>
 /* ▼ Apps Script をデプロイしたときの「ウェブアプリのURL」 */
 const API_URL = "https://script.google.com/macros/s/AKfycbyt_sbyLWtGgD8TODNx7kvs2gEOlisN6X8XWqFYGyVQVHkmqvrIRTo6RWZXgYSPjRCB/exec";
-const APP_VERSION = "2026-11-17-34";
+const APP_VERSION = "2026-11-17-45";
 
 const FIELDS=["code","brand","shape","bagType","model","mpn","serial","country","color","extMat","fabric","finish","form","pattern","handleMat","handleColor","handleStyle","liningColor","liningMat","hwColor","hwMat","closure","acc","w","h","d","handleDrop","strapDrop","size","rank","features","note"];
 const MODEL_SKIP=new Set(["code","serial","rank","note","acc"]);
@@ -269,6 +269,13 @@ function showErr(t){const m=$("dbmsg");m.hidden=!t;m.textContent=t||"";}
 class ApiError extends Error{constructor(c){super(c);this.code=c;}}
 async function api(action,params={}){
   if(!API_URL)throw new ApiError("no_api");
+  /* 削除は画面から先に消す（失敗したら元に戻す） */
+  const optDel=(action==="deleteRequests"||action==="deleteModels")&&params.ids;
+  const bakR=requests,bakM=models;
+  if(optDel){const ids=new Set(params.ids);if(action==="deleteRequests")requests=requests.filter(r=>!ids.has(r.id));else models=models.filter(m=>!ids.has(m.id));render();}
+  try{return await apiRaw(action,params);}catch(e){if(optDel){requests=bakR;models=bakM;render();}throw e;}
+}
+async function apiRaw(action,params={}){
   let res;
   try{res=await fetch(API_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({action,pass,...params})});}
   catch(e){throw new ApiError("network");}
@@ -508,9 +515,9 @@ else{refresh();}
 function combo(selId,inId,norm){const sel=$(selId),inp=$(inId);const L=[...sel.options].map(o=>o.value).filter(v=>v&&v!=="__other");
   sel.addEventListener("change",()=>{const v=sel.value;if(v==="__other"){inp.hidden=false;inp.value="";inp.focus();}else{inp.hidden=true;inp.value=v;}$("f").dispatchEvent(new Event("input",{bubbles:true}));});
   inp.addEventListener("change",()=>{if(norm){const n=norm(inp.value);if(n&&L.includes(n)){inp.value=n;}}});
-  setInterval(()=>{const v=inp.value.trim();if(sel.value==="__other"){if(!v&&document.activeElement!==inp){sel.value="";inp.hidden=true;}else if(v&&L.includes(v)&&document.activeElement!==inp){sel.value=v;inp.hidden=true;}return;}
+  setInterval(()=>{if(document.hidden)return;const v=inp.value.trim();if(sel.value==="__other"){if(!v&&document.activeElement!==inp){sel.value="";inp.hidden=true;}else if(v&&L.includes(v)&&document.activeElement!==inp){sel.value=v;inp.hidden=true;}return;}
     if(!v){if(sel.value)sel.value="";inp.hidden=true;return;}
-    if(L.includes(v)){if(sel.value!==v)sel.value=v;inp.hidden=true;}else{sel.value="__other";inp.hidden=false;}},500);}
+    if(L.includes(v)){if(sel.value!==v)sel.value=v;inp.hidden=true;}else{sel.value="__other";inp.hidden=false;}},600);}
 combo("brandSel","brand",typeof normBrand==="function"?normBrand:null);combo("shapeSel","shape");combo("countrySel","country");
 /* 付属品：複数選択（値は「、」区切りの日本語で保存） */
 const ACC_SPLIT=v=>String(v||"").split(/[、,，・\s]+/).filter(Boolean);
@@ -520,7 +527,7 @@ function accSync(){const v=ACC_SPLIT($("acc").value);const list=$("accList");
 function accLock(){const none=$("accList").querySelector('input[value="なし"]');const on=none&&none.checked;$("accList").querySelectorAll("input").forEach(x=>{if(x!==none){x.disabled=on;if(on)x.checked=false;x.parentElement.style.opacity=on?".35":"";}});}
 $("accList").addEventListener("change",e=>{accLock();
   $("acc").value=[...$("accList").querySelectorAll("input:checked")].map(x=>x.value).join("、");$("accSum").textContent=$("acc").value||"（選ばない）";$("f").dispatchEvent(new Event("input",{bubbles:true}));});
-setInterval(()=>{const want=ACC_SPLIT($("acc").value).join("、");const have=[...$("accList").querySelectorAll("input:checked")].map(x=>x.value).join("、");if(want!==have)accSync();},500);
+setInterval(()=>{if(document.hidden)return;const want=ACC_SPLIT($("acc").value).join("、");const have=[...$("accList").querySelectorAll("input:checked")].map(x=>x.value).join("、");if(want!==have)accSync();},600);
 
 /* 色・素材など：複数選択（「、」区切りで保存）＋その他を手入力で追加 */
 function multiInit(dd){const id=dd.dataset.for,hid=$(id),list=dd.querySelector(".acclist"),sum=dd.querySelector("summary"),oth=dd.querySelector(".mother input"),ob=dd.querySelector(".mother button");
@@ -531,8 +538,8 @@ function multiInit(dd){const id=dd.dataset.for,hid=$(id),list=dd.querySelector("
   list.addEventListener("change",e=>{if(e.target.closest(".mother"))return;write();});
   const addOther=()=>{const v=oth.value.trim();if(!v)return;ACC_SPLIT(v).forEach(x=>addOpt(x).checked=true);oth.value="";write();};
   ob.addEventListener("click",addOther);oth.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();addOther();}});
-  setInterval(()=>{const want=ACC_SPLIT(hid.value);const have=boxes().filter(i=>i.checked).map(i=>i.value);if(want.join("、")===have.join("、"))return;
-    want.forEach(addOpt);boxes().forEach(i=>i.checked=want.includes(i.value));sum.textContent=want.length?want.join("、"):"（選ばない）";lock();},500);}
+  setInterval(()=>{if(document.hidden)return;const want=ACC_SPLIT(hid.value);const have=boxes().filter(i=>i.checked).map(i=>i.value);if(want.join("、")===have.join("、"))return;
+    want.forEach(addOpt);boxes().forEach(i=>i.checked=want.includes(i.value));sum.textContent=want.length?want.join("、"):"（選ばない）";lock();},600);}
 document.querySelectorAll(".mdd").forEach(multiInit);
 </script>
 <script>/* 開いたときは必ず一番上から表示（上が隠れないように） */try{history.scrollRestoration="manual"}catch(_){}addEventListener("pageshow",()=>scrollTo(0,0));addEventListener("load",()=>{scrollTo(0,0);setTimeout(()=>scrollTo(0,0),300)});</script>

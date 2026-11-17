@@ -183,7 +183,7 @@ body{padding-top:env(safe-area-inset-top,0px)!important}
 <script>
 /* ▼ Apps Script をデプロイしたときの「ウェブアプリのURL」 */
 const API_URL = "https://script.google.com/macros/s/AKfycbwMrGyfC24OulRxZ5xkpKnA0rPlK1Fi0wWacCv17PgV7FsUF7CPBVEKj9O5TVpwHW6y/exec";
-const APP_VERSION = "2026-11-17-20";
+const APP_VERSION = "2026-11-17-45";
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -484,15 +484,14 @@ $("#list").addEventListener("click", async e=>{
   const b = e.target.closest("[data-undo]"); if(!b) return;
   const m = mine.find(x=>x.cid===b.dataset.undo); if(!m) return;
   if(!confirm(`「${m.name}」${yen(m.price)} を商品リストから消します。よろしいですか？`)) return;
-  b.disabled = true;
+  const before = mine.slice();
+  mine = mine.filter(x=>x.cid!==m.cid); ls.set("shiire-mine", mine); render(); toast("取り消しました");
   try{
     await api("remove", {name:m.name, price:m.price, shop:m.shop, date:m.date});
-    mine = mine.filter(x=>x.cid!==m.cid); ls.set("shiire-mine", mine); render();
-    toast("取り消しました");
   }catch(err){
-    b.disabled = false;
-    toast(err.code==="not_found" ? "商品リストで見つかりませんでした（すでに編集・削除済みかもしれません）" : "取り消せませんでした。もう一度お試しください");
-    if(err.code==="not_found"){ mine = mine.filter(x=>x.cid!==m.cid); ls.set("shiire-mine", mine); render(); }
+    if(err.code==="not_found"){ toast("商品リストで見つかりませんでした（すでに編集・削除済みかもしれません）"); return; }
+    mine = before; ls.set("shiire-mine", mine); render();
+    toast("取り消せませんでした。元に戻しました。もう一度お試しください");
   }
 });
 

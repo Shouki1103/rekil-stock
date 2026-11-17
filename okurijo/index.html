@@ -205,7 +205,7 @@ details summary{cursor:pointer;color:var(--muted);font-size:13px;font-weight:700
 <script>
 /* ▼ Apps Script をデプロイしたときの「ウェブアプリのURL」 */
 const API_URL = "https://script.google.com/macros/s/AKfycbwa-V3TqAAmz3S1-zreAI3Jkp0d4f0aGikswIQnTdmxsgFpggUxE0bjl1-sR0DZumSwsQ/exec";
-const APP_VERSION = "2026-11-17-20";
+const APP_VERSION = "2026-11-17-45";
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -230,7 +230,9 @@ const pendingDone = {};
 function applyPending(){ rows.forEach(r=>{ if(r.tracking in pendingDone) r.done = pendingDone[r.tracking]; }); }
 let doneChain = Promise.resolve();
 class ApiError extends Error{ constructor(c){ super(c); this.code = c; } }
+let writes = 0;
 async function api(action, params={}){
+  const isWrite = !["list","ocr"].includes(action); if(isWrite) writes++;
   busy++; status();
   try{
     let res;
@@ -239,11 +241,11 @@ async function api(action, params={}){
     }catch(_){ throw new ApiError("network"); }
     let j; try{ j = await res.json(); }catch(_){ throw new ApiError("bad_response"); }
     if(!j.ok){ if(j.error==="passcode") showLock(); throw new ApiError(j.error||"error"); }
-    if(j.rows){ rows = j.rows; applyPending(); ls.set("okuri-rows", rows); }
+    if(j.rows && writes === (isWrite ? 1 : 0)){ rows = j.rows; applyPending(); ls.set("okuri-rows", rows); }
     if(j.vendors){ vendors = j.vendors; ls.set("okuri-vendors", vendors); }
     online = true;
     return j.result;
-  }finally{ busy--; render(); }
+  }finally{ if(isWrite) writes--; busy--; render(); }
 }
 
 function toast(msg){
@@ -393,28 +395,25 @@ $("#form").addEventListener("submit", async e=>{
   if(!name){ toast("お届け先の名前を入れてください"); $("#fName").focus(); return; }
   if(fch==="gyohan" && !vendor){ toast("業者名を入れてください"); $("#fVendor").focus(); return; }
   if(fch==="gyohan" && !vendors.includes(vendor) && !confirm(`業者名「${vendor}」を新しく追加して登録します。よろしいですか？`)) return;
-  const btn = $("#save"); btn.disabled = true;
-  try{
-    if(editing){
-      await api("update", {tracking, fields:{name, evtn, date, channel:fch, vendor: fch==="gyohan"?vendor:""}});
-      toast("保存しました");
-    }else{
-      if(rows.some(r=>r.tracking===tracking)){ toast("この送り状番号はもう登録されています"); btn.disabled = false; return; }
-      const r = await api("add", {item:{tracking, name, evtn, date, channel:fch, vendor}});
-      toast(r && r.dup ? "この送り状番号はもう登録されています" : `${CH_NAME[fch]}に登録しました`);
-      if(ch!==fch){ ch = fch; ls.set("okuri-tab", ch); render(); }
-    }
-    closeForm();
-  }catch(err){
-    toast(err.code==="network" ? "通信できませんでした。電波の良い場所でもう一度お試しください" : `保存できませんでした（${err.code}）`);
-  }
-  btn.disabled = false;
+  if(!editing && rows.some(r=>r.tracking===tracking)){ toast("この送り状番号はもう登録されています"); return; }
+  // 画面を先に変えてから裏で保存（失敗したら元に戻す）
+  const before = JSON.parse(JSON.stringify(rows));
+  const fields = {name, evtn, date, channel:fch, vendor: fch==="gyohan"?vendor:""};
+  const wasEditing = editing;
+  if(wasEditing){ const r = rows.find(x=>x.tracking===wasEditing.tracking); if(r) Object.assign(r, fields); toast("保存しました"); }
+  else { rows.unshift(Object.assign({tracking, done:false}, fields)); toast(`${CH_NAME[fch]}に登録しました`); if(ch!==fch){ ch = fch; ls.set("okuri-tab", ch); } }
+  if(fch==="gyohan" && vendor && !vendors.includes(vendor)) vendors.push(vendor);
+  ls.set("okuri-rows", rows); closeForm(); render();
+  (wasEditing ? api("update", {tracking, fields}) : api("add", {item:{tracking, name, evtn, date, channel:fch, vendor}}))
+    .catch(err=>{ rows = before; ls.set("okuri-rows", rows); render();
+      toast(err.code==="network" ? "通信できず保存されませんでした。もう一度お試しください" : `保存できませんでした（${err.code}）。元に戻しました`); });
 });
 $("#del").addEventListener("click", async ()=>{
   if(!editing) return;
   if(!confirm(`${editing.name}（${editing.tracking}）を削除します。よろしいですか？`)) return;
-  try{ await api("remove", {tracking: editing.tracking}); toast("削除しました"); closeForm(); }
-  catch(err){ toast(`削除できませんでした（${err.code}）`); }
+  const t = editing.tracking, before = JSON.parse(JSON.stringify(rows));
+  rows = rows.filter(r=>r.tracking!==t); ls.set("okuri-rows", rows); closeForm(); render(); toast("削除しました");
+  api("remove", {tracking: t}).catch(err=>{ rows = before; ls.set("okuri-rows", rows); render(); toast(`削除できませんでした（${err.code}）。元に戻しました`); });
 });
 
 /* ---------- 写真から読み取り ---------- */
@@ -539,7 +538,7 @@ $("#lockForm").addEventListener("submit", async e=>{
 });
 
 /* ---------- 同期・更新 ---------- */
-async function refresh(){ if(!pass || busy || Object.keys(pendingDone).length) return; try{ await api("list"); }catch(err){ if(err.code==="network"){ online = false; status(); } } }
+async function refresh(){ if(!pass || busy || writes || Object.keys(pendingDone).length) return; try{ await api("list"); }catch(err){ if(err.code==="network"){ online = false; status(); } } }
 async function checkUpdate(){
   try{
     const r = await fetch(location.pathname + "?v=" + Date.now(), {cache:"no-store"});

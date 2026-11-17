@@ -148,7 +148,7 @@ label{display:block;font-size:12px;color:var(--sub);margin:10px 0 4px}
 <script>
 /* ▼ Apps Script をデプロイしたときの「ウェブアプリのURL」 */
 const API_URL = "https://script.google.com/macros/s/AKfycbw7kz9QQt6CMQvwIC4IhtSekntc4xGCUAWuop6U7LO_3U6FMRo--X6wKI0F6hSx3n3Vng/exec";
-const APP_VERSION = "2026-11-17-20";
+const APP_VERSION = "2026-11-17-45";
 let selMode=false,selected=new Set(),shownIds=[];
 const DEF_AUC=["オークネット","エコリング","JDS","JBA","コメ兵","モノバンク","プライム","浜屋","大吉","JWA","トレファク","ペンギン","アプレ","リバオク"];
 const DEF_STAFF=["俊輔","祥貴"],DEF_WHO="俊輔";
@@ -253,9 +253,12 @@ async function save(){
   const body={date:$("eDate").value,auction:$("eAuc").value,staff:$("eWho").value,memo:$("eMemo").value.trim(),status:eStatus,updatedAt:now};
   if(editing){const p=editing;body.id=p.id;body.createdAt=p.createdAt||now;body.doneAt=p.doneAt||now;body.bidAt=eStatus==="bid"?(p.bidAt||now):"";}
   else{body.createdAt=now;body.doneAt=now;body.bidAt=eStatus==="bid"?now:"";}
-  $("eSave").disabled=true;
-  try{await api("save",{record:body});$("edit").classList.remove("open");toast("保存しました")}catch(e){handleErr(e)}
-  $("eSave").disabled=false;
+  if(!body.id)body.id="tmp-"+now+"-"+Math.random().toString(36).slice(2,6);
+  const prev=items.slice();pending.set(body.id,{rec:body});
+  items=items.some(x=>x.id===body.id)?items.map(x=>x.id===body.id?{...x,...body}:x):[body,...items];
+  cacheLocal();$("edit").classList.remove("open");render();toast("保存しました");
+  const sendBody=editing?body:{...body,id:undefined};
+  api("save",{record:sendBody}).then(()=>{pending.delete(body.id)}).catch(e=>{pending.delete(body.id);items=prev;cacheLocal();render();handleErr(e)});
 }
 async function setStatus(id,s){
   const it=items.find(x=>x.id===id);if(!it)return;
@@ -271,7 +274,8 @@ $("cNo").onclick=()=>$("confirm").classList.remove("open");
 let delMany=null;
 $("cYes").onclick=async()=>{$("confirm").classList.remove("open");
   if(delMany){const ids=delMany;delMany=null;
-    try{await api("removeMany",{ids});toast(`${ids.length}件削除しました`);selected.clear();selMode=false;render()}catch(e){handleErr(e)}return}
+    const prev=items.slice();ids.forEach(i=>pending.set(i,{del:true}));items=items.filter(x=>!ids.includes(x.id));selected.clear();selMode=false;cacheLocal();render();toast(`${ids.length}件削除しました`);
+    api("removeMany",{ids}).then(()=>ids.forEach(i=>pending.delete(i))).catch(e=>{ids.forEach(i=>pending.delete(i));items=prev;cacheLocal();render();handleErr(e)});return}
   const id=delId,prev=items.slice();pending.set(id,{del:true});items=items.filter(x=>x.id!==id);cacheLocal();render();toast("削除しました");
   try{await api("remove",{id});pending.delete(id)}catch(e){pending.delete(id);items=prev;cacheLocal();render();handleErr(e)}};
 function selSync(){

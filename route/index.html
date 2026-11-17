@@ -195,7 +195,7 @@ body{padding-top:env(safe-area-inset-top,0px)!important}
 <script>
 /* ▼ Apps Script をデプロイしたときの「ウェブアプリのURL」 */
 const API_URL = "https://script.google.com/macros/s/AKfycbxPSHfn__gZMtY4xf0QqRYaeYO5aRb2OIg3S9x7pB01vA_WwSmfq3XgqvEJxUIKuhYw/exec";
-const APP_VERSION = "2026-11-17-40";
+const APP_VERSION = "2026-11-17-45";
 
 const $ = s => document.querySelector(s);
 const ls = {
@@ -212,8 +212,10 @@ let cur = ls.get("route-cur", null), pref = ls.get("route-pref", null), addType 
 let online = false, busy = 0, armRoute = false;
 
 class ApiError extends Error{ constructor(c){ super(c); this.code = c; } }
+let writes = 0;
 async function api(action, params={}){
   if(!API_URL) throw new ApiError("no_api");
+  const isWrite = action!=="list"; if(isWrite) writes++;
   busy++; status();
   try{
     let res;
@@ -221,10 +223,10 @@ async function api(action, params={}){
     catch(_){ throw new ApiError("network"); }
     let j; try{ j = await res.json(); }catch(_){ throw new ApiError("bad_response"); }
     if(!j.ok){ if(j.error==="passcode") showLock(); throw new ApiError(j.error||"error"); }
-    if(j.data){ data = j.data; ls.set("route-data", data); }
+    if(j.data && writes === (isWrite ? 1 : 0)){ data = j.data; ls.set("route-data", data); }
     online = true;
     return j.result;
-  }finally{ busy--; render(); }
+  }finally{ if(isWrite) writes--; busy--; render(); }
 }
 function toast(msg){
   document.querySelectorAll(".toast").forEach(t=>t.remove());
@@ -284,7 +286,7 @@ function delBtn(s){
   const b = el("button","icon delx","✕"); b.type = "button"; b.setAttribute("aria-label","削除");
   b.onclick = async () => {
     if(!b.dataset.arm){ b.dataset.arm = "1"; b.textContent = "削除？"; b.classList.add("armed"); setTimeout(()=>{ if(b.isConnected){ delete b.dataset.arm; b.textContent = "✕"; b.classList.remove("armed"); } }, 3000); return; }
-    try{ await api("removeStop",{id:s.id}); toast(`「${s.name}」を削除しました`); }catch(e){ fail(e); }
+    opt(()=>{ data.stores = data.stores.filter(x=>x.id!==s.id); }, "removeStop", {id:s.id}, `「${s.name}」を削除しました`);
   };
   return b;
 }
@@ -338,20 +340,28 @@ function card(s, i, list, no){
 }
 
 /* ---------- 保存 ---------- */
-async function saveStop(stop, msg){ try{ await api("saveStop",{stop}); if(msg) toast(msg); }catch(e){ fail(e); } }
+/* 画面を先に変えてから裏で保存（失敗したら元に戻す） */
+function opt(mutate, action, params, okMsg){
+  const before = JSON.parse(JSON.stringify(data));
+  try{ mutate(); }catch(_){}
+  ls.set("route-data", data); render(); if(okMsg) toast(okMsg);
+  api(action, params).catch(e=>{ data = before; ls.set("route-data", data); render(); fail(e); });
+}
+
+function saveStop(stop, msg){ opt(()=>{ const t = data.stores.find(x=>x.id===stop.id); if(t) Object.assign(t, stop); }, "saveStop", {stop}, msg); }
 async function moveTo(list, from, to){
-  if(busy || to<0 || to>=list.length || from===to) return;
+  if(to<0 || to>=list.length || from===to) return;
   const arr = list.slice(); const [it] = arr.splice(from,1); arr.splice(to,0,it);
   const orders = {}; arr.forEach((s,k)=>orders[s.id]=k+1);
-  try{ await api("setOrder",{table:"stores", orders}); toast(`${to+1}番目に移しました`); }catch(e){ fail(e); }
+  opt(()=>data.stores.forEach(x=>{ if(orders[x.id]!=null) x.order = orders[x.id]; }), "setOrder", {table:"stores", orders}, `${to+1}番目に移しました`);
 }
 async function moveRoute(dir){
-  const r = route(); if(!r || busy) return;
+  const r = route(); if(!r) return;
   const sib = routesIn(prefOf(r)), k = sib.findIndex(x=>x.id===r.id), j = k+dir; if(j<0 || j>=sib.length) return;
   const slots = sib.map(x=>x.order).sort((a,b)=>a-b);
   const arr = sib.slice(); const [it] = arr.splice(k,1); arr.splice(j,0,it);
   const orders = {}; arr.forEach((x,n)=>orders[x.id]=slots[n]===slots[n-1] ? slots[n]+n*0.001 : slots[n]);
-  try{ await api("setOrder",{table:"routes", orders}); }catch(e){ fail(e); }
+  opt(()=>data.routes.forEach(x=>{ if(orders[x.id]!=null) x.order = orders[x.id]; }), "setOrder", {table:"routes", orders});
 }
 $("#vtog").onclick = e => { const b = e.target.closest("[data-v]"); if(!b) return; view = b.dataset.v; try{ localStorage.setItem("route-view", view); }catch(_){} render(); };
 $("#rUp").onclick = () => moveRoute(-1); $("#rDown").onclick = () => moveRoute(1);
@@ -385,8 +395,8 @@ function openStop(s){
   openSheet(note ? "メモ行を編集" : hotel ? "ホテルを編集" : "店舗を編集", nodes, async fd=>{
     const v = Object.fromEntries(fd.entries()); Object.keys(v).forEach(k=>v[k]=String(v[k]).trim());
     if(!v.name){ toast("名前を入れてください"); return; }
-    try{ await api("saveStop",{stop:{id:s.id, ...v}}); closeSheet(); toast("保存しました"); }catch(e){ fail(e); }
-  }, async ()=>{ try{ await api("removeStop",{id:s.id}); closeSheet(); toast("削除しました"); }catch(e){ fail(e); } });
+    closeSheet(); opt(()=>{ const t = data.stores.find(x=>x.id===s.id); if(t) Object.assign(t, v); }, "saveStop", {stop:{id:s.id, ...v}}, "保存しました");
+  }, async ()=>{ closeSheet(); opt(()=>{ data.stores = data.stores.filter(x=>x.id!==s.id); }, "removeStop", {id:s.id}, "削除しました"); });
 }
 function openRoute(r){
   const dl = el("datalist"); dl.id = "prefList"; prefs().forEach(p=>{ const o = el("option"); o.value = p; dl.append(o); });
@@ -460,7 +470,7 @@ $("#lockForm").addEventListener("submit", async e=>{
 });
 
 /* ---------- 同期・更新 ---------- */
-async function refresh(){ if(!pass || busy || !API_URL) return; try{ await api("list"); }catch(err){ if(err.code==="network"){ online = false; status(); } } }
+async function refresh(){ if(!pass || busy || writes || !API_URL) return; try{ await api("list"); }catch(err){ if(err.code==="network"){ online = false; status(); } } }
 async function checkUpdate(){
   try{
     const r = await fetch(location.pathname + "?v=" + Date.now(), {cache:"no-store"});
