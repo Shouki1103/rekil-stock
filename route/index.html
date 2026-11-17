@@ -112,9 +112,9 @@ pre.fallback{white-space:pre-wrap;background:var(--bg);border:1px solid var(--li
 body{padding-top:env(safe-area-inset-top,0px)!important}
 .vtog{display:flex;gap:6px;margin:10px 0 6px}.vtog button{flex:1;padding:8px;border-radius:10px;border:1px solid var(--line,#333);background:transparent;color:inherit;font:inherit;font-weight:700}
 .vtog button[aria-pressed="true"]{background:var(--accent,#3ecfb2);color:#111;border-color:transparent}
-.crow{display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid var(--line,#333);border-radius:10px;margin:4px 0;list-style:none}
-.crow .cn{flex:0 0 26px;text-align:center;font-weight:800;opacity:.8}.crow .cname{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.crow.hotel .cn{color:#e0b860}.crow.note{opacity:.75}.crow .moves select{max-width:84px}
+.crow{display:flex;align-items:flex-start;gap:8px;padding:8px 10px;border:1px solid var(--line,#333);border-radius:10px;margin:4px 0;list-style:none}
+.crow .cn{flex:0 0 26px;text-align:center;font-weight:800;opacity:.8}.crow .cname{flex:1 1 auto;min-width:0;white-space:normal;word-break:break-all;line-height:1.4}
+.crow.hotel .cn{color:#e0b860}.crow.note{opacity:.75}.crow .moves select{max-width:84px}.crow .moves{flex:0 0 auto}.crow .cn{padding-top:2px}
 </style>
 </head>
 <body>
@@ -194,7 +194,7 @@ body{padding-top:env(safe-area-inset-top,0px)!important}
 <script>
 /* ▼ Apps Script をデプロイしたときの「ウェブアプリのURL」 */
 const API_URL = "https://script.google.com/macros/s/AKfycbxPSHfn__gZMtY4xf0QqRYaeYO5aRb2OIg3S9x7pB01vA_WwSmfq3XgqvEJxUIKuhYw/exec";
-const APP_VERSION = "2026-11-17-37";
+const APP_VERSION = "2026-11-17-38";
 
 const $ = s => document.querySelector(s);
 const ls = {
