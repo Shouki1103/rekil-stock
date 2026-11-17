@@ -174,6 +174,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
           <label>マチ<input id="d" inputmode="decimal"><span class="inch" data-for="d"></span></label>
           <label>持ち手高さ<input id="handleDrop" inputmode="decimal"><span class="inch" data-for="handleDrop"></span></label>
           <label>ストラップ長さ<input id="strapDrop" inputmode="decimal"><span class="inch" data-for="strapDrop"></span></label>
+          <label>Size（eBayのサイズ）<select id="size"><option value="">（選ばない）</option><option>Nano</option><option>Micro</option><option>Mini</option><option>Small</option><option>Medium</option><option>Large</option><option>Extra Large</option></select></label>
         </div>
       </section>
 
@@ -245,9 +246,9 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 <script>
 /* ▼ Apps Script をデプロイしたときの「ウェブアプリのURL」 */
 const API_URL = "https://script.google.com/macros/s/AKfycbyt_sbyLWtGgD8TODNx7kvs2gEOlisN6X8XWqFYGyVQVHkmqvrIRTo6RWZXgYSPjRCB/exec";
-const APP_VERSION = "2026-11-17-10";
+const APP_VERSION = "2026-11-17-11";
 
-const FIELDS=["code","brand","shape","model","mpn","serial","country","color","extMat","fabric","finish","form","pattern","handleMat","handleColor","liningColor","liningMat","hwColor","hwMat","closure","acc","w","h","d","handleDrop","strapDrop","rank","features","note"];
+const FIELDS=["code","brand","shape","model","mpn","serial","country","color","extMat","fabric","finish","form","pattern","handleMat","handleColor","liningColor","liningMat","hwColor","hwMat","closure","acc","w","h","d","handleDrop","strapDrop","size","rank","features","note"];
 const MODEL_SKIP=new Set(["code","serial","rank","note","acc"]);
 const $=id=>document.getElementById(id);
 let pass="";try{pass=localStorage.getItem("rekil-irai-pass")||localStorage.getItem("rekil-pass")||"";}catch(e){}
