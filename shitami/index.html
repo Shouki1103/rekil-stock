@@ -64,7 +64,7 @@ main{padding:12px 14px 100px;max-width:760px;margin:0 auto}
 .note{font-size:12px;color:var(--sub);text-align:center;padding:6px}
 .sheet{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:flex-end;justify-content:center;z-index:20}
 .sheet.open{display:flex}
-.panel{background:var(--card);width:100%;max-width:560px;border-radius:16px 16px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom));max-height:90vh;overflow:auto}
+.panel{background:var(--card);width:100%;max-width:560px;border-radius:16px 16px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom));max-height:calc(100vh - env(safe-area-inset-top,0px) - 16px);max-height:calc(100dvh - env(safe-area-inset-top,0px) - 16px);overflow:auto}
 .panel h2{font-size:17px;margin:0 0 12px}
 label{display:block;font-size:12px;color:var(--sub);margin:10px 0 4px}
 .panel input,.panel select,.panel textarea{width:100%;padding:11px;border:1px solid var(--line);border-radius:10px;background:var(--field);color:var(--ink);font-size:16px}
@@ -148,7 +148,7 @@ label{display:block;font-size:12px;color:var(--sub);margin:10px 0 4px}
 <script>
 /* ▼ Apps Script をデプロイしたときの「ウェブアプリのURL」 */
 const API_URL = "https://script.google.com/macros/s/AKfycbw7kz9QQt6CMQvwIC4IhtSekntc4xGCUAWuop6U7LO_3U6FMRo--X6wKI0F6hSx3n3Vng/exec";
-const APP_VERSION = "2026-11-17-45";
+const APP_VERSION = "2026-11-17-53";
 let selMode=false,selected=new Set(),shownIds=[];
 const DEF_AUC=["オークネット","エコリング","JDS","JBA","コメ兵","モノバンク","プライム","浜屋","大吉","JWA","トレファク","ペンギン","アプレ","リバオク"];
 const DEF_STAFF=["俊輔","祥貴"],DEF_WHO="俊輔";

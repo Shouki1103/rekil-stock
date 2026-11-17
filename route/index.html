@@ -98,7 +98,7 @@ select.pos{width:auto;min-height:36px;padding:2px 6px;font-size:13px}
 pre.fallback{white-space:pre-wrap;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px;font-size:13px;user-select:all;-webkit-user-select:all;margin:0}
 .toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:#f2f4f6;color:#111;padding:10px 16px;border-radius:8px;font-weight:700;z-index:60;max-width:calc(100% - 32px);box-shadow:0 6px 24px #0008}
 .sheet{position:fixed;inset:0;z-index:30;background:#000a;display:flex;align-items:flex-end;justify-content:center}
-.sheet form{background:var(--surface);width:100%;max-width:640px;max-height:92vh;overflow:auto;border-radius:14px 14px 0 0;padding:16px max(16px,env(safe-area-inset-right,0px)) calc(16px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:12px}
+.sheet form{background:var(--surface);width:100%;max-width:640px;max-height:calc(100vh - env(safe-area-inset-top,0px) - 16px);max-height:calc(100dvh - env(safe-area-inset-top,0px) - 16px);overflow:auto;border-radius:14px 14px 0 0;padding:16px max(16px,env(safe-area-inset-right,0px)) calc(16px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:12px}
 .sheet h3{margin:0;font-size:18px;display:flex;justify-content:space-between;align-items:center}
 .f{display:flex;flex-direction:column;gap:5px}
 #lock{position:fixed;inset:0;z-index:50;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:24px}
@@ -198,7 +198,7 @@ a.cname,a.name{color:inherit;text-decoration:underline;text-decoration-color:rgb
 <script>
 /* ▼ Apps Script をデプロイしたときの「ウェブアプリのURL」 */
 const API_URL = "https://script.google.com/macros/s/AKfycbxPSHfn__gZMtY4xf0QqRYaeYO5aRb2OIg3S9x7pB01vA_WwSmfq3XgqvEJxUIKuhYw/exec";
-const APP_VERSION = "2026-11-17-46";
+const APP_VERSION = "2026-11-17-53";
 
 const $ = s => document.querySelector(s);
 const ls = {

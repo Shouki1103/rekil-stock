@@ -70,7 +70,7 @@ a.lnk{color:var(--acc)}
 .empty{text-align:center;color:var(--sub);padding:30px 10px}
 .sheet{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:flex-end;justify-content:center;z-index:20}
 .sheet.open{display:flex}
-.panel{background:var(--card);width:100%;max-width:560px;border-radius:16px 16px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom));max-height:92vh;overflow:auto}
+.panel{background:var(--card);width:100%;max-width:560px;border-radius:16px 16px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom));max-height:calc(100vh - env(safe-area-inset-top,0px) - 16px);max-height:calc(100dvh - env(safe-area-inset-top,0px) - 16px);overflow:auto}
 .panel h3{margin:0 0 6px;font-size:17px}
 .panel h4{margin:14px 0 2px;font-size:13px;color:var(--acc)}
 label{display:block;font-size:12px;color:var(--sub);margin:8px 0 3px}
@@ -162,7 +162,7 @@ body{padding-top:env(safe-area-inset-top,0px)!important}
 <script>
 /* ▼ Apps Script をデプロイしたときの「ウェブアプリのURL」 */
 const API_URL = "https://script.google.com/macros/s/AKfycby3F-MYmPDbMyj3CC4sR2WC2KwtC73femnvFT4XG67PgCpaQjw9Z5Dp6qRk_KgknGrc/exec";
-const APP_VERSION = "2026-11-17-36";
+const APP_VERSION = "2026-11-17-53";
 
 const $=id=>document.getElementById(id);
 const C_FIELDS=["id","name","status","apply_deadline","start_jst","end_jst","coupon_code","offer","cashback_rate","cashback_cap_usd","budget_usd","min_price_usd","target_items","excluded_items","conditions","cashback_due","inquiry_tag","orders","sales_usd","discount_usd","fees_usd","cashback_expected_usd","cashback_received_usd","cashback_received_date","note","result_pdf"];

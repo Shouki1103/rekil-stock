@@ -92,7 +92,7 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid 
 .toast{position:fixed;left:50%;bottom:calc(92px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:#f2f4f6;color:#111;padding:10px 16px;border-radius:8px;font-weight:700;z-index:60;max-width:calc(100% - 32px);box-shadow:0 6px 24px #0008}
 /* 追加・編集シート */
 .sheet{position:fixed;inset:0;z-index:30;background:#000a;display:flex;align-items:flex-end;justify-content:center}
-.sheet form{background:var(--surface);width:100%;max-width:600px;max-height:92vh;overflow:auto;border-radius:14px 14px 0 0;padding:16px max(16px,env(safe-area-inset-right,0px)) calc(16px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:12px}
+.sheet form{background:var(--surface);width:100%;max-width:600px;max-height:calc(100vh - env(safe-area-inset-top,0px) - 16px);max-height:calc(100dvh - env(safe-area-inset-top,0px) - 16px);overflow:auto;border-radius:14px 14px 0 0;padding:16px max(16px,env(safe-area-inset-right,0px)) calc(16px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:12px}
 .sheet h3{margin:0;font-size:18px;display:flex;justify-content:space-between;align-items:center}
 label.f{display:flex;flex-direction:column;gap:6px}
 .label{font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.06em}
@@ -210,7 +210,7 @@ details summary{cursor:pointer;color:var(--muted);font-size:13px;font-weight:700
 <script>
 /* ▼ Apps Script をデプロイしたときの「ウェブアプリのURL」 */
 const API_URL = "https://script.google.com/macros/s/AKfycbwa-V3TqAAmz3S1-zreAI3Jkp0d4f0aGikswIQnTdmxsgFpggUxE0bjl1-sR0DZumSwsQ/exec";
-const APP_VERSION = "2026-11-17-52";
+const APP_VERSION = "2026-11-17-53";
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
