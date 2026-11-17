@@ -133,6 +133,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
           <label>管理番号<input id="code" required></label>
           <label>ブランド<input id="brand" list="dl-brand"></label>
           <label>バッグ形状<input id="shape" list="dl-shape"></label>
+          <label>Type（eBayのタイプ）<select id="bagType"><option value="">（選ばない）</option><option>Backpack</option><option>Briefcase</option><option>Clutch</option><option>Handbag</option><option>Pouch</option><option>Satchel</option></select></label>
           <label>モデル名<input id="model"></label>
           <label>型番<input id="mpn"></label>
           <label>シリアル番号<input id="serial"></label>
@@ -246,9 +247,9 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 <script>
 /* ▼ Apps Script をデプロイしたときの「ウェブアプリのURL」 */
 const API_URL = "https://script.google.com/macros/s/AKfycbyt_sbyLWtGgD8TODNx7kvs2gEOlisN6X8XWqFYGyVQVHkmqvrIRTo6RWZXgYSPjRCB/exec";
-const APP_VERSION = "2026-11-17-11";
+const APP_VERSION = "2026-11-17-12";
 
-const FIELDS=["code","brand","shape","model","mpn","serial","country","color","extMat","fabric","finish","form","pattern","handleMat","handleColor","liningColor","liningMat","hwColor","hwMat","closure","acc","w","h","d","handleDrop","strapDrop","size","rank","features","note"];
+const FIELDS=["code","brand","shape","bagType","model","mpn","serial","country","color","extMat","fabric","finish","form","pattern","handleMat","handleColor","liningColor","liningMat","hwColor","hwMat","closure","acc","w","h","d","handleDrop","strapDrop","size","rank","features","note"];
 const MODEL_SKIP=new Set(["code","serial","rank","note","acc"]);
 const $=id=>document.getElementById(id);
 let pass="";try{pass=localStorage.getItem("rekil-irai-pass")||localStorage.getItem("rekil-pass")||"";}catch(e){}
