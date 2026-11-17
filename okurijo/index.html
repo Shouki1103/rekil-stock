@@ -26,7 +26,7 @@
 }
 *{box-sizing:border-box}
 html,body{margin:0;background:var(--bg);color:var(--fg)}
-body{font-family:var(--font-body);font-size:15px;line-height:1.6;padding-bottom:calc(88px + env(safe-area-inset-bottom,0px))}
+body{font-family:var(--font-body);font-size:15px;line-height:1.6;padding-top:env(safe-area-inset-top,0px);padding-bottom:calc(88px + env(safe-area-inset-bottom,0px))}
 [hidden]{display:none!important}
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--steel)}
 header{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--steel);
@@ -51,6 +51,7 @@ main{max-width:600px;margin:0 auto;padding:12px max(16px,env(safe-area-inset-rig
 .toggle input{width:20px;height:20px;min-height:0;accent-color:var(--accent)}
 .summary{font-size:13px;color:var(--muted)}
 .search{position:relative;display:flex;align-items:center}
+.hsearch{max-width:600px;margin:0 auto;padding:8px 0 10px}
 .search svg{position:absolute;left:12px;color:var(--muted);pointer-events:none}
 .search input{width:100%;font:inherit;font-size:16px;padding:10px 64px 10px 38px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--fg)}
 .search input:focus{outline:none;border-color:var(--accent)}
@@ -124,11 +125,11 @@ details summary{cursor:pointer;color:var(--muted);font-size:13px;font-weight:700
     <button type="button" role="tab" data-ch="yahoo" aria-selected="false">ヤフオク <span class="badge" id="b-yahoo"></span></button>
     <button type="button" role="tab" data-ch="gyohan" aria-selected="false">業販 <span class="badge" id="b-gyohan"></span></button>
   </div>
+  <label class="search hsearch" for="q"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/></svg><input id="q" type="search" placeholder="名前・送り状番号・evtn・業者名で検索" autocomplete="off" aria-label="検索"><button type="button" class="clr" id="qClr" hidden>クリア</button></label>
 </header>
 
 <main>
   <div class="chips" id="vendorChips" aria-label="業者で絞り込み" hidden></div>
-  <label class="search" for="q"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/></svg><input id="q" type="search" placeholder="名前・送り状番号・evtn・業者名で検索" autocomplete="off" aria-label="検索"><button type="button" class="clr" id="qClr" hidden>クリア</button></label>
   <div class="bar">
     <span class="summary" id="summary"></span>
     <label class="toggle"><input type="checkbox" id="onlyTodo">未登録だけ表示</label>
