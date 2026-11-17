@@ -110,6 +110,11 @@ pre.fallback{white-space:pre-wrap;background:var(--bg);border:1px solid var(--li
 
 /* iPhone上部のステータスバー分の余白（ヘッダーで上が隠れないように） */
 body{padding-top:env(safe-area-inset-top,0px)!important}
+.vtog{display:flex;gap:6px;margin:10px 0 6px}.vtog button{flex:1;padding:8px;border-radius:10px;border:1px solid var(--line,#333);background:transparent;color:inherit;font:inherit;font-weight:700}
+.vtog button[aria-pressed="true"]{background:var(--accent,#3ecfb2);color:#111;border-color:transparent}
+.crow{display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid var(--line,#333);border-radius:10px;margin:4px 0;list-style:none}
+.crow .cn{flex:0 0 26px;text-align:center;font-weight:800;opacity:.8}.crow .cname{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.crow.hotel .cn{color:#e0b860}.crow.note{opacity:.75}.crow .moves select{max-width:84px}
 </style>
 </head>
 <body>
@@ -150,6 +155,7 @@ body{padding-top:env(safe-area-inset-top,0px)!important}
     <pre class="fallback" id="fallback" hidden></pre>
   </section>
 
+  <div class="vtog" id="vtog" hidden><button type="button" data-v="full">詳細つき</button><button type="button" data-v="names">店名だけ</button></div>
   <ol class="list" id="list"></ol>
   <p class="empty" id="empty" hidden></p>
 
@@ -188,7 +194,7 @@ body{padding-top:env(safe-area-inset-top,0px)!important}
 <script>
 /* ▼ Apps Script をデプロイしたときの「ウェブアプリのURL」 */
 const API_URL = "https://script.google.com/macros/s/AKfycbxPSHfn__gZMtY4xf0QqRYaeYO5aRb2OIg3S9x7pB01vA_WwSmfq3XgqvEJxUIKuhYw/exec";
-const APP_VERSION = "2026-11-17-20";
+const APP_VERSION = "2026-11-17-37";
 
 const $ = s => document.querySelector(s);
 const ls = {
@@ -237,6 +243,7 @@ const route = () => data.routes.find(r=>r.id===cur);
 function pick(id){ cur = id; const r = route(); if(r) pref = prefOf(r); ls.set("route-cur",cur); ls.set("route-pref",pref); armRoute = false; $("#fallback").hidden = true; render(); window.scrollTo(0,0); }
 
 /* ---------- 表示 ---------- */
+let view=(()=>{try{return localStorage.getItem("route-view")||"full"}catch(_){return "full"}})();
 function render(){
   status();
   const ps = prefs(); if(!ps.includes(pref)) pref = ps[0] || null;
@@ -263,13 +270,28 @@ function render(){
     $("#rDel").textContent = armRoute ? `もう一度押すと削除（${stopsOf(r.id).length}件も消えます）` : "ルートを削除";
   }
   const list = r ? stopsOf(r.id) : []; let no = 0;
-  $("#list").replaceChildren(...list.map((s,i)=>card(s,i,list,(s.type==="store") ? ++no : 0)));
+  $("#vtog").hidden = !r || !list.length;
+  document.querySelectorAll("#vtog button").forEach(b=>b.setAttribute("aria-pressed", b.dataset.v===view));
+  $("#list").replaceChildren(...list.map((s,i)=>(view==="names"?row:card)(s,i,list,(s.type==="store") ? ++no : 0)));
   const em = $("#empty");
   if(!data.routes.length){ em.hidden = false; em.textContent = API_URL ? "ルートがまだありません。「＋ルート」から作成してください。" : "データ側（Apps Script）の設定待ちです。設定が終わるとここに表示されます。"; }
   else if(r && !list.length){ em.hidden = false; em.textContent = "このルートにはまだ店舗がありません。下から追加してください。"; }
   else em.hidden = true;
 }
 
+function row(s, i, list, no){
+  const hotel = s.type==="hotel", note = s.type==="note";
+  const li = el("li","crow"+(hotel?" hotel":"")+(note?" note":""));
+  li.append(el("span","cn", hotel ? "宿" : note ? "→" : no), el("span","cname", s.name));
+  const mv = el("div","moves");
+  const up = el("button","icon","↑"); up.type="button"; up.setAttribute("aria-label","1つ前へ"); up.disabled = i===0; up.onclick = () => moveTo(list,i,i-1);
+  const dn = el("button","icon","↓"); dn.type="button"; dn.setAttribute("aria-label","1つ後ろへ"); dn.disabled = i===list.length-1; dn.onclick = () => moveTo(list,i,i+1);
+  const pos = el("select","pos"); pos.setAttribute("aria-label","何番目に移すか");
+  list.forEach((_,k)=>{ const o = el("option",null,`${k+1}番目`); o.value = k; if(k===i) o.selected = true; pos.append(o); });
+  pos.onchange = () => moveTo(list,i,+pos.value);
+  mv.append(up,dn,pos); li.append(mv);
+  return li;
+}
 function card(s, i, list, no){
   const hotel = s.type==="hotel", note = s.type==="note";
   const li = el("li", "stop" + (hotel?" hotel":"") + (note?" note":"") + (s.name.includes("🙅")?" skip":""));
@@ -322,6 +344,7 @@ async function moveRoute(dir){
   const orders = {}; arr.forEach((x,n)=>orders[x.id]=slots[n]===slots[n-1] ? slots[n]+n*0.001 : slots[n]);
   try{ await api("setOrder",{table:"routes", orders}); }catch(e){ fail(e); }
 }
+$("#vtog").onclick = e => { const b = e.target.closest("[data-v]"); if(!b) return; view = b.dataset.v; try{ localStorage.setItem("route-view", view); }catch(_){} render(); };
 $("#rUp").onclick = () => moveRoute(-1); $("#rDown").onclick = () => moveRoute(1);
 
 /* ---------- 入力シート ---------- */
