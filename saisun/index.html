@@ -154,7 +154,7 @@ const $ = (s, r = document) => r.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 /* ▼ Apps Script をデプロイしたときの「ウェブアプリのURL」 */
 const API_URL = "https://script.google.com/macros/s/AKfycbymxFtpBAd8KiZMjoAyHEl8Tz8GQRjaVLlpAZfm3KGTeOa4Ifz4IHGjO_PZpiTJfx31/exec";
-const APP_VERSION = "2026-11-17-41";
+const APP_VERSION = "2026-11-17-42";
 const CACHE = "saisun-data";
 let items = [], tpls = [], query = "";
 let pass = ""; try{ pass = localStorage.getItem("rekil-saisun-pass") || localStorage.getItem("rekil-pass") || ""; }catch(_){}
@@ -389,7 +389,7 @@ function openItem(it){
   document.querySelectorAll("[data-tx]").forEach(el=>el.oninput=e=>{ d[e.target.dataset.tx]=e.target.value; drawOut(); });
   document.querySelectorAll("[data-pick]").forEach(dd=>{ const k=dd.dataset.pick, P=PICKS[k], inp=document.getElementById("tx-"+k);
     const split=v=>String(v||"").split(/[、,，×・\/／\s]+/).filter(Boolean);
-    const sync=()=>{ const cur=split(inp.value); dd.querySelectorAll("input").forEach(c=>c.checked=cur.includes(c.value)); };
+    const sync=()=>{ const cur=split(inp.value); const none=cur.includes("なし"); dd.querySelectorAll("input").forEach(c=>{ c.checked=cur.includes(c.value); if(c.value!=="なし"){ c.disabled=none; c.parentElement.style.opacity=none?".35":""; } }); };
     sync(); inp.addEventListener("input",sync);
     dd.addEventListener("change",e=>{ const c=e.target; let cur=split(inp.value);
       if(c.checked){ if(c.value==="なし") cur=["なし"]; else { cur=cur.filter(x=>x!=="なし"); if(!cur.includes(c.value)) cur.push(c.value); } }
