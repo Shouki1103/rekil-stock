@@ -116,6 +116,8 @@ body{padding-top:env(safe-area-inset-top,0px)!important}
 .crow .cn{flex:0 0 26px;text-align:center;font-weight:800;opacity:.8}.crow .cname{flex:1 1 auto;min-width:0;white-space:normal;word-break:break-all;line-height:1.4}
 .crow.hotel .cn{color:#e0b860}.crow.note{opacity:.75}.crow .moves select{max-width:84px}.crow .moves{flex:0 0 auto}.crow .cn{padding-top:2px}
 .delx{color:var(--danger)}.delx.armed{width:auto;padding:0 8px;font-size:12px;font-weight:700;background:var(--danger);color:#fff;border-color:transparent}
+a.cname,a.name{color:inherit;text-decoration:underline;text-decoration-color:rgba(242,165,65,.5);text-underline-offset:3px}
+.maplink{flex:1;display:flex;align-items:center;justify-content:center;min-height:40px;border:1px solid var(--accent);border-radius:10px;color:var(--accent);text-decoration:none;font-weight:700;font-size:14px;padding:0 8px}
 </style>
 </head>
 <body>
@@ -149,6 +151,7 @@ body{padding-top:env(safe-area-inset-top,0px)!important}
       <button class="primary" id="copyNames" type="button">店名だけコピー</button>
       <button class="outline" id="copyFull" type="button">詳細つきでコピー</button>
     </div>
+    <div class="bar" id="mapBar"></div>
     <div class="bar">
       <button id="rEdit" type="button">名前・県・出発時刻</button>
       <button class="danger" id="rDel" type="button">ルートを削除</button>
@@ -195,7 +198,7 @@ body{padding-top:env(safe-area-inset-top,0px)!important}
 <script>
 /* ▼ Apps Script をデプロイしたときの「ウェブアプリのURL」 */
 const API_URL = "https://script.google.com/macros/s/AKfycbxPSHfn__gZMtY4xf0QqRYaeYO5aRb2OIg3S9x7pB01vA_WwSmfq3XgqvEJxUIKuhYw/exec";
-const APP_VERSION = "2026-11-17-45";
+const APP_VERSION = "2026-11-17-46";
 
 const $ = s => document.querySelector(s);
 const ls = {
@@ -270,6 +273,12 @@ function render(){
     $("#rpref").textContent = prefOf(r); $("#rname").textContent = r.name; $("#rdep").textContent = r.depart || "未設定";
     const sib = routesIn(prefOf(r)), k = sib.findIndex(x=>x.id===r.id);
     $("#rUp").disabled = k<=0; $("#rDown").disabled = k<0 || k>=sib.length-1;
+    { const pts = stopsOf(r.id).filter(x=>x.type!=="note").map(placeName).filter(Boolean); const mb = $("#mapBar"); mb.replaceChildren();
+      // 10か所ずつ（Googleマップの上限）に分けて開く
+      let start = 0; const parts = []; while(start < pts.length){ const end = Math.min(pts.length, start+10); parts.push([start,end]); if(end>=pts.length) break; start = end-1; }
+      parts.forEach(([a,b2],n)=>{ const seg = pts.slice(a,b2); const origin = a>0 ? seg.shift() : ""; const dest = seg.pop(); if(!dest) return;
+        const btn = el("a","outline maplink", parts.length>1 ? `地図でルート（${a+1}〜${b2}）` : "地図アプリでルート全体を開く"); btn.href = mapsDir(dest, seg, origin); btn.target = "_blank"; btn.rel = "noopener"; mb.append(btn); });
+      mb.hidden = !pts.length; }
     $("#rDel").textContent = armRoute ? `もう一度押すと削除（${stopsOf(r.id).length}件も消えます）` : "ルートを削除";
   }
   const list = r ? stopsOf(r.id) : []; let no = 0;
@@ -282,6 +291,9 @@ function render(){
   else em.hidden = true;
 }
 
+const mapsDir = (dest, wps=[], origin="") => "https://www.google.com/maps/dir/?api=1&travelmode=driving" + (origin?"&origin="+encodeURIComponent(origin):"") + "&destination="+encodeURIComponent(dest) + (wps.length?"&waypoints="+encodeURIComponent(wps.join("|")):"");
+const placeName = s => String(s.name||"").replace(/🙅/g,"").trim();
+function mapLink(s, cls){ const a = el("a", cls, s.name); if(s.type!=="note"){ a.href = mapsDir(placeName(s)); a.target = "_blank"; a.rel = "noopener"; a.title = "Googleマップで経路を開く"; } return a; }
 function delBtn(s){
   const b = el("button","icon delx","✕"); b.type = "button"; b.setAttribute("aria-label","削除");
   b.onclick = async () => {
@@ -293,7 +305,7 @@ function delBtn(s){
 function row(s, i, list, no){
   const hotel = s.type==="hotel", note = s.type==="note";
   const li = el("li","crow"+(hotel?" hotel":"")+(note?" note":""));
-  li.append(el("span","cn", hotel ? "宿" : note ? "→" : no), el("span","cname", s.name));
+  li.append(el("span","cn", hotel ? "宿" : note ? "→" : no), mapLink(s,"cname"));
   const mv = el("div","moves");
   const up = el("button","icon","↑"); up.type="button"; up.setAttribute("aria-label","1つ前へ"); up.disabled = i===0; up.onclick = () => moveTo(list,i,i-1);
   const dn = el("button","icon","↓"); dn.type="button"; dn.setAttribute("aria-label","1つ後ろへ"); dn.disabled = i===list.length-1; dn.onclick = () => moveTo(list,i,i+1);
@@ -309,7 +321,7 @@ function card(s, i, list, no){
   li.append(el("div","num", hotel ? "宿" : note ? "→" : no));
   const c = el("div","card"); li.append(c);
   const top = el("div","ctop"), nm = el("div");
-  nm.append(el("span","tag", hotel ? "宿泊" : note ? "メモ" : (s.chain || "店舗")), el("div","name",s.name));
+  nm.append(el("span","tag", hotel ? "宿泊" : note ? "メモ" : (s.chain || "店舗")), mapLink(s,"name"));
   const mv = el("div","moves");
   const up = el("button","icon","↑"); up.type="button"; up.setAttribute("aria-label","1つ前へ"); up.disabled = i===0; up.onclick = () => moveTo(list,i,i-1);
   const dn = el("button","icon","↓"); dn.type="button"; dn.setAttribute("aria-label","1つ後ろへ"); dn.disabled = i===list.length-1; dn.onclick = () => moveTo(list,i,i+1);
