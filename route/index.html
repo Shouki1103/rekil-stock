@@ -115,6 +115,7 @@ body{padding-top:env(safe-area-inset-top,0px)!important}
 .crow{display:flex;align-items:flex-start;gap:8px;padding:8px 10px;border:1px solid var(--line,#333);border-radius:10px;margin:4px 0;list-style:none}
 .crow .cn{flex:0 0 26px;text-align:center;font-weight:800;opacity:.8}.crow .cname{flex:1 1 auto;min-width:0;white-space:normal;word-break:break-all;line-height:1.4}
 .crow.hotel .cn{color:#e0b860}.crow.note{opacity:.75}.crow .moves select{max-width:84px}.crow .moves{flex:0 0 auto}.crow .cn{padding-top:2px}
+.delx{color:var(--danger)}.delx.armed{width:auto;padding:0 8px;font-size:12px;font-weight:700;background:var(--danger);color:#fff;border-color:transparent}
 </style>
 </head>
 <body>
@@ -194,7 +195,7 @@ body{padding-top:env(safe-area-inset-top,0px)!important}
 <script>
 /* ▼ Apps Script をデプロイしたときの「ウェブアプリのURL」 */
 const API_URL = "https://script.google.com/macros/s/AKfycbxPSHfn__gZMtY4xf0QqRYaeYO5aRb2OIg3S9x7pB01vA_WwSmfq3XgqvEJxUIKuhYw/exec";
-const APP_VERSION = "2026-11-17-38";
+const APP_VERSION = "2026-11-17-40";
 
 const $ = s => document.querySelector(s);
 const ls = {
@@ -279,6 +280,14 @@ function render(){
   else em.hidden = true;
 }
 
+function delBtn(s){
+  const b = el("button","icon delx","✕"); b.type = "button"; b.setAttribute("aria-label","削除");
+  b.onclick = async () => {
+    if(!b.dataset.arm){ b.dataset.arm = "1"; b.textContent = "削除？"; b.classList.add("armed"); setTimeout(()=>{ if(b.isConnected){ delete b.dataset.arm; b.textContent = "✕"; b.classList.remove("armed"); } }, 3000); return; }
+    try{ await api("removeStop",{id:s.id}); toast(`「${s.name}」を削除しました`); }catch(e){ fail(e); }
+  };
+  return b;
+}
 function row(s, i, list, no){
   const hotel = s.type==="hotel", note = s.type==="note";
   const li = el("li","crow"+(hotel?" hotel":"")+(note?" note":""));
@@ -289,7 +298,7 @@ function row(s, i, list, no){
   const pos = el("select","pos"); pos.setAttribute("aria-label","何番目に移すか");
   list.forEach((_,k)=>{ const o = el("option",null,`${k+1}番目`); o.value = k; if(k===i) o.selected = true; pos.append(o); });
   pos.onchange = () => moveTo(list,i,+pos.value);
-  mv.append(up,dn,pos); li.append(mv);
+  mv.append(up,dn,pos,delBtn(s)); li.append(mv);
   return li;
 }
 function card(s, i, list, no){
@@ -305,7 +314,7 @@ function card(s, i, list, no){
   const pos = el("select","pos"); pos.setAttribute("aria-label","何番目に移すか");
   list.forEach((_,k)=>{ const o = el("option",null,`${k+1}番目`); o.value = k; if(k===i) o.selected = true; pos.append(o); });
   pos.onchange = () => moveTo(list,i,+pos.value);
-  mv.append(up,dn,pos); top.append(nm); c.append(top);
+  mv.append(up,dn,pos,delBtn(s)); top.append(nm); c.append(top);
   if(!note){
     const dl = el("dl","facts");
     const fact = (label, val) => { const dd = el("dd"); if(unknown(val)) dd.append(el("span","pill","要確認")); else dd.textContent = val; dl.append(el("dt",null,label), dd); };
