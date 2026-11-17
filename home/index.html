@@ -33,7 +33,7 @@ h3{font-size:13px;color:var(--muted);margin:16px 2px 8px;font-weight:700}
 .app{position:relative;display:flex;flex-direction:column;align-items:center;gap:6px;text-decoration:none;color:var(--fg)}
 .app img,.app .ph{width:58px;height:58px;border-radius:14px;background:var(--surface);border:1px solid var(--line);object-fit:cover}
 .app .ph{display:flex;align-items:center;justify-content:center;font-weight:900;font-size:20px;color:var(--accent)}
-.app span.n{font-size:11px;text-align:center;line-height:1.3;word-break:keep-all;overflow-wrap:anywhere}
+.app span.n{font-size:11px;text-align:center;line-height:1.3;white-space:nowrap;letter-spacing:-.02em;max-width:calc(100% + 8px)}
 .badge{position:absolute;top:-6px;left:calc(50% + 16px);min-width:22px;height:22px;padding:0 6px;border-radius:11px;background:var(--danger);color:#fff;font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;border:2px solid var(--bg)}
 .badge:empty{display:none}
 .hint{font-size:12px;color:var(--muted)}.erow{display:flex;align-items:center;gap:6px;padding:6px 0;border-bottom:1px solid var(--line)}.erow .en{flex:1;min-width:0}.erow button,.erow select,.ebar button{font:inherit;font-size:14px;min-height:36px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--fg);padding:0 10px}.erow select{max-width:130px}.ebar{margin-top:14px}#edit{border:1px solid var(--line);border-radius:8px;padding:4px 10px}
@@ -49,7 +49,7 @@ h3{font-size:13px;color:var(--muted);margin:16px 2px 8px;font-weight:700}
   <div id="groups"></div>
 </main>
 <script>
-const APP_VERSION = "2026-11-17-55";
+const APP_VERSION = "2026-11-17-56";
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const today = () => new Date(Date.now()+9*3600e3).toISOString().slice(0,10);
@@ -60,6 +60,7 @@ let CATALOG = {groups:[]};
 try{ CATALOG = JSON.parse(localStorage.getItem("rekil-home-catalog")||'{"groups":[]}'); }catch(_){}
 let layout = null; try{ layout = JSON.parse(localStorage.getItem("rekil-home-layout")||"null"); }catch(_){}
 let editing = false;
+const HIDDEN = "使わない";
 const allApps = () => { const m = {}; CATALOG.groups.forEach(g=>g.apps.forEach(a=>m[a.id]={...a, g:g.name})); return m; };
 /* 自分で並べ替えた配置に、新しく増えたアプリを元のグループの最後に足す */
 function groupsView(){
@@ -79,13 +80,13 @@ const items = {};
 function render(){
   const A = allApps(), gs = groupsView();
   if(!editing){
-    $("#groups").innerHTML = gs.filter(g=>g.ids.length).map(g=>`<h3>${esc(g.name)}</h3><div class="grid">${g.ids.map(id=>{ const a = A[id];
-      return `<a class="app" href="${esc(a.url)}"${/^https?:/.test(a.url)?' target="_blank" rel="noopener"':''}><img src="${esc(a.icon||"x")}" alt="" onerror="this.outerHTML='<span class=ph>${esc(a.name.slice(0,1))}</span>'"><span class="badge">${a.badge && badges[a.badge] ? badges[a.badge] : ""}</span><span class="n">${esc(a.name)}</span></a>`; }).join("")}</div>`).join("");
+    $("#groups").innerHTML = gs.filter(g=>g.ids.length && g.name!==HIDDEN).map(g=>`<h3>${esc(g.name)}</h3><div class="grid">${g.ids.map(id=>{ const a = A[id];
+      return `<a class="app" href="${esc(a.url)}"${/^https?:/.test(a.url)?' target="_blank" rel="noopener"':''}><img src="${esc(a.icon||"x")}" alt="" onerror="this.outerHTML='<span class=ph>${esc(a.name.slice(0,1))}</span>'"><span class="badge">${a.badge && badges[a.badge] ? badges[a.badge] : ""}</span><span class="n"${[...a.name].length>6?` style="font-size:${[...a.name].length>7?9.5:10}px"`:""}>${esc(a.name)}</span></a>`; }).join("")}</div>`).join("");
   }else{
     const names = gs.map(g=>g.name);
-    $("#groups").innerHTML = `<p class="hint">↑↓で順番、右のプルダウンでグループを変えられます。この端末に保存されます。</p>` + gs.map((g,gi)=>`<h3>${esc(g.name)}</h3>${g.ids.map((id,i)=>`<div class="erow"><span class="en">${esc(A[id].name)}</span>
+    $("#groups").innerHTML = `<p class="hint">↑↓で順番、右のプルダウンでグループを変えられます。「使わない」にしたアプリはホームに出なくなります（ここから戻せます）。この端末に保存されます。</p>` + gs.map((g,gi)=>`<h3>${esc(g.name)}</h3>${g.ids.map((id,i)=>`<div class="erow"><span class="en">${esc(A[id].name)}</span>
       <button data-mv="${gi},${i},-1" ${i===0?"disabled":""}>↑</button><button data-mv="${gi},${i},1" ${i===g.ids.length-1?"disabled":""}>↓</button>
-      <select data-grp="${gi},${i}">${names.map((n,k)=>`<option value="${k}" ${k===gi?"selected":""}>${esc(n)}</option>`).join("")}<option value="new">＋新しいグループ</option></select></div>`).join("") || '<p class="hint">（アプリなし）</p>'}`).join("")
+      <select data-grp="${gi},${i}">${names.map((n,k)=>`<option value="${k}" ${k===gi?"selected":""}>${esc(n)}</option>`).join("")}${g.name===HIDDEN?"":`<option value="hide">使わない（非表示にする）</option>`}<option value="new">＋新しいグループ</option></select></div>`).join("") || '<p class="hint">（アプリなし）</p>'}`).join("")
       + `<div class="ebar"><button id="reset" type="button">最初の並びに戻す</button></div>`;
   }
   $("#edit").textContent = editing ? "完了" : "並べ替え";
@@ -98,7 +99,7 @@ $("#groups").addEventListener("click", e=>{
 });
 $("#groups").addEventListener("change", e=>{
   const s = e.target.closest("[data-grp]"); if(!s) return; const [gi,i] = s.dataset.grp.split(",").map(Number); const gs = groupsView();
-  let to = s.value; if(to==="new"){ const n = prompt("新しいグループ名"); if(!n){ render(); return; } gs.push({name:n.trim(), ids:[]}); to = gs.length-1; }
+  let to = s.value; if(to==="hide"){ let k = gs.findIndex(x=>x.name===HIDDEN); if(k<0){ gs.push({name:HIDDEN, ids:[]}); k = gs.length-1; } to = k; } else if(to==="new"){ const n = prompt("新しいグループ名"); if(!n){ render(); return; } gs.push({name:n.trim(), ids:[]}); to = gs.length-1; }
   const [id] = gs[gi].ids.splice(i,1); gs[+to].ids.push(id); saveLayout(gs); render();
 });
 
