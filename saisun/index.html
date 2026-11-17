@@ -153,7 +153,7 @@ const $ = (s, r = document) => r.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 /* ▼ Apps Script をデプロイしたときの「ウェブアプリのURL」 */
 const API_URL = "https://script.google.com/macros/s/AKfycbymxFtpBAd8KiZMjoAyHEl8Tz8GQRjaVLlpAZfm3KGTeOa4Ifz4IHGjO_PZpiTJfx31/exec";
-const APP_VERSION = "2026-11-17-10";
+const APP_VERSION = "2026-11-17-20";
 const CACHE = "saisun-data";
 let items = [], tpls = [], query = "";
 let pass = ""; try{ pass = localStorage.getItem("rekil-saisun-pass") || localStorage.getItem("rekil-pass") || ""; }catch(_){}
@@ -484,7 +484,7 @@ async function refresh(){ if(!pass||busy||writes||!API_URL) return;
 async function checkUpdate(){ try{
   const r = await fetch(location.pathname+"?v="+Date.now(), {cache:"no-store"}); const t = await r.text();
   const m = t.match(/const APP_VERSION = "([^"]+)"/);
-  if(m && m[1]!==APP_VERSION && !busy && !$("#sheet-root").innerHTML) location.replace(location.pathname+"?v="+encodeURIComponent(m[1]));
+  if(m && m[1]!==APP_VERSION && (busy || $("#sheet-root").innerHTML)){ setTimeout(checkUpdate,3000); return; } if(m && m[1]!==APP_VERSION) location.replace(location.pathname+"?v="+encodeURIComponent(m[1]));
 }catch(_){} }
 document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState==="visible"){ checkUpdate(); refresh(); } });
 setInterval(()=>{ if(document.visibilityState==="visible" && !$("#sheet-root").innerHTML) refresh(); }, 60000);
@@ -497,5 +497,6 @@ else { setStatus(items.length||tpls.length ? "" : "読み込み中…"); checkUp
 })();
 </script>
 <script>/* 開いたときは必ず一番上から表示（上が隠れないように） */try{history.scrollRestoration="manual"}catch(_){}addEventListener("pageshow",()=>scrollTo(0,0));addEventListener("load",()=>{scrollTo(0,0);setTimeout(()=>scrollTo(0,0),300)});</script>
+<script>setInterval(()=>{try{if(document.visibilityState==="visible")checkUpdate()}catch(_){}},60000);</script>
 </body>
 </html>

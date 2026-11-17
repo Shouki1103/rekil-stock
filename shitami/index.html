@@ -148,7 +148,7 @@ label{display:block;font-size:12px;color:var(--sub);margin:10px 0 4px}
 <script>
 /* ▼ Apps Script をデプロイしたときの「ウェブアプリのURL」 */
 const API_URL = "https://script.google.com/macros/s/AKfycbw7kz9QQt6CMQvwIC4IhtSekntc4xGCUAWuop6U7LO_3U6FMRo--X6wKI0F6hSx3n3Vng/exec";
-const APP_VERSION = "2026-11-17-10";
+const APP_VERSION = "2026-11-17-20";
 let selMode=false,selected=new Set(),shownIds=[];
 const DEF_AUC=["オークネット","エコリング","JDS","JBA","コメ兵","モノバンク","プライム","浜屋","大吉","JWA","トレファク","ペンギン","アプレ","リバオク"];
 const DEF_STAFF=["俊輔","祥貴"],DEF_WHO="俊輔";
@@ -333,7 +333,7 @@ $("lockForm").addEventListener("submit",async e=>{
 });
 async function refresh(){if(!pass||busy||!API_URL)return;try{await api("list")}catch(err){if(err.code==="network"){online=false;setSync()}}}
 async function checkUpdate(){try{const r=await fetch(location.pathname+"?v="+Date.now(),{cache:"no-store"});const t=await r.text();const m=t.match(/const APP_VERSION = "([^"]+)"/);
-  if(m&&m[1]!==APP_VERSION&&!busy)location.replace(location.pathname+"?v="+encodeURIComponent(m[1]))}catch(_){}}
+  if(m&&m[1]!==APP_VERSION&&busy){setTimeout(checkUpdate,2000);return}if(m&&m[1]!==APP_VERSION)location.replace(location.pathname+"?v="+encodeURIComponent(m[1]))}catch(_){}}
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"){checkUpdate();refresh()}});
 setInterval(()=>{if(document.visibilityState==="visible"&&!$("edit").classList.contains("open"))refresh()},60000);
 render();setSync();
@@ -341,5 +341,6 @@ if(!API_URL){$("list").innerHTML='<div class="empty">データ側（Apps Script�
 else if(!pass)showLock();else{checkUpdate();refresh()}
 </script>
 <script>/* 開いたときは必ず一番上から表示（上が隠れないように） */try{history.scrollRestoration="manual"}catch(_){}addEventListener("pageshow",()=>scrollTo(0,0));addEventListener("load",()=>{scrollTo(0,0);setTimeout(()=>scrollTo(0,0),300)});</script>
+<script>setInterval(()=>{try{if(document.visibilityState==="visible")checkUpdate()}catch(_){}},60000);</script>
 </body>
 </html>

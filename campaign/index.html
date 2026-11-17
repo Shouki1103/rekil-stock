@@ -157,7 +157,7 @@ body{padding-top:env(safe-area-inset-top,0px)!important}
 <script>
 /* ▼ Apps Script をデプロイしたときの「ウェブアプリのURL」 */
 const API_URL = "https://script.google.com/macros/s/AKfycby3F-MYmPDbMyj3CC4sR2WC2KwtC73femnvFT4XG67PgCpaQjw9Z5Dp6qRk_KgknGrc/exec";
-const APP_VERSION = "2026-11-17-10";
+const APP_VERSION = "2026-11-17-20";
 
 const $=id=>document.getElementById(id);
 const C_FIELDS=["id","name","status","apply_deadline","start_jst","end_jst","coupon_code","offer","cashback_rate","cashback_cap_usd","budget_usd","min_price_usd","target_items","excluded_items","conditions","cashback_due","inquiry_tag","orders","sales_usd","discount_usd","fees_usd","cashback_expected_usd","cashback_received_usd","cashback_received_date","note","result_pdf"];
@@ -298,7 +298,7 @@ $("lockForm").addEventListener("submit",async e=>{e.preventDefault();pass=$("pas
   catch(err){if(err.code==="network")$("lockMsg").textContent="データ側に接続できませんでした。電波を確認してください。";else if(err.code==="no_api")$("lockMsg").textContent="データ側（Apps Script）がまだ設定されていません。";else if(err.code!=="passcode")$("lockMsg").textContent=`データ側でエラーが起きました（${err.code}）`}
   $("lockGo").disabled=false;$("lockGo").textContent="開く"});
 async function refresh(){if(!pass||busy||!API_URL)return;try{await api("list")}catch(err){if(err.code==="network"){online=false;setSync()}}}
-async function checkUpdate(){try{const r=await fetch(location.pathname+"?v="+Date.now(),{cache:"no-store"});const t=await r.text();const m=t.match(/const APP_VERSION = "([^"]+)"/);if(m&&m[1]!==APP_VERSION&&!busy)location.replace(location.pathname+"?v="+encodeURIComponent(m[1]))}catch(_){}}
+async function checkUpdate(){try{const r=await fetch(location.pathname+"?v="+Date.now(),{cache:"no-store"});const t=await r.text();const m=t.match(/const APP_VERSION = "([^"]+)"/);if(m&&m[1]!==APP_VERSION&&busy){setTimeout(checkUpdate,2000);return}if(m&&m[1]!==APP_VERSION)location.replace(location.pathname+"?v="+encodeURIComponent(m[1]))}catch(_){}}
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"){checkUpdate();refresh()}});
 setInterval(()=>{if(document.visibilityState==="visible"&&!document.querySelector(".sheet.open"))refresh()},60000);
 render();setSync();
@@ -306,5 +306,6 @@ if(!API_URL){$("list").innerHTML='<div class="empty">データ側（Apps Script�
 else if(!pass)showLock();else{checkUpdate();refresh()}
 </script>
 <script>/* 開いたときは必ず一番上から表示（上が隠れないように） */try{history.scrollRestoration="manual"}catch(_){}addEventListener("pageshow",()=>scrollTo(0,0));addEventListener("load",()=>{scrollTo(0,0);setTimeout(()=>scrollTo(0,0),300)});</script>
+<script>setInterval(()=>{try{if(document.visibilityState==="visible")checkUpdate()}catch(_){}},60000);</script>
 </body>
 </html>

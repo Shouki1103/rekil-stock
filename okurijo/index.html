@@ -205,7 +205,7 @@ details summary{cursor:pointer;color:var(--muted);font-size:13px;font-weight:700
 <script>
 /* ▼ Apps Script をデプロイしたときの「ウェブアプリのURL」 */
 const API_URL = "https://script.google.com/macros/s/AKfycbwa-V3TqAAmz3S1-zreAI3Jkp0d4f0aGikswIQnTdmxsgFpggUxE0bjl1-sR0DZumSwsQ/exec";
-const APP_VERSION = "2026-11-17-10";
+const APP_VERSION = "2026-11-17-20";
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -544,7 +544,7 @@ async function checkUpdate(){
   try{
     const r = await fetch(location.pathname + "?v=" + Date.now(), {cache:"no-store"});
     const t = await r.text(); const m = t.match(/const APP_VERSION = "([^"]+)"/);
-    if(m && m[1] !== APP_VERSION && !busy){ location.replace(location.pathname + "?v=" + encodeURIComponent(m[1])); }
+    if(m && m[1] !== APP_VERSION){ if(busy){ setTimeout(checkUpdate,2000); return; } location.replace(location.pathname + "?v=" + encodeURIComponent(m[1])); }
   }catch(_){}
 }
 document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState==="visible"){ checkUpdate(); refresh(); } });
@@ -554,5 +554,6 @@ render();
 if(!pass) showLock(); else { checkUpdate(); refresh(); }
 </script>
 <script>/* 開いたときは必ず一番上から表示（上が隠れないように） */try{history.scrollRestoration="manual"}catch(_){}addEventListener("pageshow",()=>scrollTo(0,0));addEventListener("load",()=>{scrollTo(0,0);setTimeout(()=>scrollTo(0,0),300)});</script>
+<script>setInterval(()=>{try{if(document.visibilityState==="visible")checkUpdate()}catch(_){}},60000);</script>
 </body>
 </html>

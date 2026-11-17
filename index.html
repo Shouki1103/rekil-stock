@@ -1432,12 +1432,13 @@ document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState=
 /* ---------- 新しい版の自動反映 ----------
    GitHub Pagesやスマホが古い画面を覚えていても、開いたとき・画面に戻ったときに
    最新版があるか確認し、あれば自動で読み直す */
-const APP_VERSION = "2026-11-17-10";
+const APP_VERSION = "2026-11-17-20";
 async function checkUpdate(){
   try{
     const r = await fetch(location.pathname + "?v=" + Date.now(), {cache:"no-store"});
     const t = await r.text(); const m = t.match(/const APP_VERSION = "([^"]+)"/);
-    if(m && m[1] !== APP_VERSION && busy===0 && !flushing){
+    if(m && m[1] !== APP_VERSION && (busy!==0 || flushing)){ setTimeout(checkUpdate,2000); return; }
+    if(m && m[1] !== APP_VERSION){
       try{ sessionStorage.setItem("rekil-updated", m[1]); }catch(_){}
       location.replace(location.pathname + "?v=" + encodeURIComponent(m[1]) + location.hash);
     }
@@ -1456,4 +1457,5 @@ else { if(!queue.length) $("#sync").textContent="接続中…"; if(!who) showWho
 </script>
 
 <script>/* 開いたときは必ず一番上から表示（上が隠れないように） */try{history.scrollRestoration="manual"}catch(_){}addEventListener("pageshow",()=>scrollTo(0,0));addEventListener("load",()=>{scrollTo(0,0);setTimeout(()=>scrollTo(0,0),300)});</script>
+<script>setInterval(()=>{try{if(document.visibilityState==="visible")checkUpdate()}catch(_){}},60000);</script>
 </body></html>
