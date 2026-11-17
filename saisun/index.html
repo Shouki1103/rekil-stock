@@ -104,6 +104,7 @@ html,body{margin:0}
 /* iPhone上部のステータスバー分の余白（ヘッダーで上が隠れないように） */
 body{padding-top:env(safe-area-inset-top,0px)!important}
 .pick{margin-top:6px;border:1px solid var(--line);border-radius:10px}.pick summary{padding:8px 10px;cursor:pointer;color:var(--muted);font-size:13px}.pickl{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:2px 6px;padding:4px 10px 10px}.pickl label{display:flex;align-items:center;gap:6px;font-size:13px;min-height:36px;white-space:nowrap}.pickl input{width:18px;height:18px;padding:0;accent-color:var(--accent,#4f8cff)}
+.ttl{display:flex;align-items:center;gap:8px;margin:4px 0;font-size:13px}.ttl .tl{flex:0 0 auto;color:var(--muted);font-size:12px;width:96px}.ttl .tv{flex:1;min-width:0;word-break:break-all}
 </style>
 </head>
 <body>
@@ -154,7 +155,7 @@ const $ = (s, r = document) => r.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 /* ▼ Apps Script をデプロイしたときの「ウェブアプリのURL」 */
 const API_URL = "https://script.google.com/macros/s/AKfycbymxFtpBAd8KiZMjoAyHEl8Tz8GQRjaVLlpAZfm3KGTeOa4Ifz4IHGjO_PZpiTJfx31/exec";
-const APP_VERSION = "2026-11-17-44";
+const APP_VERSION = "2026-11-17-50";
 const CACHE = "saisun-data";
 let items = [], tpls = [], query = "";
 let pass = ""; try{ pass = localStorage.getItem("rekil-saisun-pass") || localStorage.getItem("rekil-pass") || ""; }catch(_){}
@@ -338,6 +339,20 @@ function shrink(file, max, q){
   });
 }
 
+/* タイトル自動作成：商品名＋カラー＋素材＋管理番号（字数を超える分は後ろから省く） */
+function makeTitle(d, max){
+  const name = String(d.name||"").trim(); if(!name) return "";
+  const sp = v => String(v||"").replace(/[×、,]/g," ").trim();
+  const parts = [name, sp(d.color), sp(d.material)].filter(Boolean);
+  const kn = String(d.kanri||"").trim();
+  const len = s => [...s].length;
+  let t = parts.join(" ");
+  const withK = kn ? t+" "+kn : t;
+  if(len(withK) <= max) return withK;
+  while(parts.length > 1 && len(parts.join(" ")) > max) parts.pop();
+  t = parts.join(" ");
+  return len(t) > max ? [...t].slice(0,max).join("") : t;
+}
 /* ---------- item editor ---------- */
 function openItem(it){
   const isNew = !it;
@@ -360,6 +375,9 @@ function openItem(it){
     ${TEXT_FIELDS.map(f=>`<div class="field"><label for="tx-${f.key}">${f.label}</label><input id="tx-${f.key}" data-tx="${f.key}" value="${esc(d[f.key]||"")}" placeholder="${esc(f.ph)}">${PICKS[f.key]?`<details class="pick" data-pick="${f.key}"><summary>一覧から選ぶ（複数可）</summary><div class="pickl">${PICKS[f.key].o.map(o=>`<label><input type="checkbox" value="${esc(o)}">${esc(o)}</label>`).join("")}</div></details>`:""}</div>`).join("")}
     <div class="field"><label for="kanri">管理番号</label><input id="kanri" value="${esc(d.kanri||"")}" placeholder="例：R-1108-01"></div>
     <div class="field"><label for="memo">メモ（出品文には入りません）</label><textarea id="memo" rows="2" placeholder="社内用のメモ">${esc(d.memo)}</textarea></div>
+    <div class="field"><label>タイトル（自動作成）</label>
+      <div class="ttl"><span class="tl">メルカリ（40字）</span><span id="tM" class="tv"></span><button class="btn sm" id="cpM">コピー</button></div>
+      <div class="ttl"><span class="tl">ヤフオク（65字）</span><span id="tY" class="tv"></span><button class="btn sm" id="cpY">コピー</button></div></div>
     <div class="field"><label>出品文（テンプレート反映後）</label><div class="out" id="out"></div>
       <div class="row" style="margin-top:6px"><button class="btn primary" id="copy">本文をコピー</button><button class="btn" id="copym">採寸だけコピー</button></div></div>
     <div class="row" style="margin-top:8px">
@@ -378,7 +396,9 @@ function openItem(it){
       <span class="unit">${esc(r.unit===""?"":(r.unit||"cm"))}</span>
       <button class="x" data-rm="${i}" aria-label="削除">×</button></div>`).join("") : `<span class="hint">テンプレートを選ぶか「＋ 項目を追加」してください。</span>`;
   };
-  const drawOut = ()=>{ $("#out").textContent = render(tplById(d.templateId), d) || "（採寸を入力するとここに出ます）"; };
+  const drawOut = ()=>{ $("#out").textContent = render(tplById(d.templateId), d) || "（採寸を入力するとここに出ます）";
+    const tm = makeTitle(d,40), ty = makeTitle(d,65);
+    $("#tM").textContent = tm ? `${tm}（${[...tm].length}字）` : "商品名を入れると作ります"; $("#tY").textContent = ty ? `${ty}（${[...ty].length}字）` : "—"; };
   drawPhoto(); drawRows(); drawOut();
 
   $("#close").onclick = closeSheet;
@@ -411,6 +431,8 @@ function openItem(it){
     try{ pendingPhoto = await shrink(f, 1400, .85); drawPhoto(); }catch(err){ toast(err.message); } };
   $("#ph-del").onclick = ()=>{ pendingPhoto=null; d.photoId=""; d.photoUrl=""; drawPhoto(); };
   $("#copy").onclick = ()=>copyText(render(tplById(d.templateId), d));
+  $("#cpM").onclick = e=>{ e.preventDefault(); copyText(makeTitle(d,40)); };
+  $("#cpY").onclick = e=>{ e.preventDefault(); copyText(makeTitle(d,65)); };
   $("#copym").onclick = ()=>copyText(measText(d.measures));
 
   if(!isNew) $("#del").onclick = ()=>{

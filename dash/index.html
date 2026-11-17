@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ReKiL 月次">
+<meta name="theme-color" content="#0d1014">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<title>ReKiL 月次ダッシュボード</title>
+<style>
+:root{--bg:#14181d;--surface:#1d232a;--line:#2f3740;--fg:#e8ebee;--muted:#9aa4af;--accent:#f5c026;--steel:#0d1014;--ok:#4cc27e;--danger:#ff7a6b;--blue:#6aa8ff;color-scheme:dark}
+*{box-sizing:border-box}
+html,body{background:var(--bg);color:var(--fg);margin:0}
+body{font-family:"Hiragino Sans","Yu Gothic",system-ui,sans-serif;font-size:15px;line-height:1.55;padding-top:env(safe-area-inset-top,0px);padding-bottom:calc(24px + env(safe-area-inset-bottom,0px))}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--steel)}
+[hidden]{display:none!important}
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--steel);padding:10px 14px 12px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:900;font-size:17px}
+.brand i{display:inline-block;width:12px;height:22px;background:repeating-linear-gradient(-45deg,var(--accent) 0 5px,#1d2228 5px 10px);border-radius:2px}
+.sync{font-size:12px;color:var(--muted);background:none;border:0;cursor:pointer}
+.month{display:flex;align-items:center;justify-content:space-between;margin-top:10px;gap:8px}
+.month button{min-width:44px;min-height:40px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--fg);font:inherit;font-size:18px}
+.month b{font-size:19px}
+main{max-width:640px;margin:0 auto;padding:12px 14px;display:flex;flex-direction:column;gap:14px}
+h2{font-size:14px;color:var(--muted);margin:6px 0 0;font-weight:700}
+.kpis{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.kpi span{display:block;font-size:12px;color:var(--muted)}
+.kpi b{display:block;font-size:21px;font-variant-numeric:tabular-nums;margin-top:2px}
+.kpi small{font-size:12px;color:var(--muted)}
+.up{color:var(--ok)}.dn{color:var(--danger)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+table{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric:tabular-nums}
+th,td{padding:7px 4px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+th{color:var(--muted);font-weight:600;font-size:12px}
+.bar{height:6px;border-radius:3px;background:var(--accent);margin-top:3px}
+.trend{display:flex;align-items:flex-end;gap:4px;height:130px;padding-top:6px}
+.trend .col{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:2px;cursor:pointer}
+.trend .s{width:100%;background:var(--blue);border-radius:3px 3px 0 0;min-height:1px}
+.trend .p{width:100%;background:var(--accent);border-radius:3px 3px 0 0;min-height:1px}
+.trend .bars{display:flex;gap:1px;align-items:flex-end;width:100%;height:100%}
+.trend .bars>div{flex:1}
+.trend .lbl{font-size:10px;color:var(--muted)}
+.trend .col.on .lbl{color:var(--fg);font-weight:800}
+.legend{display:flex;gap:12px;font-size:12px;color:var(--muted);margin-top:6px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:-1px}
+.note{font-size:12px;color:var(--muted)}
+#lock{position:fixed;inset:0;z-index:50;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:24px}
+#lock form{width:100%;max-width:360px;display:flex;flex-direction:column;gap:12px}
+#lock input{font:inherit;font-size:18px;padding:12px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--fg)}
+#lock button{font:inherit;font-weight:800;padding:12px;border-radius:10px;border:0;background:var(--accent);color:#111}
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:#f2f4f6;color:#111;padding:10px 16px;border-radius:8px;font-weight:700;opacity:0;transition:opacity .2s;pointer-events:none;z-index:60}
+.toast.show{opacity:1}
+</style>
+</head>
+<body>
+<header>
+  <div class="top"><div class="brand"><i></i>ReKiL 月次</div><button class="sync" id="sync" type="button">読み込み中…</button></div>
+  <div class="month"><button id="prev" type="button" aria-label="前の月">‹</button><b id="mLabel"></b><button id="next" type="button" aria-label="次の月">›</button></div>
+</header>
+<main>
+  <div class="kpis" id="kpis"></div>
+  <h2>販路別（売却日ベース）</h2>
+  <div class="card"><table id="ch"></table></div>
+  <h2>直近12か月の推移（タップでその月へ）</h2>
+  <div class="card"><div class="trend" id="trend"></div><div class="legend"><span><i style="background:var(--blue)"></i>売上</span><span><i style="background:var(--accent)"></i>粗利</span></div></div>
+  <h2>いまの在庫（出品中）</h2>
+  <div class="kpis" id="stock"></div>
+  <p class="note">在庫/売上管理シート（商品リスト）の数字です。売上・粗利は売却日、仕入は仕入日で月に振り分けています。粗利はシートの粗利（手数料・送料などを引いた額）です。</p>
+</main>
+<div id="lock" hidden><form id="lockForm"><h2 style="color:var(--fg);font-size:18px">暗証番号</h2><p class="note" id="lockMsg">社内の暗証番号を入力してください。</p><input id="passIn" type="password" inputmode="numeric" placeholder="暗証番号"><button type="submit">開く</button></form></div>
+<div class="toast" id="toast"></div>
+<script>
+/* データは「ReKiL 在庫」と同じ（在庫/売上管理シート） */
+const API_URL = "https://script.google.com/macros/s/AKfycbzOhUEYHb8aw2YofUdx1o9v19HzFqHBSP0cN4nfcHpvaBJX51z36H4HavxHMD37NZVcLQ/exec";
+const APP_VERSION = "2026-11-17-50";
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const yen = v => "¥" + Math.round(v||0).toLocaleString("ja-JP");
+const man = v => { const a = Math.abs(v||0); return a>=10000 ? (Math.round((v||0)/1000)/10).toLocaleString("ja-JP")+"万" : Math.round(v||0).toLocaleString("ja-JP"); };
+let pass = ""; try{ pass = localStorage.getItem("rekil-zaiko-pass") || localStorage.getItem("rekil-pass") || ""; }catch(_){}
+let rows = [], loadedAt = null;
+const now = new Date(Date.now()+9*3600e3);
+let ym = now.toISOString().slice(0,7);
+function toast(t){ const el=$("#toast"); el.textContent=t; el.classList.add("show"); clearTimeout(toast.t); toast.t=setTimeout(()=>el.classList.remove("show"),1800); }
+const addM = (m, d) => { const [y,mm] = m.split("-").map(Number); const t = new Date(Date.UTC(y, mm-1+d, 1)); return t.toISOString().slice(0,7); };
+const mLabel = m => { const [y,mm] = m.split("-"); return `${y}年${+mm}月`; };
+// 販路名は【】を外してまとめる（例：コメ兵【アパレル】→コメ兵、エコ【ブランド】→エコリング）
+const chName = c => { let s = String(c||"不明").replace(/【.*?】/g,"").trim(); if(s==="エコ") s="エコリング"; return s || "不明"; };
+
+function setData(list, at){
+  rows = list.map(r => ({no:r[0], name:r[1], cost:+r[2]||0, src:r[3], buy:String(r[4]||""), st:r[6], sold:String(r[7]||""), sale:+r[8]||0, ch:r[9], total:+r[10]||0, profit:+r[11]||0}));
+  loadedAt = at ? new Date(at) : new Date(); render();
+}
+function stats(m){
+  const sold = rows.filter(r=>r.st==="売却済み" && r.sold.slice(0,7)===m);
+  const bought = rows.filter(r=>r.buy.slice(0,7)===m);
+  const sale = sold.reduce((t,r)=>t+r.sale,0), profit = sold.reduce((t,r)=>t+r.profit,0);
+  return {sold, n:sold.length, sale, profit, rate: sale ? profit/sale*100 : 0, buyN:bought.length, buy:bought.reduce((t,r)=>t+r.cost,0)};
+}
+const diff = (a,b) => { if(!b) return ""; const d = (a-b)/Math.abs(b)*100; return `<small class="${d>=0?"up":"dn"}">前月比 ${d>=0?"+":""}${d.toFixed(0)}%</small>`; };
+function render(){
+  $("#mLabel").textContent = mLabel(ym);
+  $("#sync").textContent = loadedAt ? `${loadedAt.getMonth()+1}/${loadedAt.getDate()} ${String(loadedAt.getHours()).padStart(2,"0")}:${String(loadedAt.getMinutes()).padStart(2,"0")} 更新 ↻` : "読み込み中…";
+  if(!rows.length){ $("#kpis").innerHTML = '<div class="kpi" style="grid-column:1/-1"><span>データを読み込んでいます…</span></div>'; return; }
+  const s = stats(ym), p = stats(addM(ym,-1));
+  $("#kpis").innerHTML = [
+    ["売上", yen(s.sale), diff(s.sale,p.sale)],
+    ["粗利", `<span class="${s.profit<0?"dn":""}">${yen(s.profit)}</span>`, diff(s.profit,p.profit)],
+    ["粗利率", s.sale ? s.rate.toFixed(1)+"%" : "—", p.sale ? `<small>前月 ${p.rate.toFixed(1)}%</small>` : ""],
+    ["販売点数", s.n.toLocaleString()+"点", `<small>前月 ${p.n}点</small>`],
+    ["仕入額", yen(s.buy), diff(s.buy,p.buy)],
+    ["仕入点数", s.buyN.toLocaleString()+"点", `<small>前月 ${p.buyN}点</small>`],
+  ].map(([l,v,d])=>`<div class="kpi"><span>${l}</span><b>${v}</b>${d}</div>`).join("");
+  // 販路別
+  const g = {}; s.sold.forEach(r=>{ const k = chName(r.ch); (g[k] = g[k] || {n:0,sale:0,profit:0}); g[k].n++; g[k].sale += r.sale; g[k].profit += r.profit; });
+  const ks = Object.keys(g).sort((a,b)=>g[b].sale-g[a].sale), mx = Math.max(1, ...ks.map(k=>g[k].sale));
+  $("#ch").innerHTML = ks.length ? `<tr><th>販路</th><th>点数</th><th>売上</th><th>粗利</th><th>率</th></tr>` + ks.map(k=>{ const x = g[k];
+    return `<tr><td>${esc(k)}<div class="bar" style="width:${Math.max(4,x.sale/mx*100)}%"></div></td><td>${x.n}</td><td>${man(x.sale)}</td><td class="${x.profit<0?"dn":""}">${man(x.profit)}</td><td>${x.sale?(x.profit/x.sale*100).toFixed(0)+"%":"—"}</td></tr>`; }).join("")
+    + `<tr><td><b>合計</b></td><td><b>${s.n}</b></td><td><b>${man(s.sale)}</b></td><td><b>${man(s.profit)}</b></td><td><b>${s.sale?s.rate.toFixed(0)+"%":"—"}</b></td></tr>`
+    : '<tr><td class="note">この月の売却はまだありません</td></tr>';
+  // 推移
+  const ms = []; for(let i=11;i>=0;i--) ms.push(addM(ym,-i));
+  const st = ms.map(m=>({m, ...stats(m)})), top = Math.max(1, ...st.map(x=>Math.max(x.sale, x.profit)));
+  $("#trend").innerHTML = st.map(x=>`<div class="col ${x.m===ym?"on":""}" data-m="${x.m}" title="${mLabel(x.m)} 売上${yen(x.sale)} 粗利${yen(x.profit)}"><div class="bars"><div class="s" style="height:${x.sale/top*100}%"></div><div class="p" style="height:${Math.max(0,x.profit)/top*100}%"></div></div><span class="lbl">${+x.m.slice(5)}月</span></div>`).join("");
+  // 在庫
+  const inv = rows.filter(r=>r.st==="出品中"), t0 = Date.now();
+  const old = inv.filter(r=>{ const d = Date.parse(r.buy); return d && (t0-d)/864e5 >= 180; });
+  $("#stock").innerHTML = [["在庫点数", inv.length.toLocaleString()+"点"],["在庫額（仕入値）", yen(inv.reduce((t,r)=>t+r.cost,0))],["180日以上の在庫", old.length.toLocaleString()+"点"],["その在庫額", yen(old.reduce((t,r)=>t+r.cost,0))]]
+    .map(([l,v])=>`<div class="kpi"><span>${l}</span><b>${v}</b></div>`).join("");
+}
+$("#prev").onclick = () => { ym = addM(ym,-1); render(); };
+$("#next").onclick = () => { ym = addM(ym,1); render(); };
+$("#trend").onclick = e => { const c = e.target.closest("[data-m]"); if(c){ ym = c.dataset.m; render(); } };
+
+async function load(){
+  if(!pass){ $("#lock").hidden = false; return; }
+  $("#sync").textContent = "更新中…";
+  let j;
+  try{ const res = await fetch(API_URL, {method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"}, body: JSON.stringify({action:"list", pass})}); j = await res.json(); }
+  catch(_){ render(); toast(rows.length ? "通信できません（前回のデータを表示中）" : "通信できません"); return; }
+  if(!j.ok){ render(); if(j.error==="passcode"||j.error==="passcode_not_set"){ $("#lockMsg").textContent = pass ? "暗証番号が違います。" : "社内の暗証番号を入力してください。"; $("#lock").hidden = false; } else toast("読み込めませんでした"); return; }
+  try{ localStorage.setItem("rekil-zaiko-pass", pass); localStorage.setItem("rekil-dash-cache", JSON.stringify({at:j.at, result:j.result})); }catch(_){}
+  $("#lock").hidden = true; setData(j.result, j.at);
+}
+$("#lockForm").onsubmit = e => { e.preventDefault(); pass = $("#passIn").value.trim(); if(pass) load(); };
+$("#sync").onclick = load;
+try{ const c = JSON.parse(localStorage.getItem("rekil-dash-cache")||"null"); if(c && c.result) setData(c.result, c.at); }catch(_){}
+render(); load();
+document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState==="visible"){ checkUpdate(); if(!loadedAt || Date.now()-loadedAt>5*60000) load(); } });
+async function checkUpdate(){ try{ const r=await fetch(location.pathname+"?v="+Date.now(),{cache:"no-store"}); const t=await r.text(); const m=t.match(/const APP_VERSION = "([^"]+)"/); if(m && m[1]!==APP_VERSION) location.replace(location.pathname+"?v="+encodeURIComponent(m[1])); }catch(_){} }
+if(location.protocol.startsWith("http")){ checkUpdate(); setInterval(()=>{ if(document.visibilityState==="visible") checkUpdate(); }, 60000); }
+try{history.scrollRestoration="manual"}catch(_){} addEventListener("pageshow",()=>scrollTo(0,0));
+</script>
+</body>
+</html>

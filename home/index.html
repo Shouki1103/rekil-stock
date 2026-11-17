@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ReKiL ホーム">
+<meta name="theme-color" content="#0d1014">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<title>ReKiL ホーム</title>
+<style>
+:root{--bg:#14181d;--surface:#1d232a;--line:#2f3740;--fg:#e8ebee;--muted:#9aa4af;--accent:#f2a541;--steel:#0d1014;--danger:#ff5d4d;color-scheme:dark}
+*{box-sizing:border-box}
+html,body{background:var(--bg);color:var(--fg);margin:0}
+body{font-family:"Hiragino Sans","Yu Gothic",system-ui,sans-serif;font-size:15px;line-height:1.5;padding-top:env(safe-area-inset-top,0px);padding-bottom:calc(24px + env(safe-area-inset-bottom,0px))}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--steel)}
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--steel);padding:12px 16px;display:flex;align-items:center;justify-content:space-between}
+.brand{display:flex;align-items:center;gap:10px;font-weight:900;font-size:18px}
+.brand i{display:inline-block;width:12px;height:22px;background:repeating-linear-gradient(-45deg,var(--accent) 0 5px,#1d2228 5px 10px);border-radius:2px}
+.sync{font-size:12px;color:var(--muted);background:none;border:0;cursor:pointer;font:inherit;font-size:12px}
+main{max-width:640px;margin:0 auto;padding:10px 14px}
+.todo{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:6px}
+.todo h2{font-size:13px;color:var(--muted);margin:0 0 6px}
+.todo a{display:flex;justify-content:space-between;gap:10px;color:var(--fg);text-decoration:none;padding:6px 0;border-top:1px solid var(--line)}
+.todo a:first-of-type{border-top:0}
+.todo b{color:var(--danger)}
+.todo .ok{color:var(--muted);font-size:13px}
+h3{font-size:13px;color:var(--muted);margin:16px 2px 8px;font-weight:700}
+.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px 8px}
+.app{position:relative;display:flex;flex-direction:column;align-items:center;gap:6px;text-decoration:none;color:var(--fg)}
+.app img,.app .ph{width:58px;height:58px;border-radius:14px;background:var(--surface);border:1px solid var(--line);object-fit:cover}
+.app .ph{display:flex;align-items:center;justify-content:center;font-weight:900;font-size:20px;color:var(--accent)}
+.app span.n{font-size:11px;text-align:center;line-height:1.3;word-break:keep-all;overflow-wrap:anywhere}
+.badge{position:absolute;top:-6px;left:calc(50% + 16px);min-width:22px;height:22px;padding:0 6px;border-radius:11px;background:var(--danger);color:#fff;font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;border:2px solid var(--bg)}
+.badge:empty{display:none}
+</style>
+</head>
+<body>
+<header><div class="brand"><i></i>ReKiL ホーム</div><button class="sync" id="sync" type="button">確認中…</button></header>
+<main>
+  <section class="todo" id="todo"><h2>未対応</h2><div id="todoList"><span class="ok">確認中…</span></div></section>
+  <div id="groups"></div>
+</main>
+<script>
+const APP_VERSION = "2026-11-17-50";
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const today = () => new Date(Date.now()+9*3600e3).toISOString().slice(0,10);
+const getPass = (...keys) => { try{ for(const k of [...keys,"rekil-pass","rekil-shiire-pass"]){ const v = localStorage.getItem(k); if(v) return v; } }catch(_){} return ""; };
+
+/* アプリ一覧（key があるものはバッジを出す） */
+const GROUPS = [
+  ["仕入・在庫", [
+    {n:"仕入記帳", u:"../shiire/", i:"../shiire/icon-180.png"},
+    {n:"仕入ルート", u:"../route/", i:"../route/icon-180.png"},
+    {n:"下見・指値", u:"../shitami/", i:"../shitami/icon-180.png", key:"shitami"},
+    {n:"在庫", u:"../zaiko/", i:"../zaiko/icon-180.png"},
+    {n:"ReKiL Stock", u:"../", i:"../icon-180.png"},
+    {n:"採寸帳", u:"../saisun/", i:"../saisun/icon-180.png"},
+    {n:"管理番号シール", u:"../seal/", i:"../seal/icon-180.png"},
+    {n:"利益計算", u:"https://shouki1103.github.io/rekil-rieki/", i:"https://shouki1103.github.io/rekil-rieki/icon180.png"},
+  ]],
+  ["販売・発送", [
+    {n:"eBay出品依頼", u:"../irai/", i:"../irai/icon-180.png", key:"irai"},
+    {n:"送り状控え", u:"../okurijo/", i:"../okurijo/icon-180.png", key:"okurijo"},
+    {n:"出品・返品・外注", u:"../henpin/", i:"../henpin/icon-180.png", key:"henpin"},
+    {n:"ReKiL 翻訳", u:"../ebay/", i:"../ebay/icon-180.png"},
+    {n:"eBay販促", u:"../campaign/", i:"../campaign/icon-180.png"},
+  ]],
+  ["数字・管理", [
+    {n:"月次", u:"../dash/", i:"../dash/icon-180.png"},
+    {n:"給与", u:"../kyuyo/", i:"../kyuyo/icon-180.png"},
+    {n:"ポータル", u:"../portal/", i:"../portal/icon-180.png"},
+    {n:"アカウント一覧", u:"https://docs.google.com/spreadsheets/d/11Os5NS2Sq_CbMjkDd6S6HPY9XHBF1wRpvZ5s4-9aMIk/edit", i:"x"},
+    {n:"ラウンジ", u:"../lounge/", i:"../lounge/icon-180.png"},
+  ]],
+];
+const badges = JSON.parse((()=>{ try{ return localStorage.getItem("rekil-home-badges") || "{}"; }catch(_){ return "{}"; } })());
+const items = {};
+
+function render(){
+  $("#groups").innerHTML = GROUPS.map(([g, apps])=>`<h3>${esc(g)}</h3><div class="grid">${apps.map(a=>`<a class="app" href="${esc(a.u)}"><img src="${esc(a.i)}" alt="" onerror="this.outerHTML='<span class=ph>${esc(a.n.slice(0,1))}</span>'"><span class="badge">${a.key && badges[a.key] ? badges[a.key] : ""}</span><span class="n">${esc(a.n)}</span></a>`).join("")}</div>`).join("");
+  const list = Object.values(items).flat();
+  $("#todoList").innerHTML = list.length ? list.map(x=>`<a href="${esc(x.u)}"><span>${esc(x.t)}</span><b>${esc(x.v)}</b></a>`).join("") : '<span class="ok">未対応はありません</span>';
+}
+
+async function call(url, pass, action="list"){
+  const res = await fetch(url, {method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"}, body: JSON.stringify({action, pass})});
+  const j = await res.json(); if(!j.ok) throw new Error(j.error||"error"); return j;
+}
+const SRC = {
+  okurijo: async () => {
+    const j = await call("https://script.google.com/macros/s/AKfycbwa-V3TqAAmz3S1-zreAI3Jkp0d4f0aGikswIQnTdmxsgFpggUxE0bjl1-sR0DZumSwsQ/exec", getPass("rekil-okuri-pass"));
+    const rows = j.rows || []; const c = {ebay:0, yahoo:0, gyohan:0}; rows.forEach(r=>{ if(!r.done && c[r.channel]!=null) c[r.channel]++; });
+    const n = c.ebay+c.yahoo+c.gyohan;
+    return {n, items: n ? [{t:`送り状の未登録（eBay ${c.ebay}・ヤフオク ${c.yahoo}・業販 ${c.gyohan}）`, v:`${n}件`, u:"../okurijo/"}] : []};
+  },
+  henpin: async () => {
+    const j = await call("https://script.google.com/macros/s/AKfycbzuakHA841y3KMQTn32E6L6UOebKO9LZGEqX1IHAAQ3Xkb5Y2tvp4ZlIOVnr1u9T5KD/exec", getPass("rekil-henpin-pass"));
+    const d = j.data || {}, t = today();
+    const closed = {shuppin:["保留処理済み","保留なし"], shiire:["返金済み","返品不可"], frima:["返金完了","返品不可"], repair:["受取済み"]};
+    const name = {shuppin:"業者出品の保留処理", shiire:"仕入返品", frima:"フリマ返品", repair:"リペアの受取"};
+    const out = []; let n = 0;
+    Object.keys(closed).forEach(k=>{ const over = (d[k]||[]).filter(r=>{ if(closed[k].includes(r.status)) return false;
+      const due = k==="shuppin" ? r.kaisai : k==="repair" ? r.due : r.deadline; return due && due < t; }).length;
+      if(over){ n += over; out.push({t:`${name[k]}が期限超え`, v:`${over}件`, u:"../henpin/"}); } });
+    return {n, items: out};
+  },
+  shitami: async () => {
+    const j = await call("https://script.google.com/macros/s/AKfycbw7kz9QQt6CMQvwIC4IhtSekntc4xGCUAWuop6U7LO_3U6FMRo--X6wKI0F6hSx3n3Vng/exec", getPass("rekil-shitami-pass"));
+    const t = today(); const n = ((j.data||{}).items||[]).filter(i=>i.status!=="bid" && (!i.date || i.date >= t)).length;
+    return {n, items: n ? [{t:"指値の登録待ち", v:`${n}件`, u:"../shitami/"}] : []};
+  },
+  irai: async () => {
+    const j = await call("https://script.google.com/macros/s/AKfycbyt_sbyLWtGgD8TODNx7kvs2gEOlisN6X8XWqFYGyVQVHkmqvrIRTo6RWZXgYSPjRCB/exec", getPass("rekil-irai-pass"));
+    const n = (j.requests||[]).filter(r=>r.status!=="done").length;
+    return {n, items: n ? [{t:"eBay下書きの未作成・修正待ち", v:`${n}件`, u:"../irai/"}] : []};
+  },
+};
+async function refresh(){
+  $("#sync").textContent = "確認中…";
+  let fails = 0;
+  await Promise.all(Object.entries(SRC).map(async ([k,f])=>{
+    try{ const r = await f(); badges[k] = r.n || 0; items[k] = r.items; }catch(_){ fails++; }
+  }));
+  try{ localStorage.setItem("rekil-home-badges", JSON.stringify(badges)); localStorage.setItem("rekil-home-items", JSON.stringify(items)); }catch(_){}
+  const d = new Date(); $("#sync").textContent = (fails ? `一部確認できません ` : "") + `${d.getHours()}:${String(d.getMinutes()).padStart(2,"0")} 確認 ↻`;
+  render();
+}
+try{ Object.assign(items, JSON.parse(localStorage.getItem("rekil-home-items")||"{}")); }catch(_){}
+render(); refresh();
+$("#sync").onclick = refresh;
+document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState==="visible"){ checkUpdate(); refresh(); } });
+async function checkUpdate(){ try{ const r=await fetch(location.pathname+"?v="+Date.now(),{cache:"no-store"}); const t=await r.text(); const m=t.match(/const APP_VERSION = "([^"]+)"/); if(m && m[1]!==APP_VERSION) location.replace(location.pathname+"?v="+encodeURIComponent(m[1])); }catch(_){} }
+if(location.protocol.startsWith("http")){ checkUpdate(); setInterval(()=>{ if(document.visibilityState==="visible") checkUpdate(); }, 60000); }
+try{history.scrollRestoration="manual"}catch(_){} addEventListener("pageshow",()=>scrollTo(0,0));
+</script>
+</body>
+</html>
