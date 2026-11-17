@@ -101,7 +101,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .lockbox{width:min(360px,100%);display:grid;gap:12px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:20px}
 .lockbox h2{margin:0;font-size:18px}
 .toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:999px;font-size:14px;z-index:60;max-width:90vw}
-.accw{display:flex;flex-direction:column;gap:4px;grid-column:1/-1}.accw .acclbl{font-size:13px;color:var(--muted)}.accdd{border:1px solid var(--line);border-radius:10px;background:var(--surface,transparent)}.accdd summary{padding:10px 12px;cursor:pointer;list-style:none;min-height:44px}.accdd summary::after{content:"▾";float:right;opacity:.6}.acclist{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:2px 8px;padding:4px 12px 12px;border-top:1px solid var(--line)}.accopt{display:flex;align-items:center;gap:8px;font-size:14px;min-height:40px;flex-direction:row!important}.accopt input{width:20px;height:20px;padding:0;flex:0 0 auto;accent-color:var(--accent)}
+.accw{display:flex;flex-direction:column;gap:4px;grid-column:1/-1}.accw .acclbl{font-size:13px;color:var(--muted)}.accdd{border:1px solid var(--line);border-radius:10px;background:var(--surface,transparent)}.accdd summary{padding:10px 12px;cursor:pointer;list-style:none;min-height:44px}.accdd summary::after{content:"▾";float:right;opacity:.6}.acclist{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:2px 6px;padding:4px 10px 12px;border-top:1px solid var(--line)}.accopt{display:flex;align-items:center;gap:6px;font-size:13px;letter-spacing:0;white-space:nowrap;min-height:40px;flex-direction:row!important;overflow:hidden}.accopt input{width:20px;height:20px;padding:0;flex:0 0 auto;accent-color:var(--accent)}
 </style>
 </head>
 <body>
@@ -249,7 +249,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 <script>
 /* ▼ Apps Script をデプロイしたときの「ウェブアプリのURL」 */
 const API_URL = "https://script.google.com/macros/s/AKfycbyt_sbyLWtGgD8TODNx7kvs2gEOlisN6X8XWqFYGyVQVHkmqvrIRTo6RWZXgYSPjRCB/exec";
-const APP_VERSION = "2026-11-17-26";
+const APP_VERSION = "2026-11-17-27";
 
 const FIELDS=["code","brand","shape","bagType","model","mpn","serial","country","color","extMat","fabric","finish","form","pattern","handleMat","handleColor","handleStyle","liningColor","liningMat","hwColor","hwMat","closure","acc","w","h","d","handleDrop","strapDrop","size","rank","features","note"];
 const MODEL_SKIP=new Set(["code","serial","rank","note","acc"]);
