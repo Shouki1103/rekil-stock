@@ -1,0 +1,131 @@
+{
+ "groups": [
+  {
+   "name": "仕入・在庫",
+   "apps": [
+    {
+     "id": "shiire",
+     "name": "仕入記帳",
+     "url": "../shiire/",
+     "icon": "../shiire/icon-180.png"
+    },
+    {
+     "id": "route",
+     "name": "仕入ルート",
+     "url": "../route/",
+     "icon": "../route/icon-180.png"
+    },
+    {
+     "id": "shitami",
+     "name": "下見・指値",
+     "url": "../shitami/",
+     "icon": "../shitami/icon-180.png",
+     "badge": "shitami"
+    },
+    {
+     "id": "zaiko",
+     "name": "在庫",
+     "url": "../zaiko/",
+     "icon": "../zaiko/icon-180.png"
+    },
+    {
+     "id": "stock",
+     "name": "ReKiL Stock",
+     "url": "../",
+     "icon": "../icon-180.png"
+    },
+    {
+     "id": "saisun",
+     "name": "採寸帳",
+     "url": "../saisun/",
+     "icon": "../saisun/icon-180.png"
+    },
+    {
+     "id": "seal",
+     "name": "管理番号シール",
+     "url": "../seal/",
+     "icon": "../seal/icon-180.png"
+    },
+    {
+     "id": "rieki",
+     "name": "利益計算",
+     "url": "https://shouki1103.github.io/rekil-rieki/",
+     "icon": "https://shouki1103.github.io/rekil-rieki/icon180.png"
+    }
+   ]
+  },
+  {
+   "name": "販売・発送",
+   "apps": [
+    {
+     "id": "irai",
+     "name": "eBay出品依頼",
+     "url": "../irai/",
+     "icon": "../irai/icon-180.png",
+     "badge": "irai"
+    },
+    {
+     "id": "okurijo",
+     "name": "送り状控え",
+     "url": "../okurijo/",
+     "icon": "../okurijo/icon-180.png",
+     "badge": "okurijo"
+    },
+    {
+     "id": "henpin",
+     "name": "出品・返品・外注",
+     "url": "../henpin/",
+     "icon": "../henpin/icon-180.png",
+     "badge": "henpin"
+    },
+    {
+     "id": "ebay",
+     "name": "ReKiL 翻訳",
+     "url": "../ebay/",
+     "icon": "../ebay/icon-180.png"
+    },
+    {
+     "id": "campaign",
+     "name": "eBay販促",
+     "url": "../campaign/",
+     "icon": "../campaign/icon-180.png"
+    }
+   ]
+  },
+  {
+   "name": "数字・管理",
+   "apps": [
+    {
+     "id": "dash",
+     "name": "月次",
+     "url": "../dash/",
+     "icon": "../dash/icon-180.png"
+    },
+    {
+     "id": "kyuyo",
+     "name": "給与",
+     "url": "../kyuyo/",
+     "icon": "../kyuyo/icon-180.png"
+    },
+    {
+     "id": "portal",
+     "name": "ポータル",
+     "url": "../portal/",
+     "icon": "../portal/icon-180.png"
+    },
+    {
+     "id": "account",
+     "name": "アカウント一覧",
+     "url": "../account/",
+     "icon": "../account/icon-180.png"
+    },
+    {
+     "id": "lounge",
+     "name": "ラウンジ",
+     "url": "../lounge/",
+     "icon": "../lounge/icon-180.png"
+    }
+   ]
+  }
+ ]
+}

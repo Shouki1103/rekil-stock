@@ -57,19 +57,22 @@ th{color:var(--muted);font-weight:600;font-size:12px}
 #lock button{font:inherit;font-weight:800;padding:12px;border-radius:10px;border:0;background:var(--accent);color:#111}
 .toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:#f2f4f6;color:#111;padding:10px 16px;border-radius:8px;font-weight:700;opacity:0;transition:opacity .2s;pointer-events:none;z-index:60}
 .toast.show{opacity:1}
+.modes{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:10px}.modes button{min-height:36px;border-radius:9px;border:1px solid var(--line);background:var(--surface);color:var(--muted);font:inherit;font-weight:700}.modes button.on{background:var(--accent);color:#111;border-color:transparent}
+.cmp{font-size:12px;color:var(--muted);display:block}
 </style>
 </head>
 <body>
 <header>
   <div class="top"><div class="brand"><i></i>ReKiL 月次</div><button class="sync" id="sync" type="button">読み込み中…</button></div>
-  <div class="month"><button id="prev" type="button" aria-label="前の月">‹</button><b id="mLabel"></b><button id="next" type="button" aria-label="次の月">›</button></div>
+  <div class="modes"><button data-mode="m" type="button">月</button><button data-mode="y" type="button">年</button><button data-mode="fy" type="button">決算期</button></div>
+  <div class="month"><button id="prev" type="button" aria-label="前へ">‹</button><b id="mLabel"></b><button id="next" type="button" aria-label="次へ">›</button></div>
 </header>
 <main>
   <div class="kpis" id="kpis"></div>
-  <h2>販路別（売却日ベース）</h2>
+  <h2 id="chTitle">販路別（売却日ベース）</h2>
   <div class="card"><table id="ch"></table></div>
-  <h2>直近12か月の推移（タップでその月へ）</h2>
-  <div class="card"><div class="trend" id="trend"></div><div class="legend"><span><i style="background:var(--blue)"></i>売上</span><span><i style="background:var(--accent)"></i>粗利</span></div></div>
+  <h2 id="trendTitle">直近12か月の推移（タップでその月へ）</h2>
+  <div class="card"><div class="trend" id="trend"></div><div class="legend"><span><i style="background:var(--blue)"></i>売上</span><span><i style="background:var(--accent)"></i>粗利</span><span><i style="background:#4a525c"></i>前年売上</span></div></div>
   <h2>いまの在庫（出品中）</h2>
   <div class="kpis" id="stock"></div>
   <p class="note">在庫/売上管理シート（商品リスト）の数字です。売上・粗利は売却日、仕入は仕入日で月に振り分けています。粗利はシートの粗利（手数料・送料などを引いた額）です。</p>
@@ -79,7 +82,7 @@ th{color:var(--muted);font-weight:600;font-size:12px}
 <script>
 /* データは「ReKiL 在庫」と同じ（在庫/売上管理シート） */
 const API_URL = "https://script.google.com/macros/s/AKfycbzOhUEYHb8aw2YofUdx1o9v19HzFqHBSP0cN4nfcHpvaBJX51z36H4HavxHMD37NZVcLQ/exec";
-const APP_VERSION = "2026-11-17-50";
+const APP_VERSION = "2026-11-17-51";
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const yen = v => "¥" + Math.round(v||0).toLocaleString("ja-JP");
@@ -88,6 +91,13 @@ let pass = ""; try{ pass = localStorage.getItem("rekil-zaiko-pass") || localStor
 let rows = [], loadedAt = null;
 const now = new Date(Date.now()+9*3600e3);
 let ym = now.toISOString().slice(0,7);
+let mode = (()=>{ try{ return localStorage.getItem("rekil-dash-mode")||"m"; }catch(_){ return "m"; } })();
+let yy = +ym.slice(0,4);
+const FOUND = 2024; // 第N期 = (2024+N)年4月〜(2025+N)年3月（第1期は2025年4月設立）
+const fyOf = m => { const y = +m.slice(0,4), mm = +m.slice(5,7); return (mm>=4 ? y : y-1) - FOUND; };
+let fy = fyOf(ym);
+const fyMonths = n => { const out=[]; for(let i=0;i<12;i++) out.push(addM(`${FOUND+n}-04`, i)); return out; };
+const yMonths = y => { const out=[]; for(let i=1;i<=12;i++) out.push(`${y}-${String(i).padStart(2,"0")}`); return out; };
 function toast(t){ const el=$("#toast"); el.textContent=t; el.classList.add("show"); clearTimeout(toast.t); toast.t=setTimeout(()=>el.classList.remove("show"),1800); }
 const addM = (m, d) => { const [y,mm] = m.split("-").map(Number); const t = new Date(Date.UTC(y, mm-1+d, 1)); return t.toISOString().slice(0,7); };
 const mLabel = m => { const [y,mm] = m.split("-"); return `${y}年${+mm}月`; };
@@ -99,24 +109,31 @@ function setData(list, at){
   loadedAt = at ? new Date(at) : new Date(); render();
 }
 function stats(m){
-  const sold = rows.filter(r=>r.st==="売却済み" && r.sold.slice(0,7)===m);
-  const bought = rows.filter(r=>r.buy.slice(0,7)===m);
+  const ms = Array.isArray(m) ? new Set(m) : new Set([m]);
+  const sold = rows.filter(r=>r.st==="売却済み" && ms.has(r.sold.slice(0,7)));
+  const bought = rows.filter(r=>ms.has(r.buy.slice(0,7)));
   const sale = sold.reduce((t,r)=>t+r.sale,0), profit = sold.reduce((t,r)=>t+r.profit,0);
   return {sold, n:sold.length, sale, profit, rate: sale ? profit/sale*100 : 0, buyN:bought.length, buy:bought.reduce((t,r)=>t+r.cost,0)};
 }
 const diff = (a,b) => { if(!b) return ""; const d = (a-b)/Math.abs(b)*100; return `<small class="${d>=0?"up":"dn"}">前月比 ${d>=0?"+":""}${d.toFixed(0)}%</small>`; };
+const periodMonths = () => mode==="m" ? [ym] : mode==="y" ? yMonths(yy) : fyMonths(fy);
+const prevMonths = () => mode==="m" ? [addM(ym,-12)] : mode==="y" ? yMonths(yy-1) : fyMonths(fy-1);
+const periodLabel = () => mode==="m" ? mLabel(ym) : mode==="y" ? `${yy}年（1〜12月）` : `第${fy}期（${FOUND+fy}年4月〜${FOUND+fy+1}年3月）`;
 function render(){
-  $("#mLabel").textContent = mLabel(ym);
+  document.querySelectorAll(".modes button").forEach(b=>b.classList.toggle("on", b.dataset.mode===mode));
+  $("#mLabel").textContent = periodLabel();
   $("#sync").textContent = loadedAt ? `${loadedAt.getMonth()+1}/${loadedAt.getDate()} ${String(loadedAt.getHours()).padStart(2,"0")}:${String(loadedAt.getMinutes()).padStart(2,"0")} 更新 ↻` : "読み込み中…";
   if(!rows.length){ $("#kpis").innerHTML = '<div class="kpi" style="grid-column:1/-1"><span>データを読み込んでいます…</span></div>'; return; }
-  const s = stats(ym), p = stats(addM(ym,-1));
+  const s = stats(periodMonths()), p = stats(prevMonths()), pm = mode==="m" ? stats(addM(ym,-1)) : null;
+  const yo = (a,b) => { if(!b) return '<small class="cmp">前年 —</small>'; const d=(a-b)/Math.abs(b)*100; return `<small class="cmp">前年比 <span class="${d>=0?"up":"dn"}">${d>=0?"+":""}${d.toFixed(0)}%</span>（前年 ${man(b)}）</small>`; };
+  const mo = (a,b) => pm ? diff(a,b) : "";
   $("#kpis").innerHTML = [
-    ["売上", yen(s.sale), diff(s.sale,p.sale)],
-    ["粗利", `<span class="${s.profit<0?"dn":""}">${yen(s.profit)}</span>`, diff(s.profit,p.profit)],
-    ["粗利率", s.sale ? s.rate.toFixed(1)+"%" : "—", p.sale ? `<small>前月 ${p.rate.toFixed(1)}%</small>` : ""],
-    ["販売点数", s.n.toLocaleString()+"点", `<small>前月 ${p.n}点</small>`],
-    ["仕入額", yen(s.buy), diff(s.buy,p.buy)],
-    ["仕入点数", s.buyN.toLocaleString()+"点", `<small>前月 ${p.buyN}点</small>`],
+    ["売上", yen(s.sale), mo(s.sale,pm&&pm.sale)+yo(s.sale,p.sale)],
+    ["粗利", `<span class="${s.profit<0?"dn":""}">${yen(s.profit)}</span>`, mo(s.profit,pm&&pm.profit)+yo(s.profit,p.profit)],
+    ["粗利率", s.sale ? s.rate.toFixed(1)+"%" : "—", `<small class="cmp">前年 ${p.sale?p.rate.toFixed(1)+"%":"—"}</small>`],
+    ["販売点数", s.n.toLocaleString()+"点", `<small class="cmp">前年 ${p.n}点</small>`],
+    ["仕入額", yen(s.buy), mo(s.buy,pm&&pm.buy)+yo(s.buy,p.buy)],
+    ["仕入点数", s.buyN.toLocaleString()+"点", `<small class="cmp">前年 ${p.buyN}点</small>`],
   ].map(([l,v,d])=>`<div class="kpi"><span>${l}</span><b>${v}</b>${d}</div>`).join("");
   // 販路別
   const g = {}; s.sold.forEach(r=>{ const k = chName(r.ch); (g[k] = g[k] || {n:0,sale:0,profit:0}); g[k].n++; g[k].sale += r.sale; g[k].profit += r.profit; });
@@ -125,19 +142,22 @@ function render(){
     return `<tr><td>${esc(k)}<div class="bar" style="width:${Math.max(4,x.sale/mx*100)}%"></div></td><td>${x.n}</td><td>${man(x.sale)}</td><td class="${x.profit<0?"dn":""}">${man(x.profit)}</td><td>${x.sale?(x.profit/x.sale*100).toFixed(0)+"%":"—"}</td></tr>`; }).join("")
     + `<tr><td><b>合計</b></td><td><b>${s.n}</b></td><td><b>${man(s.sale)}</b></td><td><b>${man(s.profit)}</b></td><td><b>${s.sale?s.rate.toFixed(0)+"%":"—"}</b></td></tr>`
     : '<tr><td class="note">この月の売却はまだありません</td></tr>';
-  // 推移
-  const ms = []; for(let i=11;i>=0;i--) ms.push(addM(ym,-i));
-  const st = ms.map(m=>({m, ...stats(m)})), top = Math.max(1, ...st.map(x=>Math.max(x.sale, x.profit)));
-  $("#trend").innerHTML = st.map(x=>`<div class="col ${x.m===ym?"on":""}" data-m="${x.m}" title="${mLabel(x.m)} 売上${yen(x.sale)} 粗利${yen(x.profit)}"><div class="bars"><div class="s" style="height:${x.sale/top*100}%"></div><div class="p" style="height:${Math.max(0,x.profit)/top*100}%"></div></div><span class="lbl">${+x.m.slice(5)}月</span></div>`).join("");
+  // 推移（月：直近12か月／年：1〜12月／決算期：4〜3月）と前年
+  const ms = mode==="m" ? Array.from({length:12},(_,i)=>addM(ym,i-11)) : periodMonths();
+  const st = ms.map(m=>({m, ...stats(m), py: stats(addM(m,-12)).sale})), top = Math.max(1, ...st.map(x=>Math.max(x.sale, x.profit, x.py)));
+  $("#trendTitle").textContent = mode==="m" ? "直近12か月の推移（タップでその月へ）" : "月別の推移（灰色＝前年の売上）";
+  $("#trend").innerHTML = st.map(x=>`<div class="col ${x.m===ym&&mode==="m"?"on":""}" data-m="${x.m}" title="${mLabel(x.m)} 売上${yen(x.sale)} 粗利${yen(x.profit)} 前年売上${yen(x.py)}"><div class="bars"><div style="background:#4a525c;border-radius:3px 3px 0 0;height:${x.py/top*100}%"></div><div class="s" style="height:${x.sale/top*100}%"></div><div class="p" style="height:${Math.max(0,x.profit)/top*100}%"></div></div><span class="lbl">${+x.m.slice(5)}月</span></div>`).join("");
   // 在庫
   const inv = rows.filter(r=>r.st==="出品中"), t0 = Date.now();
   const old = inv.filter(r=>{ const d = Date.parse(r.buy); return d && (t0-d)/864e5 >= 180; });
   $("#stock").innerHTML = [["在庫点数", inv.length.toLocaleString()+"点"],["在庫額（仕入値）", yen(inv.reduce((t,r)=>t+r.cost,0))],["180日以上の在庫", old.length.toLocaleString()+"点"],["その在庫額", yen(old.reduce((t,r)=>t+r.cost,0))]]
     .map(([l,v])=>`<div class="kpi"><span>${l}</span><b>${v}</b></div>`).join("");
 }
-$("#prev").onclick = () => { ym = addM(ym,-1); render(); };
-$("#next").onclick = () => { ym = addM(ym,1); render(); };
-$("#trend").onclick = e => { const c = e.target.closest("[data-m]"); if(c){ ym = c.dataset.m; render(); } };
+const step = d => { if(mode==="m") ym = addM(ym,d); else if(mode==="y") yy += d; else fy = Math.max(1, fy+d); render(); };
+$("#prev").onclick = () => step(-1);
+$("#next").onclick = () => step(1);
+$("#trend").onclick = e => { const c = e.target.closest("[data-m]"); if(c){ ym = c.dataset.m; mode = "m"; render(); } };
+document.querySelector(".modes").onclick = e => { const b = e.target.closest("[data-mode]"); if(!b) return; mode = b.dataset.mode; try{ localStorage.setItem("rekil-dash-mode", mode); }catch(_){} if(mode==="y") yy = +ym.slice(0,4); if(mode==="fy") fy = fyOf(ym); render(); };
 
 async function load(){
   if(!pass){ $("#lock").hidden = false; return; }

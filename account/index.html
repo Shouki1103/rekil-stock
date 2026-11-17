@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="アカウント一覧">
+<meta name="theme-color" content="#0d1014">
+<meta name="robots" content="noindex">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<title>ReKiL アカウント一覧</title>
+<style>
+:root{--bg:#14181d;--surface:#1d232a;--line:#2f3740;--fg:#e8ebee;--muted:#9aa4af;--accent:#6aa8ff;--steel:#0d1014;--danger:#ff7a6b;color-scheme:dark}
+*{box-sizing:border-box}
+html,body{background:var(--bg);color:var(--fg);margin:0}
+body{font-family:"Hiragino Sans","Yu Gothic",system-ui,sans-serif;font-size:15px;line-height:1.5;padding-top:env(safe-area-inset-top,0px);padding-bottom:calc(90px + env(safe-area-inset-bottom,0px))}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--steel)}
+[hidden]{display:none!important}
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--steel);padding:10px 14px 12px}
+.top{display:flex;align-items:center;justify-content:space-between}
+.brand{display:flex;align-items:center;gap:10px;font-weight:900;font-size:17px}
+.brand i{display:inline-block;width:12px;height:22px;background:repeating-linear-gradient(-45deg,var(--accent) 0 5px,#1d2228 5px 10px);border-radius:2px}
+.sync{font-size:12px;color:var(--muted);background:none;border:0;font:inherit;font-size:12px;cursor:pointer}
+#q{width:100%;margin-top:8px;font:inherit;font-size:16px;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--fg)}
+.chips{display:flex;gap:6px;overflow-x:auto;margin-top:8px;scrollbar-width:none}
+.chips button{flex:0 0 auto;padding:5px 12px;border-radius:999px;border:1px solid var(--line);background:transparent;color:var(--muted);font:inherit;font-size:13px}
+.chips button.on{border-color:var(--accent);color:var(--accent)}
+main{max-width:640px;margin:0 auto;padding:10px 14px}
+h3{font-size:13px;color:var(--muted);margin:14px 2px 6px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:8px}
+.card .nm{display:flex;justify-content:space-between;gap:8px;align-items:center;font-weight:800}
+.card .nm button{font:inherit;font-size:12px;border:1px solid var(--line);background:transparent;color:var(--muted);border-radius:8px;padding:3px 10px}
+.kv{display:grid;grid-template-columns:auto 1fr auto;gap:2px 8px;margin-top:6px;font-size:14px;align-items:center}
+.kv dt{color:var(--muted);font-size:12px}
+.kv dd{margin:0;word-break:break-all}
+.kv a{color:var(--accent)}
+.cp{font:inherit;font-size:11px;border:1px solid var(--line);background:transparent;color:var(--muted);border-radius:6px;padding:2px 8px}
+.fab{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom,0px));width:min(560px,calc(100% - 32px));min-height:52px;border-radius:14px;border:0;background:var(--accent);color:#0d1014;font:inherit;font-weight:800;font-size:16px}
+.sheet{position:fixed;inset:0;z-index:30;background:#000a;display:flex;align-items:flex-end;justify-content:center}
+.sheet form{background:var(--surface);width:100%;max-width:600px;max-height:92vh;overflow:auto;border-radius:14px 14px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:10px}
+.sheet label{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted)}
+.sheet input,.sheet textarea{font:inherit;font-size:16px;padding:10px;border-radius:9px;border:1px solid var(--line);background:var(--bg);color:var(--fg)}
+.btns{display:flex;gap:8px}.btns button{flex:1;min-height:46px;border-radius:10px;border:1px solid var(--line);background:transparent;color:var(--fg);font:inherit;font-weight:700}
+.btns .main{background:var(--accent);color:#0d1014;border:0}.btns .del{color:var(--danger)}
+.warn{font-size:12px;color:var(--danger)}
+.empty{color:var(--muted);text-align:center;padding:30px 0}
+#lock{position:fixed;inset:0;z-index:50;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:24px}
+#lock form{width:100%;max-width:360px;display:flex;flex-direction:column;gap:12px}
+#lock input{font:inherit;font-size:18px;padding:12px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--fg)}
+#lock button{font:inherit;font-weight:800;padding:12px;border-radius:10px;border:0;background:var(--accent);color:#111}
+.toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:#f2f4f6;color:#111;padding:10px 16px;border-radius:8px;font-weight:700;opacity:0;transition:opacity .2s;pointer-events:none;z-index:60}
+.toast.show{opacity:1}
+</style>
+</head>
+<body>
+<header>
+  <div class="top"><div class="brand"><i></i>アカウント一覧</div><button class="sync" id="sync" type="button"></button></div>
+  <input id="q" type="search" placeholder="サイト名・会員番号・担当者で検索" autocomplete="off">
+  <div class="chips" id="chips"></div>
+</header>
+<main><div id="list"></div></main>
+<button class="fab" id="add" type="button">＋ サイトを追加</button>
+<div class="sheet" id="sheet" hidden><form id="form" autocomplete="off">
+  <h3 id="fTitle" style="color:var(--fg);font-size:16px;margin:0">サイトを追加</h3>
+  <label>区分<input name="cat" list="cats" placeholder="例：業者オークション"></label><datalist id="cats"></datalist>
+  <label>サイト名<input name="name" required></label>
+  <label>ログインページURL<input name="url" inputmode="url" placeholder="https://"></label>
+  <label>会員番号・ID<input name="member"></label>
+  <label>ログイン用メール<input name="email" inputmode="email"></label>
+  <label>担当者<input name="person"></label>
+  <label>電話<input name="tel" inputmode="tel"></label>
+  <label>担当メール<input name="pmail" inputmode="email"></label>
+  <label>メモ<textarea name="memo" rows="2"></textarea></label>
+  <p class="warn">パスワードは書かないでください。</p>
+  <div class="btns"><button type="button" class="del" id="del">削除</button><button type="button" id="cancel">閉じる</button><button type="submit" class="main">保存</button></div>
+</form></div>
+<div id="lock" hidden><form id="lockForm"><h3 style="color:var(--fg);font-size:18px;margin:0">暗証番号</h3><p id="lockMsg" style="color:var(--muted);font-size:13px">アカウント一覧専用の暗証番号を入力してください。</p><input id="passIn" type="password" inputmode="numeric" placeholder="暗証番号"><button type="submit">開く</button></form></div>
+<div class="toast" id="toast"></div>
+<script>
+/* ▼ Apps Script をデプロイしたときの「ウェブアプリのURL」（apps-script.gs を参照） */
+const API_URL = "";
+const APP_VERSION = "2026-11-17-51";
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+let pass = ""; try{ pass = localStorage.getItem("rekil-account-pass") || ""; }catch(_){}
+let items = [], cat = "", editing = null, busy = 0;
+function toast(t){ const el=$("#toast"); el.textContent=t; el.classList.add("show"); clearTimeout(toast.t); toast.t=setTimeout(()=>el.classList.remove("show"),1800); }
+async function api(action, params={}){
+  busy++; status();
+  try{
+    let res; try{ res = await fetch(API_URL, {method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"}, body: JSON.stringify({action, pass, ...params})}); }catch(_){ throw new Error("network"); }
+    const j = await res.json();
+    if(!j.ok){ if(j.error==="passcode"||j.error==="passcode_not_set") showLock(j.error); throw new Error(j.error||"error"); }
+    if(busy===1){ items = j.items||[]; try{ localStorage.setItem("rekil-account-cache", JSON.stringify(items)); }catch(_){} }
+    return j.result;
+  }finally{ busy--; status(); render(); }
+}
+function status(){ $("#sync").textContent = !API_URL ? "設定待ち" : busy ? "保存中…" : "↻ 更新"; }
+function render(){
+  const cats = [...new Set(items.map(i=>i.cat||"その他"))];
+  $("#cats").innerHTML = cats.map(c=>`<option value="${esc(c)}">`).join("");
+  $("#chips").innerHTML = [`<button data-c="" class="${!cat?"on":""}">すべて</button>`, ...cats.map(c=>`<button data-c="${esc(c)}" class="${cat===c?"on":""}">${esc(c)}</button>`)].join("");
+  const q = $("#q").value.trim().toLowerCase();
+  const list = items.filter(i=>(!cat || (i.cat||"その他")===cat) && (!q || Object.values(i).join(" ").toLowerCase().includes(q)));
+  if(!API_URL && !items.length){ $("#list").innerHTML = '<div class="empty">データ側（Apps Script）の設定待ちです。<br>設定が終わるとここに一覧が出ます。</div>'; return; }
+  if(!list.length){ $("#list").innerHTML = '<div class="empty">見つかりませんでした</div>'; return; }
+  const by = {}; list.forEach(i=>{ (by[i.cat||"その他"] = by[i.cat||"その他"] || []).push(i); });
+  const row = (l, v, link) => v ? `<dt>${l}</dt><dd>${link ? `<a href="${esc(link)}" ${/^https?:/.test(link)?'target="_blank" rel="noopener"':''}>${esc(v)}</a>` : esc(v)}</dd><button class="cp" type="button" data-cp="${esc(v)}">コピー</button>` : "";
+  $("#list").innerHTML = Object.keys(by).map(c=>`<h3>${esc(c)}</h3>` + by[c].map(i=>`<div class="card"><div class="nm"><span>${esc(i.name)}</span><button type="button" data-ed="${esc(i.id)}">編集</button></div>
+    <dl class="kv">${row("ログイン", i.url ? "ページを開く" : "", i.url)}${row("会員番号", i.member)}${row("メール", i.email)}${row("担当者", i.person)}${row("電話", i.tel, i.tel ? "tel:"+i.tel.replace(/[^\d+]/g,"") : "")}${row("担当メール", i.pmail, i.pmail ? "mailto:"+i.pmail : "")}${i.memo?`<dt>メモ</dt><dd style="grid-column:2/4">${esc(i.memo)}</dd>`:""}</dl></div>`).join("")).join("");
+}
+$("#chips").onclick = e => { const b = e.target.closest("[data-c]"); if(b){ cat = b.dataset.c; render(); } };
+$("#q").oninput = render;
+$("#list").onclick = async e => {
+  const c = e.target.closest("[data-cp]"); if(c){ try{ await navigator.clipboard.writeText(c.dataset.cp); toast("コピーしました"); }catch(_){ toast("コピーできませんでした"); } return; }
+  const ed = e.target.closest("[data-ed]"); if(ed) openForm(items.find(i=>i.id===ed.dataset.ed));
+};
+function openForm(it){
+  editing = it || null; const f = $("#form"); f.reset();
+  $("#fTitle").textContent = it ? "編集" : "サイトを追加"; $("#del").hidden = !it; delete $("#del").dataset.arm; $("#del").textContent = "削除";
+  if(it) ["cat","name","url","member","email","person","tel","pmail","memo"].forEach(k=>f.elements[k].value = it[k]||"");
+  else if(cat) f.elements.cat.value = cat;
+  $("#sheet").hidden = false;
+}
+$("#add").onclick = () => openForm(null);
+$("#cancel").onclick = () => $("#sheet").hidden = true;
+$("#sheet").onclick = e => { if(e.target.id==="sheet") $("#sheet").hidden = true; };
+$("#form").onsubmit = e => {
+  e.preventDefault(); if(!API_URL){ toast("データ側の設定がまだです"); return; }
+  const f = e.target, item = {}; ["cat","name","url","member","email","person","tel","pmail","memo"].forEach(k=>item[k]=f.elements[k].value.trim());
+  if(editing) item.id = editing.id; else item.id = "a" + Date.now().toString(36);
+  const before = items.slice(); const k = items.findIndex(i=>i.id===item.id); if(k>=0) items[k] = item; else items.push(item);
+  $("#sheet").hidden = true; render(); toast("保存しました");
+  api("save", {item}).catch(err=>{ items = before; render(); toast(err.message==="network" ? "通信できず保存されませんでした" : "保存できませんでした。元に戻しました"); });
+};
+$("#del").onclick = () => {
+  const d = $("#del"); if(!d.dataset.arm){ d.dataset.arm = "1"; d.textContent = "もう一度押すと削除"; return; }
+  const id = editing.id, before = items.slice(); items = items.filter(i=>i.id!==id); $("#sheet").hidden = true; render(); toast("削除しました");
+  api("remove", {id}).catch(()=>{ items = before; render(); toast("削除できませんでした。元に戻しました"); });
+};
+function showLock(err){ $("#lockMsg").textContent = err==="passcode_not_set" ? "データ側で暗証番号がまだ設定されていません。" : pass ? "暗証番号が違います。" : "アカウント一覧専用の暗証番号を入力してください。"; $("#lock").hidden = false; }
+$("#lockForm").onsubmit = async e => { e.preventDefault(); pass = $("#passIn").value.trim(); if(!pass) return; try{ await api("list"); localStorage.setItem("rekil-account-pass", pass); $("#lock").hidden = true; }catch(_){} };
+$("#sync").onclick = () => { if(API_URL && pass) api("list").catch(()=>{}); };
+try{ items = JSON.parse(localStorage.getItem("rekil-account-cache")||"[]"); }catch(_){}
+status(); render();
+if(API_URL){ if(!pass) showLock(); else api("list").catch(()=>{}); }
+document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState==="visible"){ checkUpdate(); if(API_URL && pass && !busy) api("list").catch(()=>{}); } });
+async function checkUpdate(){ try{ const r=await fetch(location.pathname+"?v="+Date.now(),{cache:"no-store"}); const t=await r.text(); const m=t.match(/const APP_VERSION = "([^"]+)"/); if(m && m[1]!==APP_VERSION && !busy) location.replace(location.pathname+"?v="+encodeURIComponent(m[1])); }catch(_){} }
+if(location.protocol.startsWith("http")){ checkUpdate(); setInterval(()=>{ if(document.visibilityState==="visible") checkUpdate(); }, 60000); }
+try{history.scrollRestoration="manual"}catch(_){} addEventListener("pageshow",()=>scrollTo(0,0));
+</script>
+</body>
+</html>
