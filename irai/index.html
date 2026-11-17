@@ -249,7 +249,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 <script>
 /* ▼ Apps Script をデプロイしたときの「ウェブアプリのURL」 */
 const API_URL = "https://script.google.com/macros/s/AKfycbyt_sbyLWtGgD8TODNx7kvs2gEOlisN6X8XWqFYGyVQVHkmqvrIRTo6RWZXgYSPjRCB/exec";
-const APP_VERSION = "2026-11-17-27";
+const APP_VERSION = "2026-11-17-28";
 
 const FIELDS=["code","brand","shape","bagType","model","mpn","serial","country","color","extMat","fabric","finish","form","pattern","handleMat","handleColor","handleStyle","liningColor","liningMat","hwColor","hwMat","closure","acc","w","h","d","handleDrop","strapDrop","size","rank","features","note"];
 const MODEL_SKIP=new Set(["code","serial","rank","note","acc"]);
@@ -515,8 +515,9 @@ combo("brandSel","brand",typeof normBrand==="function"?normBrand:null);combo("sh
 const ACC_SPLIT=v=>String(v||"").split(/[、,，・\s]+/).filter(Boolean);
 function accSync(){const v=ACC_SPLIT($("acc").value);const list=$("accList");
   v.forEach(x=>{if(![...list.querySelectorAll("input")].some(i=>i.value===x)){const l=document.createElement("label");l.className="accopt";l.innerHTML='<input type="checkbox">';l.firstChild.value=x;l.append(x);list.appendChild(l);}});
-  list.querySelectorAll("input").forEach(i=>i.checked=v.includes(i.value));$("accSum").textContent=v.length?v.join("、"):"（選ばない）";}
-$("accList").addEventListener("change",e=>{const i=e.target;if(i.value==="なし"&&i.checked)$("accList").querySelectorAll("input").forEach(x=>{if(x!==i)x.checked=false;});else if(i.checked)$("accList").querySelector('input[value="なし"]').checked=false;
+  list.querySelectorAll("input").forEach(i=>i.checked=v.includes(i.value));$("accSum").textContent=v.length?v.join("、"):"（選ばない）";accLock();}
+function accLock(){const none=$("accList").querySelector('input[value="なし"]');const on=none&&none.checked;$("accList").querySelectorAll("input").forEach(x=>{if(x!==none){x.disabled=on;if(on)x.checked=false;x.parentElement.style.opacity=on?".35":"";}});}
+$("accList").addEventListener("change",e=>{accLock();
   $("acc").value=[...$("accList").querySelectorAll("input:checked")].map(x=>x.value).join("、");$("accSum").textContent=$("acc").value||"（選ばない）";$("f").dispatchEvent(new Event("input",{bubbles:true}));});
 setInterval(()=>{const want=ACC_SPLIT($("acc").value).join("、");const have=[...$("accList").querySelectorAll("input:checked")].map(x=>x.value).join("、");if(want!==have)accSync();},500);
 </script>
