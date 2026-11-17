@@ -100,6 +100,9 @@ td.net{color:var(--accent);font-weight:600}
 #lock input{font:inherit;font-size:16px;color:var(--fg);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px}
 #lock .go{background:var(--accent);color:var(--accent-ink);border:0;border-radius:10px;padding:12px;font-weight:700}
 #lock p{margin:0;font-size:13.5px;color:var(--muted)}
+
+/* iPhone上部のステータスバー分の余白（ヘッダーで上が隠れないように） */
+body{padding-top:env(safe-area-inset-top,0px)!important}
 </style>
 </head>
 <body>

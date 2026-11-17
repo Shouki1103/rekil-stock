@@ -107,6 +107,9 @@ pre.fallback{white-space:pre-wrap;background:var(--bg);border:1px solid var(--li
 .note{font-size:13px;color:var(--muted);margin:0}
 @media (max-width:480px){.picker{grid-template-columns:1fr auto}.picker .q{grid-column:1/-1;grid-row:2}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
+/* iPhone上部のステータスバー分の余白（ヘッダーで上が隠れないように） */
+body{padding-top:env(safe-area-inset-top,0px)!important}
 </style>
 </head>
 <body>

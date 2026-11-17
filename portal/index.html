@@ -57,6 +57,9 @@ h2 .n{font-family:var(--font-code);font-size:11px}
 .legend span{display:flex;gap:6px;align-items:center}
 .empty{font-size:13px;color:var(--muted);text-align:center;padding:12px}
 footer{font-size:11px;color:var(--muted);font-family:var(--font-code);text-align:center;line-height:1.8}
+
+/* iPhone上部のステータスバー分の余白（ヘッダーで上が隠れないように） */
+body{padding-top:env(safe-area-inset-top,0px)!important}
 </style>
 </head>
 <body>

@@ -132,6 +132,9 @@ body{padding-bottom:calc(70px + env(safe-area-inset-bottom,0px))}
   canvas#lbl{max-width:78%!important}
   .issuebar{bottom:calc(64px + env(safe-area-inset-bottom,0px))!important;background:var(--bg)!important;padding:10px 14px!important}
 }
+
+/* iPhone上部のステータスバー分の余白（ヘッダーで上が隠れないように） */
+body{padding-top:env(safe-area-inset-top,0px)!important}
 </style>
 <style id="pageSize"></style>
 </head>

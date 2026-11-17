@@ -83,6 +83,9 @@ label{display:block;font-size:12px;color:var(--sub);margin:8px 0 3px}
 #lock form{width:100%;max-width:340px}
 #lock input{width:100%;padding:12px;border:1px solid var(--line);border-radius:10px;background:var(--field);color:var(--ink);font-size:18px;margin:10px 0}
 #lock .btn{width:100%;padding:12px}
+
+/* iPhone上部のステータスバー分の余白（ヘッダーで上が隠れないように） */
+body{padding-top:env(safe-area-inset-top,0px)!important}
 </style>
 </head>
 <body>

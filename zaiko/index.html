@@ -73,6 +73,9 @@ nav.tabs a[aria-current="page"]::after{content:"";width:22px;height:3px;backgrou
 #lock button{font:inherit;font-weight:700;border:none;border-radius:8px;background:var(--accent);color:var(--accent-ink);min-height:48px;cursor:pointer}
 .toast{position:fixed;left:50%;bottom:calc(90px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:#fff;color:#111;font-weight:700;font-size:13px;padding:8px 14px;border-radius:999px;z-index:30;opacity:0;transition:opacity .2s;pointer-events:none}
 .toast.show{opacity:1}
+
+/* iPhone上部のステータスバー分の余白（ヘッダーで上が隠れないように） */
+body{padding-top:env(safe-area-inset-top,0px)!important}
 </style>
 </head>
 <body>
