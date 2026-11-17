@@ -86,6 +86,7 @@ label{display:block;font-size:12px;color:var(--sub);margin:8px 0 3px}
 
 /* iPhone上部のステータスバー分の余白（ヘッダーで上が隠れないように） */
 body{padding-top:env(safe-area-inset-top,0px)!important}
+[hidden]{display:none!important}
 </style>
 </head>
 <body>
@@ -98,14 +99,13 @@ body{padding-top:env(safe-area-inset-top,0px)!important}
   </div>
 </header>
 <main>
-  <h2>次にやること</h2>
-  <div class="todo" id="todo"></div>
+  <div class="todo" id="todo" hidden></div>
   <h2 id="listTitle">キャンペーン</h2>
   <div id="list"><div class="empty">読み込み中…</div></div>
   <h2>キャッシュバック合計（全キャンペーン）</h2>
   <div class="grid" id="total"></div>
 </main>
-<button class="fab" id="addBtn">＋ キャンペーン</button>
+<button class="fab" id="addBtn" hidden>＋ キャンペーン</button>
 
 <!-- キャンペーン編集 -->
 <div class="sheet" id="cEdit"><div class="panel">
@@ -157,7 +157,7 @@ body{padding-top:env(safe-area-inset-top,0px)!important}
 <script>
 /* ▼ Apps Script をデプロイしたときの「ウェブアプリのURL」 */
 const API_URL = "https://script.google.com/macros/s/AKfycby3F-MYmPDbMyj3CC4sR2WC2KwtC73femnvFT4XG67PgCpaQjw9Z5Dp6qRk_KgknGrc/exec";
-const APP_VERSION = "2026-11-17-20";
+const APP_VERSION = "2026-11-17-35";
 
 const $=id=>document.getElementById(id);
 const C_FIELDS=["id","name","status","apply_deadline","start_jst","end_jst","coupon_code","offer","cashback_rate","cashback_cap_usd","budget_usd","min_price_usd","target_items","excluded_items","conditions","cashback_due","inquiry_tag","orders","sales_usd","discount_usd","fees_usd","cashback_expected_usd","cashback_received_usd","cashback_received_date","note","result_pdf"];
@@ -225,15 +225,13 @@ function card(c){
   ${cell("注文数",num(c.orders))}${cell("売上",usd(c.sales_usd))}${cell("割引額",usd(c.discount_usd))}
   ${cell("手数料",usd(c.fees_usd))}${cell("CB見込",usd(c.cashback_expected_usd),"cb")}${cell("CB入金",usd(c.cashback_received_usd)+(c.cashback_received_date?`<br><small style="font-size:11px;color:var(--sub)">${md(c.cashback_received_date)}</small>`:""),"cb")}</div>
   <div class="bar"><i style="width:${pct}%"></i></div>
-  <div class="meta">作業 ${d}/${st.length} 完了${c.cashback_due?`　CB入金予定：${esc(c.cashback_due)}`:""}</div>
-  <div class="steps">${st.map(s=>`<div class="step ${isDone(s)?"done":""}"><button class="chk ${isDone(s)?"on":""}" data-toggle="${esc(s.sid)}">${isDone(s)?"✓":""}</button><div class="t">${esc(s.step)}<small>期限 ${md(s.due)}${s.done?`・完了 ${md(s.done)}`:""}${s.memo?`・${esc(s.memo)}`:""}</small></div><button class="e" data-estep="${esc(s.sid)}">編集</button></div>`).join("")}</div>
+  <div class="meta">進捗 ${d}/${st.length}（${pct}%）${c.cashback_due?`　CB入金予定：${esc(c.cashback_due)}`:""}</div>
   <details><summary>条件・メモを見る</summary>
     ${c.conditions?`<div class="note"><b>条件：</b>${esc(c.conditions)}</div>`:""}
     ${c.note?`<div class="note"><b>メモ：</b>${esc(c.note)}</div>`:""}
     <div class="note">ID：${esc(c.id)}　CB率：${c.cashback_rate!==""&&c.cashback_rate!=null?Math.round(c.cashback_rate*100)+"%":"—"}　CB上限：${usd(c.cashback_cap_usd)}　予算：${usd(c.budget_usd)}${c.inquiry_tag?`　問い合わせタグ：${esc(c.inquiry_tag)}`:""}</div>
     ${c.result_pdf?`<div class="note"><a class="lnk" href="${esc(c.result_pdf)}" target="_blank" rel="noopener">販促結果PDFを開く</a></div>`:""}
   </details>
-  <div class="acts"><button class="btn" data-addstep="${esc(c.id)}">＋ 作業</button><button class="btn ghost" data-editc="${esc(c.id)}">編集</button><button class="btn del" data-delc="${esc(c.id)}">削除</button></div>
 </div>`;
 }
 
