@@ -101,6 +101,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .lockbox{width:min(360px,100%);display:grid;gap:12px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:20px}
 .lockbox h2{margin:0;font-size:18px}
 .toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:999px;font-size:14px;z-index:60;max-width:90vw}
+.accw{display:flex;flex-direction:column;gap:4px;grid-column:1/-1}.accw .acclbl{font-size:13px;color:var(--muted)}.accdd{border:1px solid var(--line);border-radius:10px;background:var(--surface,transparent)}.accdd summary{padding:10px 12px;cursor:pointer;list-style:none;min-height:44px}.accdd summary::after{content:"▾";float:right;opacity:.6}.acclist{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:2px 8px;padding:4px 12px 12px;border-top:1px solid var(--line)}.accopt{display:flex;align-items:center;gap:8px;font-size:14px;min-height:40px;flex-direction:row!important}.accopt input{width:20px;height:20px;padding:0;flex:0 0 auto;accent-color:var(--accent)}
 </style>
 </head>
 <body>
@@ -163,7 +164,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
           <label>金具の色<input id="hwColor" list="dl-hwcolor"></label>
           <label>金具の素材<input id="hwMat" list="dl-hwmat"></label>
           <label>留め具<select id="closure"><option value="">（選ばない）</option><option>なし（オープン）</option><option>ファスナー</option><option>マグネット</option><option>スナップボタン</option><option>ボタン</option><option>ターンロック</option><option>がま口</option><option>バックル（ベルト留め）</option><option>巾着</option><option>フラップ（かぶせ）</option><option>留め金（クラスプ）</option><option>南京錠・鍵付き</option><option>トグル</option><option>マジックテープ</option></select></label>
-          <label>付属品<input id="acc" list="dl-acc"></label>
+          <div class="accw"><span class="acclbl">付属品（複数選べます）</span><input type="hidden" id="acc"><details class="accdd" id="accDd"><summary id="accSum">（選ばない）</summary><div class="acclist" id="accList"><label class="accopt"><input type="checkbox" value="なし">なし</label><label class="accopt"><input type="checkbox" value="保存袋">保存袋</label><label class="accopt"><input type="checkbox" value="箱">箱</label><label class="accopt"><input type="checkbox" value="ポーチ">ポーチ</label><label class="accopt"><input type="checkbox" value="ショルダーストラップ">ショルダーストラップ</label><label class="accopt"><input type="checkbox" value="その他ストラップ">その他ストラップ</label><label class="accopt"><input type="checkbox" value="ギャランティカード">ギャランティカード</label><label class="accopt"><input type="checkbox" value="メンテナンスカード">メンテナンスカード</label><label class="accopt"><input type="checkbox" value="パドロック＆キー">パドロック＆キー</label><label class="accopt"><input type="checkbox" value="パドロック">パドロック</label><label class="accopt"><input type="checkbox" value="鍵">鍵</label><label class="accopt"><input type="checkbox" value="クロシェット">クロシェット</label><label class="accopt"><input type="checkbox" value="チャーム">チャーム</label><label class="accopt"><input type="checkbox" value="キーチェーン">キーチェーン</label><label class="accopt"><input type="checkbox" value="キーホルダー">キーホルダー</label><label class="accopt"><input type="checkbox" value="ハンドルキーパー">ハンドルキーパー</label><label class="accopt"><input type="checkbox" value="ネームタグ">ネームタグ</label><label class="accopt"><input type="checkbox" value="ミラー">ミラー</label><label class="accopt"><input type="checkbox" value="コインケース">コインケース</label><label class="accopt"><input type="checkbox" value="リストレット">リストレット</label></div></details></div>
         </div>
       </section>
 
@@ -247,11 +248,12 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 <script>
 /* ▼ Apps Script をデプロイしたときの「ウェブアプリのURL」 */
 const API_URL = "https://script.google.com/macros/s/AKfycbyt_sbyLWtGgD8TODNx7kvs2gEOlisN6X8XWqFYGyVQVHkmqvrIRTo6RWZXgYSPjRCB/exec";
-const APP_VERSION = "2026-11-17-21";
+const APP_VERSION = "2026-11-17-22";
 
 const FIELDS=["code","brand","shape","bagType","model","mpn","serial","country","color","extMat","fabric","finish","form","pattern","handleMat","handleColor","liningColor","liningMat","hwColor","hwMat","closure","acc","w","h","d","handleDrop","strapDrop","size","rank","features","note"];
 const MODEL_SKIP=new Set(["code","serial","rank","note","acc"]);
 const $=id=>document.getElementById(id);
+window.addEventListener("DOMContentLoaded",()=>{});
 let pass="";try{pass=localStorage.getItem("rekil-irai-pass")||localStorage.getItem("rekil-pass")||"";}catch(e){}
 let requests=[], models=[], filter="pending", busy=false;
 const selected=new Set();let visibleIds=[];
@@ -499,6 +501,15 @@ render();
 if(!API_URL){showErr("データ側の接続先がまだ設定されていません。");}
 else if(!pass){showLock();}
 else{refresh();}
+
+/* 付属品：複数選択（値は「、」区切りの日本語で保存） */
+const ACC_SPLIT=v=>String(v||"").split(/[、,，・\s]+/).filter(Boolean);
+function accSync(){const v=ACC_SPLIT($("acc").value);const list=$("accList");
+  v.forEach(x=>{if(![...list.querySelectorAll("input")].some(i=>i.value===x)){const l=document.createElement("label");l.className="accopt";l.innerHTML='<input type="checkbox">';l.firstChild.value=x;l.append(x);list.appendChild(l);}});
+  list.querySelectorAll("input").forEach(i=>i.checked=v.includes(i.value));$("accSum").textContent=v.length?v.join("、"):"（選ばない）";}
+$("accList").addEventListener("change",e=>{const i=e.target;if(i.value==="なし"&&i.checked)$("accList").querySelectorAll("input").forEach(x=>{if(x!==i)x.checked=false;});else if(i.checked)$("accList").querySelector('input[value="なし"]').checked=false;
+  $("acc").value=[...$("accList").querySelectorAll("input:checked")].map(x=>x.value).join("、");$("accSum").textContent=$("acc").value||"（選ばない）";$("f").dispatchEvent(new Event("input",{bubbles:true}));});
+setInterval(()=>{const want=ACC_SPLIT($("acc").value).join("、");const have=[...$("accList").querySelectorAll("input:checked")].map(x=>x.value).join("、");if(want!==have)accSync();},500);
 </script>
 <script>/* 開いたときは必ず一番上から表示（上が隠れないように） */try{history.scrollRestoration="manual"}catch(_){}addEventListener("pageshow",()=>scrollTo(0,0));addEventListener("load",()=>{scrollTo(0,0);setTimeout(()=>scrollTo(0,0),300)});</script>
 <script>setInterval(()=>{try{if(document.visibilityState==="visible")checkUpdate()}catch(_){}},60000);</script>
