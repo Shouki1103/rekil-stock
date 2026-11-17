@@ -621,5 +621,6 @@ restore(); refresh(); oRefresh();
 document.fonts && document.fonts.ready.then(()=>{refresh();oRefresh();});
 window.addEventListener("resize",oRefresh);
 </script>
+<script>/* 開いたときは必ず一番上から表示（上が隠れないように） */try{history.scrollRestoration="manual"}catch(_){}addEventListener("pageshow",()=>scrollTo(0,0));addEventListener("load",()=>{scrollTo(0,0);setTimeout(()=>scrollTo(0,0),300)});</script>
 </body>
 </html>

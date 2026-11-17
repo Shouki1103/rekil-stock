@@ -146,5 +146,6 @@ body{padding-top:env(safe-area-inset-top,0px)!important}
   });
 })();
 </script>
+<script>/* 開いたときは必ず一番上から表示（上が隠れないように） */try{history.scrollRestoration="manual"}catch(_){}addEventListener("pageshow",()=>scrollTo(0,0));addEventListener("load",()=>{scrollTo(0,0);setTimeout(()=>scrollTo(0,0),300)});</script>
 </body>
 </html>

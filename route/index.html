@@ -188,7 +188,7 @@ body{padding-top:env(safe-area-inset-top,0px)!important}
 <script>
 /* ▼ Apps Script をデプロイしたときの「ウェブアプリのURL」 */
 const API_URL = "https://script.google.com/macros/s/AKfycbxPSHfn__gZMtY4xf0QqRYaeYO5aRb2OIg3S9x7pB01vA_WwSmfq3XgqvEJxUIKuhYw/exec";
-const APP_VERSION = "2026-11-17-9";
+const APP_VERSION = "2026-11-17-10";
 
 const $ = s => document.querySelector(s);
 const ls = {
@@ -442,5 +442,6 @@ setInterval(()=>{ if(document.visibilityState==="visible" && $("#sheet").hidden 
 render();
 if(API_URL){ if(!pass) showLock(); else { checkUpdate(); refresh(); } }
 </script>
+<script>/* 開いたときは必ず一番上から表示（上が隠れないように） */try{history.scrollRestoration="manual"}catch(_){}addEventListener("pageshow",()=>scrollTo(0,0));addEventListener("load",()=>{scrollTo(0,0);setTimeout(()=>scrollTo(0,0),300)});</script>
 </body>
 </html>
