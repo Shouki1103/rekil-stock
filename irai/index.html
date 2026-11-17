@@ -138,7 +138,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
           <label>モデル名<input id="model"></label>
           <label>型番<input id="mpn"></label>
           <label>シリアル番号<input id="serial"></label>
-          <label>製造国<input id="country" list="dl-country"></label>
+          <label>製造国<select id="countrySel"><option value="">（選ばない）</option><option>イタリア</option><option>フランス</option><option>中国</option><option>スペイン</option><option>日本</option><option>アメリカ</option><option>ポルトガル</option><option>ルーマニア</option><option>ベトナム</option><option>ドイツ</option><option>イギリス</option><option>ハンガリー</option><option>不明（タグなし）</option><option value="__other">その他（手入力）</option></select><input id="country" placeholder="国名を入力" hidden></label>
         </div>
       </section>
 
@@ -249,7 +249,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 <script>
 /* ▼ Apps Script をデプロイしたときの「ウェブアプリのURL」 */
 const API_URL = "https://script.google.com/macros/s/AKfycbyt_sbyLWtGgD8TODNx7kvs2gEOlisN6X8XWqFYGyVQVHkmqvrIRTo6RWZXgYSPjRCB/exec";
-const APP_VERSION = "2026-11-17-24";
+const APP_VERSION = "2026-11-17-25";
 
 const FIELDS=["code","brand","shape","bagType","model","mpn","serial","country","color","extMat","fabric","finish","form","pattern","handleMat","handleColor","handleStyle","liningColor","liningMat","hwColor","hwMat","closure","acc","w","h","d","handleDrop","strapDrop","size","rank","features","note"];
 const MODEL_SKIP=new Set(["code","serial","rank","note","acc"]);
@@ -503,6 +503,12 @@ if(!API_URL){showErr("データ側の接続先がまだ設定されていませ�
 else if(!pass){showLock();}
 else{refresh();}
 
+/* 製造国：よく使う国はプルダウン、それ以外は手入力 */
+const C_LIST=[...$("countrySel").options].map(o=>o.value).filter(v=>v&&v!=="__other");
+$("countrySel").addEventListener("change",()=>{const v=$("countrySel").value;if(v==="__other"){$("country").hidden=false;$("country").value="";$("country").focus();}else{$("country").hidden=true;$("country").value=v;}$("f").dispatchEvent(new Event("input",{bubbles:true}));});
+setInterval(()=>{const v=$("country").value.trim(),sel=$("countrySel");if(sel.value==="__other")return;
+  if(!v){if(sel.value!==""&&sel.value!=="__other")sel.value="";$("country").hidden=true;return;}
+  if(C_LIST.includes(v)){if(sel.value!==v)sel.value=v;$("country").hidden=true;}else{sel.value="__other";$("country").hidden=false;}},500);
 /* 付属品：複数選択（値は「、」区切りの日本語で保存） */
 const ACC_SPLIT=v=>String(v||"").split(/[、,，・\s]+/).filter(Boolean);
 function accSync(){const v=ACC_SPLIT($("acc").value);const list=$("accList");
