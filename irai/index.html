@@ -162,7 +162,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
         <div class="grid">
           <label>金具の色<input id="hwColor" list="dl-hwcolor"></label>
           <label>金具の素材<input id="hwMat" list="dl-hwmat"></label>
-          <label>留め具<input id="closure" list="dl-closure"></label>
+          <label>留め具<select id="closure"><option value="">（選ばない）</option><option>なし（オープン）</option><option>ファスナー</option><option>マグネット</option><option>スナップボタン</option><option>ボタン</option><option>ターンロック</option><option>がま口</option><option>バックル（ベルト留め）</option><option>巾着</option><option>フラップ（かぶせ）</option><option>留め金（クラスプ）</option><option>南京錠・鍵付き</option><option>トグル</option><option>マジックテープ</option></select></label>
           <label>付属品<input id="acc" list="dl-acc"></label>
         </div>
       </section>
@@ -247,7 +247,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 <script>
 /* ▼ Apps Script をデプロイしたときの「ウェブアプリのURL」 */
 const API_URL = "https://script.google.com/macros/s/AKfycbyt_sbyLWtGgD8TODNx7kvs2gEOlisN6X8XWqFYGyVQVHkmqvrIRTo6RWZXgYSPjRCB/exec";
-const APP_VERSION = "2026-11-17-20";
+const APP_VERSION = "2026-11-17-21";
 
 const FIELDS=["code","brand","shape","bagType","model","mpn","serial","country","color","extMat","fabric","finish","form","pattern","handleMat","handleColor","liningColor","liningMat","hwColor","hwMat","closure","acc","w","h","d","handleDrop","strapDrop","size","rank","features","note"];
 const MODEL_SKIP=new Set(["code","serial","rank","note","acc"]);
@@ -315,7 +315,7 @@ function normBrand(s){const t=String(s||"").trim();if(!t)return "";const n=bnorm
   return t;}
 function readForm(){const o={};FIELDS.forEach(k=>o[k]=($(k).value||"").trim());o.brand=normBrand(o.brand);return o;}
 $("brand").addEventListener("change",e=>{const v=normBrand(e.target.value);if(v)e.target.value=v;});
-function fill(o,skipCode){FIELDS.forEach(k=>{if(skipCode&&MODEL_SKIP.has(k))return;if(o[k]!==undefined)$(k).value=o[k];});document.querySelectorAll(".inch").forEach(s=>s.textContent=inch($(s.dataset.for).value));}
+function fill(o,skipCode){FIELDS.forEach(k=>{if(skipCode&&MODEL_SKIP.has(k))return;if(o[k]!==undefined){const el=$(k);if(el.tagName==="SELECT"&&o[k]&&![...el.options].some(x=>x.value===o[k])){const op=document.createElement("option");op.textContent=o[k];el.appendChild(op);}el.value=o[k];}});document.querySelectorAll(".inch").forEach(s=>s.textContent=inch($(s.dataset.for).value));}
 function msg(t,cls){const m=$("formMsg");m.textContent=t;m.className="msg "+(cls||"");}
 const safeId=s=>s.replace(/[^A-Za-z0-9_\-.~:@+]/g,"_").replace(/_+/g,"_").slice(0,120)||"x";
 const hash=s=>{let h=0;for(const c of s)h=(h*31+c.codePointAt(0))>>>0;return h.toString(36);};
