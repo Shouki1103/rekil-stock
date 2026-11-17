@@ -152,7 +152,7 @@ body{padding-top:env(safe-area-inset-top,0px)!important}
 <script>
 /* ▼ Apps Script をデプロイしたときの「ウェブアプリのURL」 */
 const API_URL = "https://script.google.com/macros/s/AKfycbzuakHA841y3KMQTn32E6L6UOebKO9LZGEqX1IHAAQ3Xkb5Y2tvp4ZlIOVnr1u9T5KD/exec";
-const APP_VERSION = "2026-11-15-6";
+const APP_VERSION = "2026-11-17-9";
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -175,7 +175,7 @@ const VENDORS = [...AUCTIONS,"トレファクオンライン","セカンドス�
 /* 各タブの項目。[キー, 表示名, 種類, 全幅, 候補, 必須, 初期値] */
 const T = {
   shuppin:{name:"業者出品", add:"＋ 出品日を追加",
-    flow:["出品予定","出品中","保留処理待ち","保留処理済み"], closed:["保留処理済み","保留なし"], extra:["保留なし"],
+    flow:["出品予定","出品中","出品済み","保留処理済み"], closed:["保留処理済み","保留なし"], extra:["保留なし"],
     fields:[["kaisai","出品日（開催日）","date",0,null,1,"today"],["auction","オークション","select",0,AUCTIONS,1],
       ["count","出品点数","num"],["horyuCount","保留の点数","num"],
       ["item","出品内容","textarea",1],["memo","保留の処理メモ（承諾・拒否・再出品など）","textarea",1]]},
@@ -258,7 +258,7 @@ function due(t, r){
   if(t!=="shuppin") return r.deadline ? {date:r.deadline, what:"対応期限"} : null;
   if(!r.kaisai) return null;
   const n = days(r.kaisai);
-  if(r.status==="保留処理待ち" || n<0) return {date:r.kaisai, what:"保留の処理"};
+  if(r.status==="出品済み" || r.status==="保留処理待ち" || n<0) return {date:r.kaisai, what:"保留の処理"};
   if(n===0) return {date:r.kaisai, what:"本日出品・夕方に保留処理"};
   return {date:r.kaisai, what:"出品日"};
 }
@@ -464,7 +464,7 @@ $("#lockForm").addEventListener("submit", async e=>{
   pass = $("#passIn").value.trim(); if(!pass) return;
   $("#lockGo").disabled = true; $("#lockGo").textContent = "確認中…";
   try{
-    await api("list");
+    await api("list"); autoShuppinDone();
     try{ localStorage.setItem("rekil-henpin-pass", pass); }catch(_){}
     $("#lock").hidden = true; $("#passIn").value = ""; toast("接続しました");
   }catch(err){
@@ -475,8 +475,20 @@ $("#lockForm").addEventListener("submit", async e=>{
   $("#lockGo").disabled = false; $("#lockGo").textContent = "開く";
 });
 
+
+/* 業者出品：出品日を過ぎたら自動で「出品済み」へ（旧「保留処理待ち」も出品済みに統一） */
+let autoBusy = false;
+function autoShuppinDone(){
+  if(autoBusy || writes) return;
+  const t = today();
+  const list = (data.shuppin||[]).filter(r=> r.kaisai && (["出品予定","出品中"].includes(r.status) && r.kaisai < t || r.status==="保留処理待ち"));
+  if(!list.length) return;
+  autoBusy = true;
+  list.forEach(r=>{ applyLocal("shuppin", {id:r.id, status:"出品済み"}); });
+  (async()=>{ for(const r of list){ try{ await api("save", {table:"shuppin", item:{id:r.id, status:"出品済み"}}); }catch(_){} } autoBusy = false; })();
+}
 /* ---------- 同期・更新 ---------- */
-async function refresh(){ if(!pass || busy || writes || !API_URL) return; try{ await api("list"); }catch(err){ if(err.code==="network"){ online = false; status(); } } }
+async function refresh(){ if(!pass || busy || writes || !API_URL) return; try{ await api("list"); autoShuppinDone(); }catch(err){ if(err.code==="network"){ online = false; status(); } } }
 async function checkUpdate(){
   try{
     const r = await fetch(location.pathname + "?v=" + Date.now(), {cache:"no-store"});
