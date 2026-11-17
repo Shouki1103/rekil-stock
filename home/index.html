@@ -39,17 +39,19 @@ h3{font-size:13px;color:var(--muted);margin:16px 2px 8px;font-weight:700}
 .hint{font-size:12px;color:var(--muted)}.erow{display:flex;align-items:center;gap:6px;padding:6px 0;border-bottom:1px solid var(--line)}.erow .en{flex:1;min-width:0}.erow button,.erow select,.ebar button{font:inherit;font-size:14px;min-height:36px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--fg);padding:0 10px}.erow select{max-width:130px}.ebar{margin-top:14px}#edit{border:1px solid var(--line);border-radius:8px;padding:4px 10px}
 .tk{display:flex;align-items:center;gap:10px;padding:7px 0;border-top:1px solid var(--line);font-size:14px}.tk:first-of-type{border-top:0}.tk input{width:20px;height:20px;accent-color:var(--accent);flex:0 0 auto}.tk.done span{opacity:.45;text-decoration:line-through}.tk small{color:var(--danger);font-size:11px;margin-left:auto;flex:0 0 auto}
 #today summary{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between}#today summary::-webkit-details-marker{display:none}#today summary::after{content:"▾ 開く";font-size:12px;color:var(--muted)}#today[open] summary::after{content:"▴ 閉じる"}#today summary h2{margin:0}#today[open] summary{margin-bottom:6px}
+header{gap:8px}.brand{white-space:nowrap;flex:0 0 auto}.hctl{display:flex;align-items:center;gap:6px;min-width:0}.hctl .sync{white-space:nowrap}
+.warnline{font-size:12px;color:var(--muted);padding:6px 0 0;border-top:1px solid var(--line);margin-top:4px}
 </style>
 </head>
 <body>
-<header><div class="brand"><i></i>ReKiL ホーム</div><div><button class="sync" id="edit" type="button">並べ替え</button> <button class="sync" id="sync" type="button">確認中…</button></div></header>
+<header><div class="brand"><i></i>ReKiL ホーム</div><div class="hctl"><button class="sync" id="sync" type="button">確認中…</button><button class="sync" id="edit" type="button">並べ替え</button></div></header>
 <main>
   <details class="todo" id="today"><summary><h2 id="todayTitle">今日やること</h2></summary><div id="todayList"><span class="ok">読み込み中…</span></div></details>
   <section class="todo" id="todo"><h2>未対応</h2><div id="todoList"><span class="ok">確認中…</span></div></section>
   <div id="groups"></div>
 </main>
 <script>
-const APP_VERSION = "2026-11-17-56";
+const APP_VERSION = "2026-11-18-1";
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const today = () => new Date(Date.now()+9*3600e3).toISOString().slice(0,10);
@@ -91,7 +93,8 @@ function render(){
   }
   $("#edit").textContent = editing ? "完了" : "並べ替え";
   const list = Object.values(items).flat();
-  $("#todoList").innerHTML = list.length ? list.map(x=>`<a href="${esc(x.u)}"><span>${esc(x.t)}</span><b>${esc(x.v)}</b></a>`).join("") : '<span class="ok">未対応はありません</span>';
+  $("#todoList").innerHTML = (list.length ? list.map(x=>`<a href="${esc(x.u)}"><span>${esc(x.t)}</span><b>${esc(x.v)}</b></a>`).join("") : '<span class="ok">未対応はありません</span>')
+    + (typeof failed!=="undefined" && failed.length ? `<div class="warnline">確認できなかったアプリ：${failed.map(esc).join("、")}<br><button type="button" class="sync" id="setPass" style="border:1px solid var(--line);border-radius:8px;padding:4px 10px;margin-top:6px">社内の暗証番号を入れる</button></div>` : "");
 }
 $("#groups").addEventListener("click", e=>{
   const m = e.target.closest("[data-mv]"); if(m){ const [gi,i,d] = m.dataset.mv.split(",").map(Number); const gs = groupsView(); const ids = gs[gi].ids; [ids[i], ids[i+d]] = [ids[i+d], ids[i]]; saveLayout(gs); render(); return; }
@@ -127,19 +130,22 @@ function renderToday(){
 }
 $("#todayList").addEventListener("change", e=>{ const c = e.target.closest("[data-tk]"); if(!c) return; if(c.checked) tdone[c.dataset.tk] = 1; else delete tdone[c.dataset.tk];
   try{ localStorage.setItem("rekil-home-tdone", JSON.stringify(tdone)); }catch(_){} renderToday(); });
+const needPass = k => { const v = getPass(k); if(!v) throw new Error("nopass"); return v; };
 async function call(url, pass, action="list"){
   const res = await fetch(url, {method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"}, body: JSON.stringify({action, pass})});
   const j = await res.json(); if(!j.ok) throw new Error(j.error||"error"); return j;
 }
+const SRC_NAME = {okurijo:"送り状控え", henpin:"出品・返品・外注", shitami:"下見・指値", irai:"eBay出品依頼"};
+const failed = [];
 const SRC = {
   okurijo: async () => {
-    const j = await call("https://script.google.com/macros/s/AKfycbwa-V3TqAAmz3S1-zreAI3Jkp0d4f0aGikswIQnTdmxsgFpggUxE0bjl1-sR0DZumSwsQ/exec", getPass("rekil-okuri-pass"));
+    const j = await call("https://script.google.com/macros/s/AKfycbwa-V3TqAAmz3S1-zreAI3Jkp0d4f0aGikswIQnTdmxsgFpggUxE0bjl1-sR0DZumSwsQ/exec", needPass("rekil-okuri-pass"));
     const rows = j.rows || []; const c = {ebay:0, yahoo:0, gyohan:0}; rows.forEach(r=>{ if(!r.done && c[r.channel]!=null) c[r.channel]++; });
     const n = c.ebay+c.yahoo+c.gyohan;
     return {n, items: n ? [{t:`送り状の未登録（eBay ${c.ebay}・ヤフオク ${c.yahoo}・業販 ${c.gyohan}）`, v:`${n}件`, u:"../okurijo/"}] : []};
   },
   henpin: async () => {
-    const j = await call("https://script.google.com/macros/s/AKfycbzuakHA841y3KMQTn32E6L6UOebKO9LZGEqX1IHAAQ3Xkb5Y2tvp4ZlIOVnr1u9T5KD/exec", getPass("rekil-henpin-pass"));
+    const j = await call("https://script.google.com/macros/s/AKfycbzuakHA841y3KMQTn32E6L6UOebKO9LZGEqX1IHAAQ3Xkb5Y2tvp4ZlIOVnr1u9T5KD/exec", needPass("rekil-henpin-pass"));
     const d = j.data || {}, t = today();
     const closed = {shuppin:["保留処理済み","保留なし"], shiire:["返金済み","返品不可"], frima:["返金完了","返品不可"], repair:["受取済み"]};
     const name = {shuppin:"業者出品の保留処理", shiire:"仕入返品", frima:"フリマ返品", repair:"リペアの受取"};
@@ -150,29 +156,30 @@ const SRC = {
     return {n, items: out};
   },
   shitami: async () => {
-    const j = await call("https://script.google.com/macros/s/AKfycbw7kz9QQt6CMQvwIC4IhtSekntc4xGCUAWuop6U7LO_3U6FMRo--X6wKI0F6hSx3n3Vng/exec", getPass("rekil-shitami-pass"));
+    const j = await call("https://script.google.com/macros/s/AKfycbw7kz9QQt6CMQvwIC4IhtSekntc4xGCUAWuop6U7LO_3U6FMRo--X6wKI0F6hSx3n3Vng/exec", needPass("rekil-shitami-pass"));
     const t = today(); const n = ((j.data||{}).items||[]).filter(i=>i.status!=="bid" && (!i.date || i.date >= t)).length;
     return {n, items: n ? [{t:"指値の登録待ち", v:`${n}件`, u:"../shitami/"}] : []};
   },
   irai: async () => {
-    const j = await call("https://script.google.com/macros/s/AKfycbyt_sbyLWtGgD8TODNx7kvs2gEOlisN6X8XWqFYGyVQVHkmqvrIRTo6RWZXgYSPjRCB/exec", getPass("rekil-irai-pass"));
+    const j = await call("https://script.google.com/macros/s/AKfycbyt_sbyLWtGgD8TODNx7kvs2gEOlisN6X8XWqFYGyVQVHkmqvrIRTo6RWZXgYSPjRCB/exec", needPass("rekil-irai-pass"));
     const n = (j.requests||[]).filter(r=>r.status!=="done").length;
     return {n, items: n ? [{t:"eBay下書きの未作成・修正待ち", v:`${n}件`, u:"../irai/"}] : []};
   },
 };
 async function refresh(){
   $("#sync").textContent = "確認中…";
-  let fails = 0;
+  failed.length = 0;
   await Promise.all(Object.entries(SRC).map(async ([k,f])=>{
-    try{ const r = await f(); badges[k] = r.n || 0; items[k] = r.items; }catch(_){ fails++; }
+    try{ const r = await f(); badges[k] = r.n || 0; items[k] = r.items; }catch(e){ failed.push(SRC_NAME[k] + (e.message==="nopass"||e.message==="passcode" ? "（暗証番号）" : "（通信）")); }
   }));
   try{ localStorage.setItem("rekil-home-badges", JSON.stringify(badges)); localStorage.setItem("rekil-home-items", JSON.stringify(items)); }catch(_){}
-  const d = new Date(); $("#sync").textContent = (fails ? `一部確認できません ` : "") + `${d.getHours()}:${String(d.getMinutes()).padStart(2,"0")} 確認 ↻`;
+  const d = new Date(); $("#sync").textContent = `${d.getHours()}:${String(d.getMinutes()).padStart(2,"0")} ↻`;
   render();
 }
 try{ Object.assign(items, JSON.parse(localStorage.getItem("rekil-home-items")||"{}")); }catch(_){}
 render(); renderToday(); loadCatalog(); loadTasks(); refresh();
 $("#sync").onclick = refresh;
+document.addEventListener("click", e=>{ if(e.target.id!=="setPass") return; const v = prompt("社内の暗証番号（ReKiL Stockなどと同じ番号）"); if(!v) return; try{ localStorage.setItem("rekil-pass", v.trim()); }catch(_){} refresh(); });
 $("#edit").onclick = ()=>{ editing = !editing; render(); };
 document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState==="visible"){ checkUpdate(); refresh(); } });
 async function checkUpdate(){ try{ const r=await fetch(location.pathname+"?v="+Date.now(),{cache:"no-store"}); const t=await r.text(); const m=t.match(/const APP_VERSION = "([^"]+)"/); if(m && m[1]!==APP_VERSION) location.replace(location.pathname+"?v="+encodeURIComponent(m[1])); }catch(_){} }
