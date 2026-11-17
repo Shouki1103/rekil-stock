@@ -134,7 +134,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
           <label>管理番号<input id="code" required></label>
           <label>ブランド<input id="brand" list="dl-brand"></label>
           <label>バッグ形状<input id="shape" list="dl-shape"></label>
-          <label>Type（eBayのタイプ）<select id="bagType"><option value="">（選ばない）</option><option>Backpack</option><option>Briefcase</option><option>Clutch</option><option>Handbag</option><option>Pouch</option><option>Satchel</option></select></label>
+          <label>タイプ<select id="bagType"><option value="">（選ばない）</option><option>ハンドバッグ</option><option>ブリーフケース</option><option>クラッチ</option><option>ポーチ</option><option>サッチェル</option><option>リュック（バックパック）</option></select></label>
           <label>モデル名<input id="model"></label>
           <label>型番<input id="mpn"></label>
           <label>シリアル番号<input id="serial"></label>
@@ -153,7 +153,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
           <label>ライン・柄<input id="pattern" list="dl-pattern"></label>
           <label>持ち手・ストラップの素材<input id="handleMat" list="dl-mat"></label>
           <label>持ち手・ストラップの色<input id="handleColor"></label>
-          <label>持ち手のタイプ（Handle Style）<select id="handleStyle"><option value="">（選ばない）</option><option>トップハンドル（1本持ち手）</option><option>2本持ち手</option><option>ショルダーストラップ</option><option>クロスボディ（斜め掛け）</option><option>リストストラップ</option></select></label>
+          <label>持ち手のタイプ<select id="handleStyle"><option value="">（選ばない）</option><option>トップハンドル（1本持ち手）</option><option>2本持ち手</option><option>ショルダーストラップ</option><option>クロスボディ（斜め掛け）</option><option>リストストラップ</option></select></label>
           <label>裏地の色<input id="liningColor"></label>
           <label>裏地の素材<input id="liningMat"></label>
         </div>
@@ -177,7 +177,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
           <label>マチ<input id="d" inputmode="decimal"><span class="inch" data-for="d"></span></label>
           <label>持ち手高さ<input id="handleDrop" inputmode="decimal"><span class="inch" data-for="handleDrop"></span></label>
           <label>ストラップ長さ<input id="strapDrop" inputmode="decimal"><span class="inch" data-for="strapDrop"></span></label>
-          <label>Size（eBayのサイズ）<select id="size"><option value="">（選ばない）</option><option>Nano</option><option>Micro</option><option>Mini</option><option>Small</option><option>Medium</option><option>Large</option><option>Extra Large</option></select></label>
+          <label>サイズ感<select id="size"><option value="">（選ばない）</option><option>ナノ</option><option>マイクロ</option><option>ミニ</option><option>スモール</option><option>ミディアム</option><option>ラージ</option><option>エクストララージ</option></select></label>
         </div>
       </section>
 
@@ -249,7 +249,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 <script>
 /* ▼ Apps Script をデプロイしたときの「ウェブアプリのURL」 */
 const API_URL = "https://script.google.com/macros/s/AKfycbyt_sbyLWtGgD8TODNx7kvs2gEOlisN6X8XWqFYGyVQVHkmqvrIRTo6RWZXgYSPjRCB/exec";
-const APP_VERSION = "2026-11-17-23";
+const APP_VERSION = "2026-11-17-24";
 
 const FIELDS=["code","brand","shape","bagType","model","mpn","serial","country","color","extMat","fabric","finish","form","pattern","handleMat","handleColor","handleStyle","liningColor","liningMat","hwColor","hwMat","closure","acc","w","h","d","handleDrop","strapDrop","size","rank","features","note"];
 const MODEL_SKIP=new Set(["code","serial","rank","note","acc"]);
