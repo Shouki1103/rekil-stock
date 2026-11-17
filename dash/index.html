@@ -62,6 +62,8 @@ th{color:var(--muted);font-weight:600;font-size:12px}
 </style>
 </head>
 <body>
+<script>/* rekil-common */try{const K="rekil-zaiko-pass",P=localStorage.getItem("rekil-pass");if(P&&!localStorage.getItem(K))localStorage.setItem(K,P)}catch(_){}</script>
+
 <header>
   <div class="top"><div class="brand"><i></i>ReKiL 月次</div><button class="sync" id="sync" type="button">読み込み中…</button></div>
   <div class="modes"><button data-mode="m" type="button">月</button><button data-mode="y" type="button">年</button><button data-mode="fy" type="button">決算期</button></div>
@@ -82,7 +84,7 @@ th{color:var(--muted);font-weight:600;font-size:12px}
 <script>
 /* データは「ReKiL 在庫」と同じ（在庫/売上管理シート） */
 const API_URL = "https://script.google.com/macros/s/AKfycbzOhUEYHb8aw2YofUdx1o9v19HzFqHBSP0cN4nfcHpvaBJX51z36H4HavxHMD37NZVcLQ/exec";
-const APP_VERSION = "2026-11-17-51";
+const APP_VERSION = "2026-11-18-3";
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const yen = v => "¥" + Math.round(v||0).toLocaleString("ja-JP");
@@ -178,5 +180,6 @@ async function checkUpdate(){ try{ const r=await fetch(location.pathname+"?v="+D
 if(location.protocol.startsWith("http")){ checkUpdate(); setInterval(()=>{ if(document.visibilityState==="visible") checkUpdate(); }, 60000); }
 try{history.scrollRestoration="manual"}catch(_){} addEventListener("pageshow",()=>scrollTo(0,0));
 </script>
+<script>/* 共通：電波がなくても開ける・ホームへ戻るボタン */if("serviceWorker" in navigator&&location.protocol.startsWith("http"))navigator.serviceWorker.register("../sw.js",{scope:"../"}).catch(()=>{});try{if(sessionStorage.getItem("rekil-from-home")&&!/\/home\/?$/.test(location.pathname)){const b=document.createElement("a");b.href="../home/";b.textContent="⌂";b.setAttribute("aria-label","ReKiLホームへ");b.style.cssText="position:fixed;right:12px;bottom:calc(84px + env(safe-area-inset-bottom,0px));z-index:70;width:44px;height:44px;border-radius:22px;background:#2a313a;color:#fff;font-size:22px;display:flex;align-items:center;justify-content:center;text-decoration:none;box-shadow:0 4px 16px #0008;opacity:.9";document.body.appendChild(b)}}catch(_){}</script>
 </body>
 </html>

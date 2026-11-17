@@ -126,6 +126,23 @@
      "icon": "../lounge/icon-180.png"
     }
    ]
+  },
+  {
+   "name": "チーム",
+   "apps": [
+    {
+     "id": "renraku",
+     "name": "連絡",
+     "url": "../renraku/",
+     "icon": "../renraku/icon-180.png"
+    },
+    {
+     "id": "manual",
+     "name": "説明書",
+     "url": "../manual/",
+     "icon": "../manual/icon-180.png"
+    }
+   ]
   }
  ]
 }

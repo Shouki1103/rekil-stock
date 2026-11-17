@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ReKiL 説明書">
+<meta name="theme-color" content="#0d1014">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<title>ReKiL アプリ説明書</title>
+<style>
+:root{--bg:#14181d;--surface:#1d232a;--line:#2f3740;--fg:#e8ebee;--muted:#9aa4af;--accent:#f2a541;--steel:#0d1014;color-scheme:dark}
+*{box-sizing:border-box}html,body{background:var(--bg);color:var(--fg);margin:0}
+body{font-family:"Hiragino Sans","Yu Gothic",system-ui,sans-serif;font-size:15px;line-height:1.6;padding-top:env(safe-area-inset-top,0px);padding-bottom:calc(24px + env(safe-area-inset-bottom,0px))}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--steel)}
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--steel);padding:12px 14px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:900;font-size:17px;white-space:nowrap}
+.brand i{display:inline-block;width:12px;height:22px;background:repeating-linear-gradient(-45deg,var(--accent) 0 5px,#1d2228 5px 10px);border-radius:2px}
+main{max-width:640px;margin:0 auto;padding:10px 14px}
+.btn{font:inherit;font-size:13px;font-weight:700;border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:9px;padding:6px 10px;text-decoration:none;white-space:nowrap;display:inline-block}
+.btn.main{background:var(--accent);color:#111;border-color:transparent}
+details{background:var(--surface);border:1px solid var(--line);border-radius:12px;margin-bottom:8px}
+summary{list-style:none;padding:12px;display:flex;justify-content:space-between;align-items:center;gap:8px;cursor:pointer;font-weight:800}
+summary::-webkit-details-marker{display:none}summary::after{content:"▾";color:var(--muted)}details[open] summary::after{content:"▴"}
+.body{padding:0 12px 12px}.what{background:#2a2418;border-radius:8px;padding:8px 10px;font-size:14px}
+h3{font-size:13px;color:var(--muted);margin:12px 0 4px}ol,ul{margin:0;padding-left:1.3em;font-size:14px}li{margin:2px 0}
+.acts{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.common{font-size:13px;color:var(--muted)}
+.upd{font-size:12px;color:var(--muted)}
+</style>
+</head>
+<body>
+<header><div class="brand"><i></i>アプリ説明書</div><div style="display:flex;gap:6px"><a class="btn main" href="pdf/all.pdf" target="_blank" rel="noopener">全部PDF</a><button class="btn" id="shareAll" type="button">共有</button></div></header>
+<main>
+  <p class="upd" id="upd"></p>
+  <details><summary>共通のルール（全アプリ）</summary><div class="body"><ul id="common"></ul></div></details>
+  <div id="list"></div>
+</main>
+<script>
+const APP_VERSION = "2026-11-18-3";
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const BASE = new URL("./", location.href).href;
+async function share(title, url){
+  try{ if(navigator.share){ await navigator.share({title, url}); return; } }catch(e){ if(e && e.name==="AbortError") return; }
+  try{ await navigator.clipboard.writeText(url); alert("リンクをコピーしました"); }catch(_){ prompt("このリンクを共有してください", url); }
+}
+$("#shareAll").onclick = () => share("ReKiL アプリ説明書（全部）", BASE + "pdf/all.pdf");
+fetch("manuals.json?v="+Date.now(), {cache:"no-store"}).then(r=>r.json()).then(m=>{
+  $("#upd").textContent = `最終更新 ${m.updated}　アプリを直したり新しく作ったりすると、ここも更新されます。`;
+  $("#common").innerHTML = m.common.map(s=>`<li>${esc(s)}</li>`).join("");
+  $("#list").innerHTML = m.apps.map(a=>`<details><summary><span>${esc(a.name)}</span></summary><div class="body">
+    <div class="what">${esc(a.what)}</div><h3>使い方</h3><ol>${a.steps.map(s=>`<li>${esc(s)}</li>`).join("")}</ol>
+    <h3>ポイント</h3><ul>${a.tips.map(s=>`<li>${esc(s)}</li>`).join("")}</ul>
+    <div class="acts"><a class="btn" href="${esc(a.url)}">アプリを開く</a><a class="btn" href="pdf/${esc(a.id)}.pdf" target="_blank" rel="noopener">PDFで見る</a><button class="btn" type="button" data-share="${esc(a.id)}" data-name="${esc(a.name)}">共有</button></div></div></details>`).join("");
+});
+$("#list").addEventListener("click", e=>{ const b = e.target.closest("[data-share]"); if(b) share(`${b.dataset.name} 説明書`, BASE + "pdf/" + b.dataset.share + ".pdf"); });
+async function checkUpdate(){ try{ const r=await fetch(location.pathname+"?v="+Date.now(),{cache:"no-store"}); const t=await r.text(); const mm=t.match(/const APP_VERSION = "([^"]+)"/); if(mm && mm[1]!==APP_VERSION) location.replace(location.pathname+"?v="+encodeURIComponent(mm[1])); }catch(_){} }
+if(location.protocol.startsWith("http")){ checkUpdate(); document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="visible") checkUpdate(); }); }
+</script>
+<script>if("serviceWorker" in navigator&&location.protocol.startsWith("http"))navigator.serviceWorker.register("../sw.js",{scope:"../"}).catch(()=>{});try{if(sessionStorage.getItem("rekil-from-home")){const b=document.createElement("a");b.href="../home/";b.textContent="⌂";b.style.cssText="position:fixed;right:12px;bottom:calc(24px + env(safe-area-inset-bottom,0px));z-index:70;width:44px;height:44px;border-radius:22px;background:#2a313a;color:#fff;font-size:22px;display:flex;align-items:center;justify-content:center;text-decoration:none;box-shadow:0 4px 16px #0008";document.body.appendChild(b)}}catch(_){}</script>
+</body>
+</html>

@@ -63,6 +63,8 @@ body{padding-top:env(safe-area-inset-top,0px)!important}
 </style>
 </head>
 <body>
+<script>/* rekil-common */</script>
+
 <header>
   <div class="brand"><i aria-hidden="true"><b></b><b></b><b></b><b></b></i>ReKiL ポータルサイト</div>
   <input id="q" type="search" placeholder="ツール名で探す（例：送り状）" aria-label="ツールを検索" autocomplete="off">
@@ -108,6 +110,8 @@ body{padding-top:env(safe-area-inset-top,0px)!important}
       <a class="row" href="../home/"><span class="t"><span class="name">ReKiL ホーム</span><span class="desc">全アプリの入口と未対応の件数</span></span><span class="tag">アプリ</span><span class="arrow">›</span></a>
       <a class="row" href="../dash/"><span class="t"><span class="name">月次ダッシュボード</span><span class="desc">今月の売上・粗利・仕入・販路別</span></span><span class="tag">アプリ</span><span class="arrow">›</span></a>
       <a class="row" href="../account/"><span class="t"><span class="name">アカウント一覧</span><span class="desc">ログインページ・会員番号・担当者（パスワードなし）</span></span><span class="tag">アプリ</span><span class="arrow">›</span></a>
+      <a class="row" href="../renraku/"><span class="t"><span class="name">ReKiL 連絡</span><span class="desc">作業依頼と申し送り</span></span><span class="tag">アプリ</span><span class="arrow">›</span></a>
+      <a class="row" href="../manual/"><span class="t"><span class="name">アプリ説明書</span><span class="desc">全アプリの使い方（PDF・共有）</span></span><span class="tag">アプリ</span><span class="arrow">›</span></a>
       <a class="row" href="../kyuyo/"><span class="t"><span class="name">ReKiL 給与</span><span class="desc">給与・報酬・社保・税の集計（見るだけ）</span></span><span class="tag">アプリ</span><span class="arrow">›</span></a>
       <a class="row" href="https://claude.ai/artifact/4jwqUSSJaPoz4fPgX4w5Hx" target="_blank" rel="noopener"><span class="t"><span class="name">月次損益</span><span class="desc">TKCの数字で毎月の損益</span></span><span class="tag c">Claude</span><span class="arrow">›</span></a>
       <a class="row" href="https://claude.ai/artifact/SQ4d3p5W9hByjYENFiQfNz" target="_blank" rel="noopener"><span class="t"><span class="name">月次業績分析</span><span class="desc">過去比較の業績分析</span></span><span class="tag c">Claude</span><span class="arrow">›</span></a>
@@ -150,5 +154,6 @@ body{padding-top:env(safe-area-inset-top,0px)!important}
 })();
 </script>
 <script>/* 開いたときは必ず一番上から表示（上が隠れないように） */try{history.scrollRestoration="manual"}catch(_){}addEventListener("pageshow",()=>scrollTo(0,0));addEventListener("load",()=>{scrollTo(0,0);setTimeout(()=>scrollTo(0,0),300)});</script>
+<script>/* 共通：電波がなくても開ける・ホームへ戻るボタン */if("serviceWorker" in navigator&&location.protocol.startsWith("http"))navigator.serviceWorker.register("../sw.js",{scope:"../"}).catch(()=>{});try{if(sessionStorage.getItem("rekil-from-home")&&!/\/home\/?$/.test(location.pathname)){const b=document.createElement("a");b.href="../home/";b.textContent="⌂";b.setAttribute("aria-label","ReKiLホームへ");b.style.cssText="position:fixed;right:12px;bottom:calc(84px + env(safe-area-inset-bottom,0px));z-index:70;width:44px;height:44px;border-radius:22px;background:#2a313a;color:#fff;font-size:22px;display:flex;align-items:center;justify-content:center;text-decoration:none;box-shadow:0 4px 16px #0008;opacity:.9";document.body.appendChild(b)}}catch(_){}</script>
 </body>
 </html>

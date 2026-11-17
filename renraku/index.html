@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ReKiL 連絡">
+<meta name="theme-color" content="#0d1014">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<title>ReKiL 連絡</title>
+<style>
+:root{--bg:#14181d;--surface:#1d232a;--line:#2f3740;--fg:#e8ebee;--muted:#9aa4af;--accent:#4cc27e;--steel:#0d1014;--danger:#ff7a6b;--warn:#ffb547;color-scheme:dark}
+*{box-sizing:border-box}
+html,body{background:var(--bg);color:var(--fg);margin:0}
+body{font-family:"Hiragino Sans","Yu Gothic",system-ui,sans-serif;font-size:15px;line-height:1.5;padding-top:env(safe-area-inset-top,0px);padding-bottom:calc(90px + env(safe-area-inset-bottom,0px))}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--steel)}
+[hidden]{display:none!important}
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--steel);padding:10px 14px 0}
+.top{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:900;font-size:17px;white-space:nowrap}
+.brand i{display:inline-block;width:12px;height:22px;background:repeating-linear-gradient(-45deg,var(--accent) 0 5px,#1d2228 5px 10px);border-radius:2px}
+.who{font:inherit;font-size:13px;padding:5px 8px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--fg)}
+.sync{font-size:12px;color:var(--muted);background:none;border:0;font:inherit;font-size:12px;white-space:nowrap}
+.tabs{display:grid;grid-template-columns:1fr 1fr;margin-top:8px}
+.tabs button{font:inherit;font-weight:700;background:none;border:0;color:var(--muted);padding:10px 4px 12px;border-bottom:3px solid transparent}
+.tabs button.on{color:var(--fg);border-bottom-color:var(--accent)}
+.badge{font-size:11px;min-width:18px;padding:0 6px;border-radius:999px;background:var(--danger);color:#fff;margin-left:4px}
+.badge:empty{display:none}
+main{max-width:640px;margin:0 auto;padding:10px 14px}
+.chips{display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap}
+.chips button{padding:5px 12px;border-radius:999px;border:1px solid var(--line);background:transparent;color:var(--muted);font:inherit;font-size:13px}
+.chips button.on{border-color:var(--accent);color:var(--accent)}
+.task{display:flex;gap:10px;align-items:flex-start;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:8px}
+.task input{width:24px;height:24px;margin-top:2px;accent-color:var(--accent);flex:0 0 auto}
+.task .b{flex:1;min-width:0}
+.task .t{font-weight:700;word-break:break-word}
+.task.done .t{text-decoration:line-through;opacity:.5}
+.task .m{font-size:12px;color:var(--muted);margin-top:2px;display:flex;flex-wrap:wrap;gap:4px 10px}
+.task .memo{font-size:13px;color:var(--fg);opacity:.85;margin-top:4px;white-space:pre-wrap;word-break:break-word}
+.over{color:var(--danger);font-weight:700}.soon{color:var(--warn);font-weight:700}
+.x{font:inherit;font-size:12px;border:1px solid var(--line);background:transparent;color:var(--muted);border-radius:8px;padding:3px 8px;flex:0 0 auto}
+.x.arm{background:var(--danger);color:#fff;border-color:transparent}
+.note{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:8px}
+.note .h{display:flex;justify-content:space-between;gap:8px;font-size:12px;color:var(--muted)}
+.note .h b{color:var(--fg)}
+.note .tx{margin-top:4px;white-space:pre-wrap;word-break:break-word}
+.compose{display:flex;flex-direction:column;gap:6px;margin-bottom:12px}
+.compose textarea,.compose select{font:inherit;font-size:16px;padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--fg)}
+.compose .row{display:flex;gap:6px}.compose .row select{flex:1}
+.btn{font:inherit;font-weight:800;min-height:44px;border-radius:10px;border:0;background:var(--accent);color:#0d1014;padding:0 16px}
+.fab{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom,0px));width:min(560px,calc(100% - 32px));min-height:52px;border-radius:14px;border:0;background:var(--accent);color:#0d1014;font:inherit;font-weight:800;font-size:16px}
+.sheet{position:fixed;inset:0;z-index:30;background:#000a;display:flex;align-items:flex-end;justify-content:center}
+.sheet form{background:var(--surface);width:100%;max-width:600px;max-height:calc(100dvh - env(safe-area-inset-top,0px) - 16px);overflow:auto;border-radius:14px 14px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:10px}
+.sheet label{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted)}
+.sheet input,.sheet textarea,.sheet select{font:inherit;font-size:16px;padding:10px;border-radius:9px;border:1px solid var(--line);background:var(--bg);color:var(--fg)}
+.btns{display:flex;gap:8px}.btns button{flex:1;min-height:46px;border-radius:10px;border:1px solid var(--line);background:transparent;color:var(--fg);font:inherit;font-weight:700}
+.btns .main{background:var(--accent);color:#0d1014;border:0}
+.empty{color:var(--muted);text-align:center;padding:30px 0}
+.hint{font-size:12px;color:var(--muted)}
+#lock{position:fixed;inset:0;z-index:50;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:24px}
+#lock form{width:100%;max-width:360px;display:flex;flex-direction:column;gap:12px}
+#lock input,#lock select{font:inherit;font-size:18px;padding:12px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--fg)}
+#lock button{font:inherit;font-weight:800;padding:12px;border-radius:10px;border:0;background:var(--accent);color:#111}
+.toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:#f2f4f6;color:#111;padding:10px 16px;border-radius:8px;font-weight:700;opacity:0;transition:opacity .2s;pointer-events:none;z-index:60}
+.toast.show{opacity:1}
+</style>
+</head>
+<body>
+<script>/* rekil-common */try{const K="rekil-renraku-pass",P=localStorage.getItem("rekil-pass");if(P&&!localStorage.getItem(K))localStorage.setItem(K,P)}catch(_){}</script>
+
+<header>
+  <div class="top"><div class="brand"><i></i>ReKiL 連絡</div><div style="display:flex;gap:6px;align-items:center"><select class="who" id="who" aria-label="自分の名前"></select><button class="sync" id="sync" type="button"></button></div></div>
+  <div class="tabs"><button data-t="task" type="button">作業依頼<span class="badge" id="bTask"></span></button><button data-t="note" type="button">申し送り<span class="badge" id="bNote"></span></button></div>
+</header>
+<main>
+  <section id="vTask">
+    <div class="chips" id="tf"><button data-f="mine">自分の分</button><button data-f="open">未完了すべて</button><button data-f="done">完了</button></div>
+    <div id="tasks"></div>
+  </section>
+  <section id="vNote" hidden>
+    <form class="compose" id="noteForm" autocomplete="off">
+      <textarea id="noteText" rows="3" placeholder="申し送り（例：B213の商品は角スレあり。出品前に確認お願いします）"></textarea>
+      <div class="row"><select id="noteTo"></select><button class="btn" type="submit">送る</button></div>
+    </form>
+    <div id="notes"></div>
+  </section>
+</main>
+<button class="fab" id="add" type="button">＋ 作業を依頼する</button>
+<div class="sheet" id="sheet" hidden><form id="form" autocomplete="off">
+  <h3 id="fTitle" style="color:var(--fg);font-size:16px;margin:0">作業を依頼する</h3>
+  <label>やること<input name="title" required placeholder="例：eBay再出品（5件）"></label>
+  <label>担当<select name="assignee"></select></label>
+  <label>期限<input name="due" type="date"></label>
+  <label>メモ<textarea name="memo" rows="3" placeholder="手順や注意点"></textarea></label>
+  <div class="btns"><button type="button" id="cancel">閉じる</button><button type="submit" class="main">保存</button></div>
+</form></div>
+<div id="lock" hidden><form id="lockForm"><h3 style="color:var(--fg);font-size:18px;margin:0">ReKiL 連絡</h3><p id="lockMsg" class="hint">社内の暗証番号と、自分の名前を選んでください。</p><input id="passIn" type="password" inputmode="numeric" placeholder="暗証番号"><select id="whoIn"></select><button type="submit">開く</button></form></div>
+<div class="toast" id="toast"></div>
+<script>
+/* ▼ Apps Script をデプロイしたときの「ウェブアプリのURL」（apps-script.gs を参照） */
+const API_URL = "";
+const APP_VERSION = "2026-11-18-3";
+const MEMBERS = ["祥貴","俊輔","真由美"];
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const ls = { get(k,d){ try{ const v = localStorage.getItem(k); return v==null ? d : JSON.parse(v); }catch(_){ return d; } }, set(k,v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(_){} } };
+let pass = ""; try{ pass = localStorage.getItem("rekil-renraku-pass") || localStorage.getItem("rekil-pass") || ""; }catch(_){}
+let me = ls.get("renraku-me", ""), tab = ls.get("renraku-tab", "task"), tf = ls.get("renraku-tf", "mine");
+let tasks = ls.get("renraku-tasks", []), notes = ls.get("renraku-notes", []), seen = ls.get("renraku-seen", ""), busy = 0, writes = 0, lineOn = false;
+/* 電波がないときの保存待ち（つながったら順に送る） */
+let queue = ls.get("renraku-queue", []);
+const today = () => new Date(Date.now()+9*3600e3).toISOString().slice(0,10);
+const md = d => d ? `${+d.slice(5,7)}/${+d.slice(8,10)}` : "";
+const ago = iso => { const t = new Date(iso); if(isNaN(t)) return ""; const m = Math.round((Date.now()-t)/60000); return m<1 ? "たった今" : m<60 ? `${m}分前` : m<1440 ? `${Math.round(m/60)}時間前` : `${t.getMonth()+1}/${t.getDate()} ${t.getHours()}:${String(t.getMinutes()).padStart(2,"0")}`; };
+function toast(t){ const el=$("#toast"); el.textContent=t; el.classList.add("show"); clearTimeout(toast.t); toast.t=setTimeout(()=>el.classList.remove("show"),1800); }
+
+async function api(action, params={}){
+  const isWrite = action!=="list"; if(isWrite) writes++;
+  busy++; status();
+  try{
+    let res; try{ res = await fetch(API_URL, {method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"}, body: JSON.stringify({action, pass, ...params})}); }catch(_){ throw new Error("network"); }
+    const j = await res.json();
+    if(!j.ok){ if(j.error==="passcode"||j.error==="passcode_not_set") showLock(j.error); throw new Error(j.error||"error"); }
+    if(writes === (isWrite ? 1 : 0) && !queue.length){ tasks = j.tasks||[]; notes = j.notes||[]; ls.set("renraku-tasks", tasks); ls.set("renraku-notes", notes); }
+    lineOn = !!j.line;
+    return j.result;
+  }finally{ if(isWrite) writes--; busy--; status(); render(); }
+}
+async function flush(){
+  while(queue.length){ const q = queue[0];
+    try{ await api(q.action, q.params); queue.shift(); ls.set("renraku-queue", queue); }
+    catch(e){ if(e.message==="network") return; queue.shift(); ls.set("renraku-queue", queue); toast("保存できなかった操作がありました"); } }
+  if(API_URL && pass) api("list").catch(()=>{});
+}
+function send(action, params){ queue.push({action, params}); ls.set("renraku-queue", queue); render(); flush(); }
+function status(){ $("#sync").textContent = !API_URL ? "設定待ち" : queue.length ? `送信待ち ${queue.length}件` : busy ? "同期中…" : "↻"; }
+
+function render(){
+  document.querySelectorAll(".tabs button").forEach(b=>b.classList.toggle("on", b.dataset.t===tab));
+  $("#vTask").hidden = tab!=="task"; $("#vNote").hidden = tab!=="note"; $("#add").hidden = tab!=="task";
+  const opts = (sel, extra) => (extra||"") + MEMBERS.map(m=>`<option value="${esc(m)}" ${m===sel?"selected":""}>${esc(m)}</option>`).join("");
+  $("#who").innerHTML = `<option value="">名前</option>` + opts(me);
+  // 作業依頼
+  document.querySelectorAll("#tf button").forEach(b=>b.classList.toggle("on", b.dataset.f===tf));
+  const mineOpen = tasks.filter(t=>!t.done && (!t.assignee || t.assignee===me));
+  $("#bTask").textContent = mineOpen.length || "";
+  let list = tf==="mine" ? mineOpen : tf==="open" ? tasks.filter(t=>!t.done) : tasks.filter(t=>t.done).sort((a,b)=>String(b.doneAt).localeCompare(String(a.doneAt))).slice(0,100);
+  if(tf!=="done") list = list.slice().sort((a,b)=>(a.due||"9999").localeCompare(b.due||"9999") || String(a.createdAt).localeCompare(String(b.createdAt)));
+  const t0 = today();
+  $("#tasks").innerHTML = list.length ? list.map(t=>{ const over = t.due && !t.done && t.due < t0, soon = t.due && !t.done && t.due===t0;
+    return `<div class="task ${t.done?"done":""}"><input type="checkbox" data-done="${esc(t.id)}" ${t.done?"checked":""} aria-label="完了"><div class="b"><div class="t">${esc(t.title)}</div>
+      <div class="m"><span>担当：${esc(t.assignee||"誰でも")}</span>${t.due?`<span class="${over?"over":soon?"soon":""}">期限 ${md(t.due)}${over?"（超過）":soon?"（今日）":""}</span>`:""}<span>依頼 ${esc(t.createdBy||"")}</span></div>
+      ${t.memo?`<div class="memo">${esc(t.memo)}</div>`:""}</div><button class="x" type="button" data-ed="${esc(t.id)}">編集</button></div>`; }).join("")
+    : `<div class="empty">${tf==="mine" ? "自分の未完了の作業はありません" : tf==="open" ? "未完了の作業はありません" : "完了した作業はまだありません"}</div>`;
+  // 申し送り
+  $("#noteTo").innerHTML = `<option value="">全員へ</option>` + MEMBERS.filter(m=>m!==me).map(m=>`<option value="${esc(m)}">${esc(m)}さんへ</option>`).join("");
+  const unread = notes.filter(n=>String(n.createdAt) > seen && n.author!==me).length;
+  $("#bNote").textContent = tab==="note" ? "" : (unread || "");
+  $("#notes").innerHTML = notes.length ? notes.slice().reverse().map(n=>`<div class="note"><div class="h"><span><b>${esc(n.author)}</b>${n.to?` → ${esc(n.to)}さん`:""}</span><span>${ago(n.createdAt)}${n.author===me?` <button class="x" type="button" data-rmn="${esc(n.id)}">削除</button>`:""}</span></div><div class="tx">${esc(n.text)}</div></div>`).join("") : '<div class="empty">申し送りはまだありません</div>';
+  if(tab==="note" && notes.length){ const last = notes.map(n=>String(n.createdAt)).sort().pop(); if(last > seen){ seen = last; ls.set("renraku-seen", seen); } }
+  status();
+}
+document.querySelector(".tabs").onclick = e => { const b = e.target.closest("[data-t]"); if(!b) return; tab = b.dataset.t; ls.set("renraku-tab", tab); render(); };
+$("#tf").onclick = e => { const b = e.target.closest("[data-f]"); if(!b) return; tf = b.dataset.f; ls.set("renraku-tf", tf); render(); };
+$("#who").onchange = e => { me = e.target.value; ls.set("renraku-me", me); render(); };
+$("#tasks").addEventListener("change", e => { const c = e.target.closest("[data-done]"); if(!c) return; const t = tasks.find(x=>x.id===c.dataset.done); if(!t) return;
+  t.done = c.checked ? "1" : ""; t.doneAt = c.checked ? new Date().toISOString() : ""; ls.set("renraku-tasks", tasks); render(); toast(c.checked ? "完了にしました" : "未完了に戻しました");
+  send("doneTask", {id:t.id, done:c.checked, by:me}); });
+$("#tasks").addEventListener("click", e => { const b = e.target.closest("[data-ed]"); if(b) openForm(tasks.find(t=>t.id===b.dataset.ed)); });
+$("#notes").addEventListener("click", e => { const b = e.target.closest("[data-rmn]"); if(!b) return;
+  if(!b.classList.contains("arm")){ b.classList.add("arm"); b.textContent = "もう一度"; return; }
+  notes = notes.filter(n=>n.id!==b.dataset.rmn); ls.set("renraku-notes", notes); render(); send("removeNote", {id:b.dataset.rmn}); });
+let editing = null;
+function openForm(t){
+  editing = t || null; const f = $("#form"); f.reset();
+  f.elements.assignee.innerHTML = `<option value="">誰でも</option>` + MEMBERS.map(m=>`<option value="${esc(m)}">${esc(m)}</option>`).join("");
+  $("#fTitle").textContent = t ? "依頼を編集" : "作業を依頼する";
+  if(t){ f.elements.title.value = t.title; f.elements.assignee.value = t.assignee||""; f.elements.due.value = t.due||""; f.elements.memo.value = t.memo||""; }
+  $("#cancel").textContent = t ? "削除" : "閉じる"; delete $("#cancel").dataset.arm;
+  $("#sheet").hidden = false;
+}
+$("#add").onclick = () => { if(!me){ toast("右上で自分の名前を選んでください"); return; } openForm(null); };
+$("#sheet").onclick = e => { if(e.target.id==="sheet") $("#sheet").hidden = true; };
+$("#cancel").onclick = () => { const b = $("#cancel"); if(!editing){ $("#sheet").hidden = true; return; }
+  if(!b.dataset.arm){ b.dataset.arm = "1"; b.textContent = "もう一度押すと削除"; return; }
+  const id = editing.id; tasks = tasks.filter(t=>t.id!==id); ls.set("renraku-tasks", tasks); $("#sheet").hidden = true; render(); toast("削除しました"); send("removeTask", {id}); };
+$("#form").onsubmit = e => { e.preventDefault(); const f = e.target;
+  const item = Object.assign({}, editing || {id:"t"+Date.now().toString(36)+Math.random().toString(36).slice(2,5), createdBy:me, createdAt:new Date().toISOString(), done:"", doneAt:""},
+    {title:f.elements.title.value.trim(), assignee:f.elements.assignee.value, due:f.elements.due.value, memo:f.elements.memo.value.trim()});
+  if(!item.title) return;
+  const k = tasks.findIndex(t=>t.id===item.id); if(k>=0) tasks[k] = item; else tasks.push(item);
+  ls.set("renraku-tasks", tasks); $("#sheet").hidden = true; render(); toast(editing ? "保存しました" : (lineOn ? "依頼しました（LINEに通知）" : "依頼しました"));
+  send("saveTask", {item}); };
+$("#noteForm").onsubmit = e => { e.preventDefault(); if(!me){ toast("右上で自分の名前を選んでください"); return; }
+  const text = $("#noteText").value.trim(); if(!text) return;
+  const item = {id:"n"+Date.now().toString(36)+Math.random().toString(36).slice(2,5), text, author:me, createdAt:new Date().toISOString(), to:$("#noteTo").value};
+  notes.push(item); ls.set("renraku-notes", notes); $("#noteText").value = ""; render(); toast("送りました"); send("addNote", {item}); };
+
+function showLock(err){
+  $("#whoIn").innerHTML = `<option value="">自分の名前を選ぶ</option>` + MEMBERS.map(m=>`<option ${m===me?"selected":""}>${esc(m)}</option>`).join("");
+  $("#lockMsg").textContent = err==="passcode_not_set" ? "データ側で暗証番号がまだ設定されていません。" : err==="passcode" && pass ? "暗証番号が違います。" : "社内の暗証番号と、自分の名前を選んでください。";
+  $("#lock").hidden = false;
+}
+$("#lockForm").onsubmit = async e => { e.preventDefault(); pass = $("#passIn").value.trim(); me = $("#whoIn").value; if(!pass || !me){ toast("番号と名前を入れてください"); return; }
+  ls.set("renraku-me", me);
+  try{ await api("list"); localStorage.setItem("rekil-renraku-pass", pass); $("#lock").hidden = true; }catch(_){} };
+$("#sync").onclick = () => flush();
+render();
+if(API_URL){ if(!pass || !me) showLock(); else flush(); }
+addEventListener("online", flush);
+document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState==="visible"){ checkUpdate(); if(API_URL && pass && !busy) flush(); } });
+setInterval(()=>{ if(document.visibilityState==="visible" && API_URL && pass && !busy && $("#sheet").hidden) flush(); }, 60000);
+async function checkUpdate(){ try{ const r=await fetch(location.pathname+"?v="+Date.now(),{cache:"no-store"}); const t=await r.text(); const m=t.match(/const APP_VERSION = "([^"]+)"/); if(m && m[1]!==APP_VERSION && !busy && !queue.length) location.replace(location.pathname+"?v="+encodeURIComponent(m[1])); }catch(_){} }
+if(location.protocol.startsWith("http")){ checkUpdate(); setInterval(()=>{ if(document.visibilityState==="visible") checkUpdate(); }, 60000); }
+try{history.scrollRestoration="manual"}catch(_){} addEventListener("pageshow",()=>scrollTo(0,0));
+</script>
+<script>/* 共通：電波がなくても開ける・ホームへ戻るボタン */if("serviceWorker" in navigator&&location.protocol.startsWith("http"))navigator.serviceWorker.register("../sw.js",{scope:"../"}).catch(()=>{});try{if(sessionStorage.getItem("rekil-from-home")&&!/\/home\/?$/.test(location.pathname)){const b=document.createElement("a");b.href="../home/";b.textContent="⌂";b.setAttribute("aria-label","ReKiLホームへ");b.style.cssText="position:fixed;right:12px;bottom:calc(84px + env(safe-area-inset-bottom,0px));z-index:70;width:44px;height:44px;border-radius:22px;background:#2a313a;color:#fff;font-size:22px;display:flex;align-items:center;justify-content:center;text-decoration:none;box-shadow:0 4px 16px #0008;opacity:.9";document.body.appendChild(b)}}catch(_){}</script>
+</body>
+</html>

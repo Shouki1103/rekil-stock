@@ -44,6 +44,8 @@ header{gap:8px}.brand{white-space:nowrap;flex:0 0 auto}.hctl{display:flex;align-
 </style>
 </head>
 <body>
+<script>/* rekil-common */</script>
+
 <header><div class="brand"><i></i>ReKiL ホーム</div><div class="hctl"><button class="sync" id="sync" type="button">確認中…</button><button class="sync" id="edit" type="button">並べ替え</button></div></header>
 <main>
   <details class="todo" id="today"><summary><h2 id="todayTitle">今日やること</h2></summary><div id="todayList"><span class="ok">読み込み中…</span></div></details>
@@ -51,7 +53,7 @@ header{gap:8px}.brand{white-space:nowrap;flex:0 0 auto}.hctl{display:flex;align-
   <div id="groups"></div>
 </main>
 <script>
-const APP_VERSION = "2026-11-18-1";
+const APP_VERSION = "2026-11-18-3";
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const today = () => new Date(Date.now()+9*3600e3).toISOString().slice(0,10);
@@ -177,9 +179,10 @@ async function refresh(){
   render();
 }
 try{ Object.assign(items, JSON.parse(localStorage.getItem("rekil-home-items")||"{}")); }catch(_){}
+try{ sessionStorage.setItem("rekil-from-home","1"); }catch(_){}
 render(); renderToday(); loadCatalog(); loadTasks(); refresh();
 $("#sync").onclick = refresh;
-document.addEventListener("click", e=>{ if(e.target.id!=="setPass") return; const v = prompt("社内の暗証番号（ReKiL Stockなどと同じ番号）"); if(!v) return; try{ localStorage.setItem("rekil-pass", v.trim()); }catch(_){} refresh(); });
+document.addEventListener("click", e=>{ if(e.target.id!=="setPass") return; const v = prompt("社内の暗証番号（ReKiL Stockなどと同じ番号）。一度入れると、ホームから開くアプリで入力不要になります"); if(!v) return; try{ localStorage.setItem("rekil-pass", v.trim()); }catch(_){} refresh(); });
 $("#edit").onclick = ()=>{ editing = !editing; render(); };
 document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState==="visible"){ checkUpdate(); refresh(); } });
 async function checkUpdate(){ try{ const r=await fetch(location.pathname+"?v="+Date.now(),{cache:"no-store"}); const t=await r.text(); const m=t.match(/const APP_VERSION = "([^"]+)"/); if(m && m[1]!==APP_VERSION) location.replace(location.pathname+"?v="+encodeURIComponent(m[1])); }catch(_){} }
@@ -187,5 +190,6 @@ document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState=
 if(location.protocol.startsWith("http")){ checkUpdate(); setInterval(()=>{ if(document.visibilityState==="visible") checkUpdate(); }, 60000); }
 try{history.scrollRestoration="manual"}catch(_){} addEventListener("pageshow",()=>scrollTo(0,0));
 </script>
+<script>/* 共通：電波がなくても開ける・ホームへ戻るボタン */if("serviceWorker" in navigator&&location.protocol.startsWith("http"))navigator.serviceWorker.register("../sw.js",{scope:"../"}).catch(()=>{});try{if(sessionStorage.getItem("rekil-from-home")&&!/\/home\/?$/.test(location.pathname)){const b=document.createElement("a");b.href="../home/";b.textContent="⌂";b.setAttribute("aria-label","ReKiLホームへ");b.style.cssText="position:fixed;right:12px;bottom:calc(84px + env(safe-area-inset-bottom,0px));z-index:70;width:44px;height:44px;border-radius:22px;background:#2a313a;color:#fff;font-size:22px;display:flex;align-items:center;justify-content:center;text-decoration:none;box-shadow:0 4px 16px #0008;opacity:.9";document.body.appendChild(b)}}catch(_){}</script>
 </body>
 </html>

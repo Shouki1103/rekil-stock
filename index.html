@@ -1,6 +1,8 @@
 <!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="ReKiL Stock"><meta name="theme-color" content="#0d1014"><link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="icon-180.png"><link rel="icon" href="icon-192.png"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}
 body{padding-top:env(safe-area-inset-top,0px)!important}
 </style></head><body>
+<script>/* rekil-common */</script>
+
 <title>ReKiL Stock</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1432,7 +1434,7 @@ document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState=
 /* ---------- 新しい版の自動反映 ----------
    GitHub Pagesやスマホが古い画面を覚えていても、開いたとき・画面に戻ったときに
    最新版があるか確認し、あれば自動で読み直す */
-const APP_VERSION = "2026-11-17-20";
+const APP_VERSION = "2026-11-18-3";
 async function checkUpdate(){
   try{
     const r = await fetch(location.pathname + "?v=" + Date.now(), {cache:"no-store"});
@@ -1458,4 +1460,5 @@ else { if(!queue.length) $("#sync").textContent="接続中…"; if(!who) showWho
 
 <script>/* 開いたときは必ず一番上から表示（上が隠れないように） */try{history.scrollRestoration="manual"}catch(_){}addEventListener("pageshow",()=>scrollTo(0,0));addEventListener("load",()=>{scrollTo(0,0);setTimeout(()=>scrollTo(0,0),300)});</script>
 <script>setInterval(()=>{try{if(document.visibilityState==="visible")checkUpdate()}catch(_){}},60000);</script>
+<script>/* 共通：電波がなくても開ける・ホームへ戻るボタン */if("serviceWorker" in navigator&&location.protocol.startsWith("http"))navigator.serviceWorker.register("./sw.js",{scope:"./"}).catch(()=>{});try{if(sessionStorage.getItem("rekil-from-home")&&!/\/home\/?$/.test(location.pathname)){const b=document.createElement("a");b.href="./home/";b.textContent="⌂";b.setAttribute("aria-label","ReKiLホームへ");b.style.cssText="position:fixed;right:12px;bottom:calc(84px + env(safe-area-inset-bottom,0px));z-index:70;width:44px;height:44px;border-radius:22px;background:#2a313a;color:#fff;font-size:22px;display:flex;align-items:center;justify-content:center;text-decoration:none;box-shadow:0 4px 16px #0008;opacity:.9";document.body.appendChild(b)}}catch(_){}</script>
 </body></html>

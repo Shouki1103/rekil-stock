@@ -106,6 +106,8 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 </style>
 </head>
 <body>
+<script>/* rekil-common */try{const K="rekil-irai-pass",P=localStorage.getItem("rekil-pass");if(P&&!localStorage.getItem(K))localStorage.setItem(K,P)}catch(_){}</script>
+
 <div class="wrap">
   <div class="hdr"><h1>eBay出品依頼</h1><span class="sync" id="sync"></span></div>
   <p class="sub">バッグの採寸・状態を入力して保存すると、Claudeが下書きを作成します。</p>
@@ -250,7 +252,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 <script>
 /* ▼ Apps Script をデプロイしたときの「ウェブアプリのURL」 */
 const API_URL = "https://script.google.com/macros/s/AKfycbyt_sbyLWtGgD8TODNx7kvs2gEOlisN6X8XWqFYGyVQVHkmqvrIRTo6RWZXgYSPjRCB/exec";
-const APP_VERSION = "2026-11-17-45";
+const APP_VERSION = "2026-11-18-3";
 
 const FIELDS=["code","brand","shape","bagType","model","mpn","serial","country","color","extMat","fabric","finish","form","pattern","handleMat","handleColor","handleStyle","liningColor","liningMat","hwColor","hwMat","closure","acc","w","h","d","handleDrop","strapDrop","size","rank","features","note"];
 const MODEL_SKIP=new Set(["code","serial","rank","note","acc"]);
@@ -544,5 +546,6 @@ document.querySelectorAll(".mdd").forEach(multiInit);
 </script>
 <script>/* 開いたときは必ず一番上から表示（上が隠れないように） */try{history.scrollRestoration="manual"}catch(_){}addEventListener("pageshow",()=>scrollTo(0,0));addEventListener("load",()=>{scrollTo(0,0);setTimeout(()=>scrollTo(0,0),300)});</script>
 <script>setInterval(()=>{try{if(document.visibilityState==="visible")checkUpdate()}catch(_){}},60000);</script>
+<script>/* 共通：電波がなくても開ける・ホームへ戻るボタン */if("serviceWorker" in navigator&&location.protocol.startsWith("http"))navigator.serviceWorker.register("../sw.js",{scope:"../"}).catch(()=>{});try{if(sessionStorage.getItem("rekil-from-home")&&!/\/home\/?$/.test(location.pathname)){const b=document.createElement("a");b.href="../home/";b.textContent="⌂";b.setAttribute("aria-label","ReKiLホームへ");b.style.cssText="position:fixed;right:12px;bottom:calc(84px + env(safe-area-inset-bottom,0px));z-index:70;width:44px;height:44px;border-radius:22px;background:#2a313a;color:#fff;font-size:22px;display:flex;align-items:center;justify-content:center;text-decoration:none;box-shadow:0 4px 16px #0008;opacity:.9";document.body.appendChild(b)}}catch(_){}</script>
 </body>
 </html>
