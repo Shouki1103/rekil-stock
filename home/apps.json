@@ -105,7 +105,8 @@
      "id": "kyuyo",
      "name": "給与",
      "url": "../kyuyo/",
-     "icon": "../kyuyo/icon-180.png"
+     "icon": "../kyuyo/icon-180.png",
+     "owner": true
     },
     {
      "id": "portal",
@@ -117,7 +118,8 @@
      "id": "account",
      "name": "アカウント一覧",
      "url": "../account/",
-     "icon": "../account/icon-180.png"
+     "icon": "../account/icon-180.png",
+     "owner": true
     },
     {
      "id": "lounge",
