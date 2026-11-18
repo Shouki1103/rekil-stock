@@ -53,7 +53,7 @@ header{gap:8px}.brand{white-space:nowrap;flex:0 0 auto}.hctl{display:flex;align-
   <div id="groups"></div>
 </main>
 <script>
-const APP_VERSION = "2026-11-19-1";
+const APP_VERSION = "2026-11-19-2";
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const today = () => new Date(Date.now()+9*3600e3).toISOString().slice(0,10);
@@ -94,7 +94,9 @@ function render(){
       <select data-grp="${gi},${i}">${names.map((n,k)=>`<option value="${k}" ${k===gi?"selected":""}>${esc(n)}</option>`).join("")}${g.name===HIDDEN?"":`<option value="hide">使わない（非表示にする）</option>`}<option value="new">＋新しいグループ</option></select></div>`).join("") || '<p class="hint">（アプリなし）</p>'}`).join("")
       + `<div class="ebar"><button id="reset" type="button">最初の並びに戻す</button> ${isOwner() ? `<button id="ownerOff" type="button">代表専用アプリを隠す</button>` : `<button id="ownerOn" type="button">代表専用（給与など）を表示</button>`}</div>`;
   }
-  $("#edit").textContent = editing ? "完了" : "並べ替え";
+  if(!isOwner()) editing = false;
+  $("#edit").textContent = !isOwner() ? "🔒" : editing ? "完了" : "並べ替え";
+  $("#edit").setAttribute("aria-label", isOwner() ? "並べ替え" : "代表のみ（暗証番号）");
   const list = Object.values(items).flat();
   $("#todoList").innerHTML = (list.length ? list.map(x=>`<a href="${esc(x.u)}"><span>${esc(x.t)}</span><b>${esc(x.v)}</b></a>`).join("") : '<span class="ok">未対応はありません</span>')
     + (typeof failed!=="undefined" && failed.length ? `<div class="warnline">確認できなかったアプリ：${failed.map(esc).join("、")}<br><button type="button" class="sync" id="setPass" style="border:1px solid var(--line);border-radius:8px;padding:4px 10px;margin-top:6px">社内の暗証番号を入れる</button></div>` : "");
@@ -102,7 +104,7 @@ function render(){
 $("#groups").addEventListener("click", e=>{
   const m = e.target.closest("[data-mv]"); if(m){ const [gi,i,d] = m.dataset.mv.split(",").map(Number); const gs = groupsView(); const ids = gs[gi].ids; [ids[i], ids[i+d]] = [ids[i+d], ids[i]]; saveLayout(gs); render(); return; }
   if(e.target.id==="ownerOn"){ ownerUnlock(); return; }
-  if(e.target.id==="ownerOff"){ try{ localStorage.removeItem("rekil-kyuyo-pass"); localStorage.removeItem("rekil-account-pass"); }catch(_){} render(); return; }
+  if(e.target.id==="ownerOff"){ try{ localStorage.removeItem("rekil-kyuyo-pass"); localStorage.removeItem("rekil-account-pass"); }catch(_){} editing = false; render(); return; }
   if(e.target.id==="reset"){ layout = null; try{ localStorage.removeItem("rekil-home-layout"); }catch(_){} render(); }
 });
 $("#groups").addEventListener("change", e=>{
@@ -144,7 +146,7 @@ async function ownerUnlock(){
     const r = await fetch("https://script.google.com/macros/s/AKfycbwNWiqaeTw23PfypT3TgOCv5yzfKzFbipU4u9-N8RqWFOFwLfzuaNQdL6oO3yKhytNZ4g/exec", {method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"}, body: JSON.stringify({action:"load", pass:v.trim()})});
     const j = await r.json();
     if(!j.ok){ alert("暗証番号が違います"); return; }
-    localStorage.setItem("rekil-kyuyo-pass", v.trim()); render(); alert("この端末で給与・アカウント一覧を表示します");
+    localStorage.setItem("rekil-kyuyo-pass", v.trim()); render(); alert("この端末で給与・アカウント一覧の表示と、並べ替えができるようになりました");
   }catch(_){ alert("通信できませんでした。もう一度お試しください"); }
 }
 async function call(url, pass, action="list"){
@@ -197,7 +199,7 @@ try{ sessionStorage.setItem("rekil-from-home","1"); }catch(_){}
 render(); renderToday(); loadCatalog(); loadTasks(); refresh();
 $("#sync").onclick = refresh;
 document.addEventListener("click", e=>{ if(e.target.id!=="setPass") return; const v = prompt("社内の暗証番号（ReKiL Stockなどと同じ番号）。一度入れると、ホームから開くアプリで入力不要になります"); if(!v) return; try{ localStorage.setItem("rekil-pass", v.trim()); }catch(_){} refresh(); });
-$("#edit").onclick = ()=>{ editing = !editing; render(); };
+$("#edit").onclick = ()=>{ if(!isOwner()){ ownerUnlock(); return; } editing = !editing; render(); };
 document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState==="visible"){ checkUpdate(); refresh(); } });
 async function checkUpdate(){ try{ const r=await fetch(location.pathname+"?v="+Date.now(),{cache:"no-store"}); const t=await r.text(); const m=t.match(/const APP_VERSION = "([^"]+)"/); if(m && m[1]!==APP_VERSION) location.replace(location.pathname+"?v="+encodeURIComponent(m[1])); }catch(_){} }
 document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState==="visible"){ loadCatalog(); loadTasks(); renderToday(); } });
