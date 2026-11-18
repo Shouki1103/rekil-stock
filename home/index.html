@@ -53,7 +53,7 @@ header{gap:8px}.brand{white-space:nowrap;flex:0 0 auto}.hctl{display:flex;align-
   <div id="groups"></div>
 </main>
 <script>
-const APP_VERSION = "2026-11-19-2";
+const APP_VERSION = "2026-11-19-3";
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const today = () => new Date(Date.now()+9*3600e3).toISOString().slice(0,10);
@@ -92,11 +92,11 @@ function render(){
     $("#groups").innerHTML = `<p class="hint">↑↓で順番、右のプルダウンでグループを変えられます。「使わない」にしたアプリはホームに出なくなります（ここから戻せます）。この端末に保存されます。</p>` + gs.map((g,gi)=>`<h3>${esc(g.name)}</h3>${g.ids.map((id,i)=>`<div class="erow"><span class="en">${esc(A[id].name)}</span>
       <button data-mv="${gi},${i},-1" ${i===0?"disabled":""}>↑</button><button data-mv="${gi},${i},1" ${i===g.ids.length-1?"disabled":""}>↓</button>
       <select data-grp="${gi},${i}">${names.map((n,k)=>`<option value="${k}" ${k===gi?"selected":""}>${esc(n)}</option>`).join("")}${g.name===HIDDEN?"":`<option value="hide">使わない（非表示にする）</option>`}<option value="new">＋新しいグループ</option></select></div>`).join("") || '<p class="hint">（アプリなし）</p>'}`).join("")
-      + `<div class="ebar"><button id="reset" type="button">最初の並びに戻す</button> ${isOwner() ? `<button id="ownerOff" type="button">代表専用アプリを隠す</button>` : `<button id="ownerOn" type="button">代表専用（給与など）を表示</button>`}</div>`;
+      + `<div class="ebar"><button id="reset" type="button">最初の並びに戻す</button> ${isOwner() ? `<button id="ownerOff" type="button">この端末のログインを解除</button>` : `<button id="ownerOn" type="button">代表ログイン</button>`}</div>`;
   }
   if(!isOwner()) editing = false;
   $("#edit").textContent = !isOwner() ? "🔒" : editing ? "完了" : "並べ替え";
-  $("#edit").setAttribute("aria-label", isOwner() ? "並べ替え" : "代表のみ（暗証番号）");
+  $("#edit").setAttribute("aria-label", isOwner() ? "並べ替え" : "代表ログイン");
   const list = Object.values(items).flat();
   $("#todoList").innerHTML = (list.length ? list.map(x=>`<a href="${esc(x.u)}"><span>${esc(x.t)}</span><b>${esc(x.v)}</b></a>`).join("") : '<span class="ok">未対応はありません</span>')
     + (typeof failed!=="undefined" && failed.length ? `<div class="warnline">確認できなかったアプリ：${failed.map(esc).join("、")}<br><button type="button" class="sync" id="setPass" style="border:1px solid var(--line);border-radius:8px;padding:4px 10px;margin-top:6px">社内の暗証番号を入れる</button></div>` : "");
@@ -139,14 +139,14 @@ $("#todayList").addEventListener("change", e=>{ const c = e.target.closest("[dat
   try{ localStorage.setItem("rekil-home-tdone", JSON.stringify(tdone)); }catch(_){} renderToday(); });
 const needPass = k => { const v = getPass(k); if(!v) throw new Error("nopass"); return v; };
 
-/* 代表専用：給与の暗証番号が合っているときだけ、給与・アカウント一覧を表示 */
+/* 代表ログイン：一度ログインした端末では、ずっと代表用の表示（給与など）になる */
 async function ownerUnlock(){
-  const v = prompt("給与の暗証番号（代表専用）"); if(!v) return;
+  const v = prompt("代表ログイン"); if(!v) return;
   try{
     const r = await fetch("https://script.google.com/macros/s/AKfycbwNWiqaeTw23PfypT3TgOCv5yzfKzFbipU4u9-N8RqWFOFwLfzuaNQdL6oO3yKhytNZ4g/exec", {method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"}, body: JSON.stringify({action:"load", pass:v.trim()})});
     const j = await r.json();
-    if(!j.ok){ alert("暗証番号が違います"); return; }
-    localStorage.setItem("rekil-kyuyo-pass", v.trim()); render(); alert("この端末で給与・アカウント一覧の表示と、並べ替えができるようになりました");
+    if(!j.ok){ alert("ログインできませんでした"); return; }
+    localStorage.setItem("rekil-kyuyo-pass", v.trim()); render(); alert("ログインしました。この端末ではこのままずっと使えます");
   }catch(_){ alert("通信できませんでした。もう一度お試しください"); }
 }
 async function call(url, pass, action="list"){
