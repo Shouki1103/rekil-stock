@@ -38,7 +38,7 @@ h3{font-size:13px;color:var(--muted);margin:16px 2px 8px;font-weight:700}
 .badge{position:absolute;top:-6px;left:calc(50% + 16px);min-width:22px;height:22px;padding:0 6px;border-radius:11px;background:var(--danger);color:#fff;font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;border:2px solid var(--bg)}
 .badge:empty{display:none}
 .hint{font-size:12px;color:var(--muted)}.erow{display:flex;align-items:center;gap:6px;padding:6px 0;border-bottom:1px solid var(--line)}.erow .en{flex:1;min-width:0}.erow button,.erow select,.ebar button{font:inherit;font-size:14px;min-height:36px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--fg);padding:0 10px}.erow select{max-width:130px}.ebar{margin-top:14px}#edit{border:1px solid var(--line);border-radius:8px;padding:4px 10px}
-.tk{display:flex;align-items:center;gap:10px;padding:7px 0;border-top:1px solid var(--line);font-size:14px}.tk:first-of-type{border-top:0}.tk input{width:20px;height:20px;accent-color:var(--accent);flex:0 0 auto}.tk.done span{opacity:.45;text-decoration:line-through}.tk small{color:var(--danger);font-size:11px;margin-left:auto;flex:0 0 auto}
+.tk{display:flex;align-items:center;gap:10px;padding:7px 0;border-top:1px solid var(--line);font-size:14px}.tk:first-of-type{border-top:0}.tk input{width:20px;height:20px;accent-color:var(--accent);flex:0 0 auto}.tk.done span{opacity:.45;text-decoration:line-through}.tk small{color:var(--danger);font-size:11px;margin-left:auto;flex:0 0 auto}.tk small.cdone{color:var(--accent)}
 #today summary{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between}#today summary::-webkit-details-marker{display:none}#today summary::after{content:"▾ 開く";font-size:12px;color:var(--muted)}#today[open] summary::after{content:"▴ 閉じる"}#today summary h2{margin:0}#today[open] summary{margin-bottom:6px}
 header{gap:8px}.brand{white-space:nowrap;flex:0 0 auto}.hctl{display:flex;align-items:center;gap:6px;min-width:0}.hctl .sync{white-space:nowrap}
 .warnline{font-size:12px;color:var(--muted);padding:6px 0 0;border-top:1px solid var(--line);margin-top:4px}
@@ -54,7 +54,7 @@ header{gap:8px}.brand{white-space:nowrap;flex:0 0 auto}.hctl{display:flex;align-
   <div id="groups"></div>
 </main>
 <script>
-const APP_VERSION = "2026-11-19-3";
+const APP_VERSION = "2026-11-19-4";
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const today = () => new Date(Date.now()+9*3600e3).toISOString().slice(0,10);
@@ -119,6 +119,10 @@ $("#groups").addEventListener("change", e=>{
 let TASKS = []; try{ TASKS = JSON.parse(localStorage.getItem("rekil-home-tasks")||"[]"); }catch(_){}
 let tdone = {}; try{ tdone = JSON.parse(localStorage.getItem("rekil-home-tdone")||"{}"); }catch(_){}
 async function loadTasks(){ try{ const r = await fetch("tasks.json?v="+Date.now(), {cache:"no-store"}); const j = await r.json(); if(j && j.tasks){ TASKS = j.tasks; localStorage.setItem("rekil-home-tasks", JSON.stringify(TASKS)); renderToday(); } }catch(_){} }
+/* Claudeが済ませた作業（done.json）。全端末共通で完了扱い */
+let SDONE = {}; try{ SDONE = JSON.parse(localStorage.getItem("rekil-home-sdone")||"{}"); }catch(_){}
+async function loadDone(){ try{ const r = await fetch("done.json?v="+Date.now(), {cache:"no-store"}); const j = await r.json(); if(j && j.done){ SDONE = j.done; localStorage.setItem("rekil-home-sdone", JSON.stringify(SDONE)); renderToday(); } }catch(_){} }
+const isDone = key => !!(tdone[key] || SDONE[key]);
 function dueKeys(){
   const t = new Date(Date.now()+9*3600e3), y = t.getUTCFullYear(), m = t.getUTCMonth(), d = t.getUTCDate(), dow = t.getUTCDay();
   const last = new Date(Date.UTC(y, m+1, 0)).getUTCDate(), ym = `${y}-${String(m+1).padStart(2,"0")}`, td = `${ym}-${String(d).padStart(2,"0")}`;
@@ -131,10 +135,10 @@ function dueKeys(){
   return out;
 }
 function renderToday(){
-  const list = dueKeys().filter(x=>!(x.late && tdone[x.key]));
-  const left = list.filter(x=>!tdone[x.key]).length;
+  const list = dueKeys().filter(x=>!(x.late && isDone(x.key)));
+  const left = list.filter(x=>!isDone(x.key)).length;
   $("#todayTitle").textContent = `今日やること（残り${left}件）`;
-  $("#todayList").innerHTML = list.length ? list.sort((a,b)=>(!!tdone[a.key])-(!!tdone[b.key]) || (b.late-a.late)).map(x=>`<label class="tk ${tdone[x.key]?"done":""}"><input type="checkbox" data-tk="${esc(x.key)}" ${tdone[x.key]?"checked":""}><span>${esc(x.k.t)}</span>${x.late&&!tdone[x.key]?"<small>未対応</small>":""}</label>`).join("") : '<span class="ok">今日の定期作業はありません</span>';
+  $("#todayList").innerHTML = list.length ? list.sort((a,b)=>isDone(a.key)-isDone(b.key) || (b.late-a.late)).map(x=>`<label class="tk ${isDone(x.key)?"done":""}"${SDONE[x.key]?` title="${esc(SDONE[x.key])}"`:""}><input type="checkbox" data-tk="${esc(x.key)}" ${isDone(x.key)?"checked":""} ${SDONE[x.key]?"disabled":""}><span>${esc(x.k.t)}</span>${x.late&&!isDone(x.key)?"<small>未対応</small>":""}${SDONE[x.key]?'<small class="cdone">Claude済</small>':""}</label>`).join("") : '<span class="ok">今日の定期作業はありません</span>';
 }
 $("#todayList").addEventListener("change", e=>{ const c = e.target.closest("[data-tk]"); if(!c) return; if(c.checked) tdone[c.dataset.tk] = 1; else delete tdone[c.dataset.tk];
   try{ localStorage.setItem("rekil-home-tdone", JSON.stringify(tdone)); }catch(_){} renderToday(); });
@@ -197,13 +201,13 @@ async function refresh(){
 }
 try{ Object.assign(items, JSON.parse(localStorage.getItem("rekil-home-items")||"{}")); }catch(_){}
 try{ sessionStorage.setItem("rekil-from-home","1"); }catch(_){}
-render(); renderToday(); loadCatalog(); loadTasks(); refresh();
+render(); renderToday(); loadCatalog(); loadTasks(); loadDone(); refresh();
 $("#sync").onclick = refresh;
 document.addEventListener("click", e=>{ if(e.target.id!=="setPass") return; const v = prompt("社内の暗証番号（ReKiL Stockなどと同じ番号）。一度入れると、ホームから開くアプリで入力不要になります"); if(!v) return; try{ localStorage.setItem("rekil-pass", v.trim()); }catch(_){} refresh(); });
 $("#edit").onclick = ()=>{ if(!isOwner()){ ownerUnlock(); return; } editing = !editing; render(); };
 document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState==="visible"){ checkUpdate(); refresh(); } });
 async function checkUpdate(){ try{ const r=await fetch(location.pathname+"?v="+Date.now(),{cache:"no-store"}); const t=await r.text(); const m=t.match(/const APP_VERSION = "([^"]+)"/); if(m && m[1]!==APP_VERSION) location.replace(location.pathname+"?v="+encodeURIComponent(m[1])); }catch(_){} }
-document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState==="visible"){ loadCatalog(); loadTasks(); renderToday(); } });
+document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState==="visible"){ loadCatalog(); loadTasks(); loadDone(); renderToday(); } });
 if(location.protocol.startsWith("http")){ checkUpdate(); setInterval(()=>{ if(document.visibilityState==="visible") checkUpdate(); }, 60000); }
 try{history.scrollRestoration="manual"}catch(_){} addEventListener("pageshow",()=>scrollTo(0,0));
 </script>
