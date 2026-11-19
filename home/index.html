@@ -54,7 +54,7 @@ header{gap:8px}.brand{white-space:nowrap;flex:0 0 auto}.hctl{display:flex;align-
   <div id="groups"></div>
 </main>
 <script>
-const APP_VERSION = "2026-11-19-4";
+const APP_VERSION = "2026-11-19-5";
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const today = () => new Date(Date.now()+9*3600e3).toISOString().slice(0,10);
@@ -115,7 +115,7 @@ $("#groups").addEventListener("change", e=>{
 });
 
 
-/* 今日やること（tasks.json）。チェックはこの端末に保存、今月の未チェック分は翌日以降も残る */
+/* 今日やること（tasks.json）。終わった分（チェック・Claude済）はすぐ消え、未完了の分は翌日以降も残る */
 let TASKS = []; try{ TASKS = JSON.parse(localStorage.getItem("rekil-home-tasks")||"[]"); }catch(_){}
 let tdone = {}; try{ tdone = JSON.parse(localStorage.getItem("rekil-home-tdone")||"{}"); }catch(_){}
 async function loadTasks(){ try{ const r = await fetch("tasks.json?v="+Date.now(), {cache:"no-store"}); const j = await r.json(); if(j && j.tasks){ TASKS = j.tasks; localStorage.setItem("rekil-home-tasks", JSON.stringify(TASKS)); renderToday(); } }catch(_){} }
@@ -135,10 +135,10 @@ function dueKeys(){
   return out;
 }
 function renderToday(){
-  const list = dueKeys().filter(x=>!(x.late && isDone(x.key)));
+  const list = dueKeys().filter(x=>!isDone(x.key));
   const left = list.filter(x=>!isDone(x.key)).length;
   $("#todayTitle").textContent = `今日やること（残り${left}件）`;
-  $("#todayList").innerHTML = list.length ? list.sort((a,b)=>isDone(a.key)-isDone(b.key) || (b.late-a.late)).map(x=>`<label class="tk ${isDone(x.key)?"done":""}"${SDONE[x.key]?` title="${esc(SDONE[x.key])}"`:""}><input type="checkbox" data-tk="${esc(x.key)}" ${isDone(x.key)?"checked":""} ${SDONE[x.key]?"disabled":""}><span>${esc(x.k.t)}</span>${x.late&&!isDone(x.key)?"<small>未対応</small>":""}${SDONE[x.key]?'<small class="cdone">Claude済</small>':""}</label>`).join("") : '<span class="ok">今日の定期作業はありません</span>';
+  $("#todayList").innerHTML = list.length ? list.sort((a,b)=>isDone(a.key)-isDone(b.key) || (b.late-a.late)).map(x=>`<label class="tk ${isDone(x.key)?"done":""}"${SDONE[x.key]?` title="${esc(SDONE[x.key])}"`:""}><input type="checkbox" data-tk="${esc(x.key)}" ${isDone(x.key)?"checked":""} ${SDONE[x.key]?"disabled":""}><span>${esc(x.k.t)}</span>${x.late&&!isDone(x.key)?"<small>未対応</small>":""}${SDONE[x.key]?'<small class="cdone">Claude済</small>':""}</label>`).join("") : `<span class="ok">${dueKeys().length?"今日の作業はすべて完了しました":"今日の定期作業はありません"}</span>`;
 }
 $("#todayList").addEventListener("change", e=>{ const c = e.target.closest("[data-tk]"); if(!c) return; if(c.checked) tdone[c.dataset.tk] = 1; else delete tdone[c.dataset.tk];
   try{ localStorage.setItem("rekil-home-tdone", JSON.stringify(tdone)); }catch(_){} renderToday(); });
