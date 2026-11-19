@@ -24,9 +24,10 @@ header{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var
 main{max-width:640px;margin:0 auto;padding:10px 14px}
 .todo{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:6px}
 .todo h2{font-size:13px;color:var(--muted);margin:0 0 6px}
-.todo a{display:flex;justify-content:space-between;gap:10px;color:var(--fg);text-decoration:none;padding:6px 0;border-top:1px solid var(--line)}
+.todo a{display:flex;justify-content:space-between;align-items:center;gap:8px;color:var(--fg);text-decoration:none;padding:6px 0;border-top:1px solid var(--line);font-size:14px;white-space:nowrap}
+.todo a span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;letter-spacing:-.02em}
 .todo a:first-of-type{border-top:0}
-.todo b{color:var(--danger)}
+.todo b{color:var(--danger);flex:0 0 auto}
 .todo .ok{color:var(--muted);font-size:13px}
 h3{font-size:13px;color:var(--muted);margin:16px 2px 8px;font-weight:700}
 .grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px 8px}
@@ -160,7 +161,7 @@ const SRC = {
     const j = await call("https://script.google.com/macros/s/AKfycbwa-V3TqAAmz3S1-zreAI3Jkp0d4f0aGikswIQnTdmxsgFpggUxE0bjl1-sR0DZumSwsQ/exec", needPass("rekil-okuri-pass"));
     const rows = j.rows || []; const c = {ebay:0, yahoo:0, gyohan:0}; rows.forEach(r=>{ if(!r.done && c[r.channel]!=null) c[r.channel]++; });
     const n = c.ebay+c.yahoo+c.gyohan;
-    return {n, items: n ? [{t:`送り状の未登録（eBay ${c.ebay}・ヤフオク ${c.yahoo}・業販 ${c.gyohan}）`, v:`${n}件`, u:"../okurijo/"}] : []};
+    return {n, items: n ? [{t:`送り状の未登録（${[["eBay",c.ebay],["ヤフオク",c.yahoo],["業販",c.gyohan]].filter(x=>x[1]).map(x=>x[0]+" "+x[1]).join("・")}）`, v:`${n}件`, u:"../okurijo/"}] : []};
   },
   henpin: async () => {
     const j = await call("https://script.google.com/macros/s/AKfycbzuakHA841y3KMQTn32E6L6UOebKO9LZGEqX1IHAAQ3Xkb5Y2tvp4ZlIOVnr1u9T5KD/exec", needPass("rekil-henpin-pass"));
