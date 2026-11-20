@@ -23,14 +23,8 @@
      "badge": "shitami"
     },
     {
-     "id": "zaiko",
-     "name": "在庫",
-     "url": "../zaiko/",
-     "icon": "../zaiko/icon-180.png"
-    },
-    {
      "id": "stock",
-     "name": "Stock",
+     "name": "在庫",
      "url": "../",
      "icon": "../icon-180.png"
     },
