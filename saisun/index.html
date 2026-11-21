@@ -157,7 +157,7 @@ const $ = (s, r = document) => r.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 /* ▼ Apps Script をデプロイしたときの「ウェブアプリのURL」 */
 const API_URL = "https://script.google.com/macros/s/AKfycbymxFtpBAd8KiZMjoAyHEl8Tz8GQRjaVLlpAZfm3KGTeOa4Ifz4IHGjO_PZpiTJfx31/exec";
-const APP_VERSION = "2026-11-22-4";
+const APP_VERSION = "2026-11-22-5";
 const CACHE = "saisun-data";
 let items = [], tpls = [], query = "";
 let pass = ""; try{ pass = localStorage.getItem("rekil-saisun-pass") || localStorage.getItem("rekil-pass") || ""; }catch(_){}
@@ -237,6 +237,8 @@ function render(tpl, it){
   (it.measures||[]).forEach(r=>{ if(!r.label) return;
     if(String(r.value??"").trim()===""){ empty.add(r.label); map[r.label]=""; }
     else map[r.label] = `${String(r.value).trim()}${r.unit===""?"":(r.unit||"cm")}`; });
+  // テンプレートにあるのに、この商品に無い採寸項目（後から足した項目など）は空欄として扱う
+  (tpl.fields||[]).map(fieldLabel).forEach(l=>{ if(l && !(it.measures||[]).some(r=>r.label===l)){ empty.add(l); map[l]=""; } });
   // 採寸が空欄の項目は、その行ごと消す（1行に複数ある場合は、空の項目と直前の見出しだけ消す）
   const lines = s.split("\n").flatMap(line=>{
     const keys = [...line.matchAll(/\{([^{}]+)\}/g)].map(m=>m[1]);
