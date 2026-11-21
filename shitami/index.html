@@ -151,7 +151,7 @@ label{display:block;font-size:12px;color:var(--sub);margin:10px 0 4px}
 <script>
 /* ▼ Apps Script をデプロイしたときの「ウェブアプリのURL」 */
 const API_URL = "https://script.google.com/macros/s/AKfycbw7kz9QQt6CMQvwIC4IhtSekntc4xGCUAWuop6U7LO_3U6FMRo--X6wKI0F6hSx3n3Vng/exec";
-const APP_VERSION = "2026-11-21-2";
+const APP_VERSION = "2026-11-22-1";
 let selMode=false,selected=new Set(),shownIds=[];
 const DEF_AUC=["オークネット","エコオク","エコトレ[関東]","エコトレ[関西]","JDS","JBA","コメ兵","モノバンク","プライム","浜屋","大吉","JWA","トレファク","ペンギン","アプレ","リバオク"];
 const DEF_STAFF=["俊輔","祥貴"],DEF_WHO="俊輔";
@@ -222,7 +222,7 @@ function render(){
   [...items].sort((a,b)=>(a.createdAt||0)-(b.createdAt||0)).forEach(x=>{const k=(x.date||"")+"|"+(x.auction||"");tot[k]=(tot[k]||0)+1;nth[x.id]=tot[k]});
   let html="",last=null;
   for(const i of list){
-    const nk=(i.date||"")+"|"+(i.auction||"");const nthTag=tot[nk]>1?`<span class="nth">${nth[i.id]}回目</span>`:"";
+    const nthTag=nth[i.id]>1?`<span class="nth">${nth[i.id]}回目</span>`:"";
     if(i.date!==last){html+=`<div class="day">${dayLabel(i.date)}</div>`;last=i.date}
     const acts=readOnly?"":[
       i.status!=="bid"?`<button class="btn bidb" data-a="bid" data-id="${i.id}">指値登録済にする</button>`:"",
