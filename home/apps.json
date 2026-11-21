@@ -45,6 +45,12 @@
      "name": "利益計算",
      "url": "https://shouki1103.github.io/rekil-rieki/",
      "icon": "https://shouki1103.github.io/rekil-rieki/icon180.png"
+    },
+    {
+     "id": "haiki",
+     "name": "廃棄記録",
+     "url": "../haiki/",
+     "icon": "../haiki/icon-180.png"
     }
    ]
   },
@@ -83,6 +89,12 @@
      "name": "eBay販促",
      "url": "../campaign/",
      "icon": "../campaign/icon-180.png"
+    },
+    {
+     "id": "uriage",
+     "name": "売上入力",
+     "url": "../uriage/",
+     "icon": "../uriage/icon-180.png"
     }
    ]
   },
