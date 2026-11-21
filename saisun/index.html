@@ -157,7 +157,7 @@ const $ = (s, r = document) => r.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 /* ▼ Apps Script をデプロイしたときの「ウェブアプリのURL」 */
 const API_URL = "https://script.google.com/macros/s/AKfycbymxFtpBAd8KiZMjoAyHEl8Tz8GQRjaVLlpAZfm3KGTeOa4Ifz4IHGjO_PZpiTJfx31/exec";
-const APP_VERSION = "2026-11-22-3";
+const APP_VERSION = "2026-11-22-4";
 const CACHE = "saisun-data";
 let items = [], tpls = [], query = "";
 let pass = ""; try{ pass = localStorage.getItem("rekil-saisun-pass") || localStorage.getItem("rekil-pass") || ""; }catch(_){}
@@ -177,9 +177,21 @@ async function api(action, params={}){
     let j; try{ j = await res.json(); }catch(_){ throw new ApiError("bad_response"); }
     if(!j.ok){ if(j.error==="passcode") showLock(); throw new ApiError(j.error||"error"); }
     if(j.data && writes === (isWrite?1:0)){ items = j.data.items||[]; tpls = j.data.templates||[]; keep(); drawItems(); drawTpls(); }
+    if(action==="list" && j.data) setTimeout(syncDrafts, 500);
     if(j.purged) toast(`下書き済みから30日たった${j.purged}件を削除しました`);
     online = true; return j.result;
   }finally{ if(isWrite) writes--; busy--; sync(); }
+}
+/* 保存済みの下書き本文を、今のテンプレートの形に合わせて裏で更新する（ページを開くたび、差がある分だけ） */
+let draftSyncing=false;
+async function syncDrafts(){
+  if(draftSyncing) return; draftSyncing=true;
+  try{
+    const ids = items.filter(it=>tplById(it.templateId) && it.draft!==render(tplById(it.templateId), it)).map(it=>it.id);
+    for(const id of ids){ const it = items.find(x=>x.id===id); if(!it) continue;
+      const draft = render(tplById(it.templateId), it); if(it.draft===draft) continue;
+      await api("saveItem", {item:{...it, draft}}); }
+  }catch(_){}finally{ draftSyncing=false; }
 }
 const newId = () => new Date(Date.now()+9*3600e3).toISOString().replace(/\D/g,"").slice(0,14)+"-"+Math.random().toString(36).slice(2,6);
 /* 画面を先に書き換えてから裏で保存し、失敗したら元に戻す */
