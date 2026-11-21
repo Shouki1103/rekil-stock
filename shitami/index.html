@@ -150,9 +150,9 @@ label{display:block;font-size:12px;color:var(--sub);margin:10px 0 4px}
 <script>
 /* ▼ Apps Script をデプロイしたときの「ウェブアプリのURL」 */
 const API_URL = "https://script.google.com/macros/s/AKfycbw7kz9QQt6CMQvwIC4IhtSekntc4xGCUAWuop6U7LO_3U6FMRo--X6wKI0F6hSx3n3Vng/exec";
-const APP_VERSION = "2026-11-18-3";
+const APP_VERSION = "2026-11-21-1";
 let selMode=false,selected=new Set(),shownIds=[];
-const DEF_AUC=["オークネット","エコリング","JDS","JBA","コメ兵","モノバンク","プライム","浜屋","大吉","JWA","トレファク","ペンギン","アプレ","リバオク"];
+const DEF_AUC=["オークネット","エコオク","エコトレ[関東]","エコトレ[関西]","JDS","JBA","コメ兵","モノバンク","プライム","浜屋","大吉","JWA","トレファク","ペンギン","アプレ","リバオク"];
 const DEF_STAFF=["俊輔","祥貴"],DEF_WHO="俊輔";
 const ST={plan:"下見済・指値待ち",done:"下見済・指値待ち",bid:"指値登録済"};
 const PCLS={plan:"p-done",done:"p-done",bid:"p-bid"};
@@ -177,7 +177,9 @@ async function api(action,params={}){
     let j;try{j=await res.json()}catch(e){throw new ApiError("bad_response")}
     if(!j.ok){if(j.error==="passcode")showLock();throw new ApiError(j.error||"error")}
     if(j.data){items=applyPending(j.data.items||[]);settings={auctions:(j.data.settings?.auctions?.length?j.data.settings.auctions:DEF_AUC.slice()),staff:(j.data.settings?.staff?.length?j.data.settings.staff:DEF_STAFF.slice())};try{localStorage.setItem("shitami-data",JSON.stringify({items,settings}))}catch(e){}}
-    online=true;return j.result;
+    online=true;
+    {const ix=settings.auctions.indexOf("エコリング");if(ix>=0&&action!=="config"){settings.auctions.splice(ix,1,...["エコオク","エコトレ[関東]","エコトレ[関西]"].filter(a=>!settings.auctions.includes(a)));setTimeout(()=>saveSettings(),0)}}
+    return j.result;
   }finally{busy--;setSync();render();if($("setting").classList.contains("open"))renderSettings()}
 }
 function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
