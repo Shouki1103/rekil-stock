@@ -41,6 +41,7 @@ main{padding:12px 14px 100px;max-width:760px;margin:0 auto}
 .card.is-bid{border-left-color:var(--bid);opacity:.8}
 .row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .auc{font-weight:700;font-size:18px}
+.nth{font-size:13px;font-weight:700;color:#7cc4ff;border:1px solid #7cc4ff;border-radius:6px;padding:1px 7px;margin-left:8px;white-space:nowrap;vertical-align:middle}
 .pill{font-size:12px;padding:3px 10px;border-radius:99px;color:#111;font-weight:700;white-space:nowrap}
 .p-plan{background:var(--plan)}.p-done{background:var(--done)}.p-bid{background:var(--bid)}
 .meta{font-size:13px;color:var(--sub);margin-top:4px}
@@ -150,7 +151,7 @@ label{display:block;font-size:12px;color:var(--sub);margin:10px 0 4px}
 <script>
 /* ▼ Apps Script をデプロイしたときの「ウェブアプリのURL」 */
 const API_URL = "https://script.google.com/macros/s/AKfycbw7kz9QQt6CMQvwIC4IhtSekntc4xGCUAWuop6U7LO_3U6FMRo--X6wKI0F6hSx3n3Vng/exec";
-const APP_VERSION = "2026-11-21-1";
+const APP_VERSION = "2026-11-21-2";
 let selMode=false,selected=new Set(),shownIds=[];
 const DEF_AUC=["オークネット","エコオク","エコトレ[関東]","エコトレ[関西]","JDS","JBA","コメ兵","モノバンク","プライム","浜屋","大吉","JWA","トレファク","ペンギン","アプレ","リバオク"];
 const DEF_STAFF=["俊輔","祥貴"],DEF_WHO="俊輔";
@@ -217,8 +218,11 @@ function render(){
   for(const id of [...selected])if(!items.some(i=>i.id===id))selected.delete(id);
   selSync();
   if(!list.length){el.innerHTML='<div class="empty">該当するものはありません<br>右下の「＋ 追加」から登録できます</div>';return}
+  const nth={},tot={};
+  [...items].sort((a,b)=>(a.createdAt||0)-(b.createdAt||0)).forEach(x=>{const k=(x.date||"")+"|"+(x.auction||"");tot[k]=(tot[k]||0)+1;nth[x.id]=tot[k]});
   let html="",last=null;
   for(const i of list){
+    const nk=(i.date||"")+"|"+(i.auction||"");const nthTag=tot[nk]>1?`<span class="nth">${nth[i.id]}回目</span>`:"";
     if(i.date!==last){html+=`<div class="day">${dayLabel(i.date)}</div>`;last=i.date}
     const acts=readOnly?"":[
       i.status!=="bid"?`<button class="btn bidb" data-a="bid" data-id="${i.id}">指値登録済にする</button>`:"",
@@ -226,7 +230,7 @@ function render(){
       `<button class="btn ghost" data-a="edit" data-id="${i.id}">編集</button>`,
       `<button class="btn del" data-a="del" data-id="${i.id}">削除</button>`].join("");
     const meta=[i.staff?`下見：${esc(i.staff)}`:"下見担当 未設定", i.doneAt?`下見済 ${fmtTs(i.doneAt)}`:"", i.bidAt?`指値登録 ${fmtTs(i.bidAt)}`:""].filter(Boolean).join("　");
-    const inner=`<div class="row"><span class="auc">${esc(i.auction||"")}</span><span class="pill ${PCLS[i.status]||"p-plan"}">${ST[i.status]||""}</span></div>
+    const inner=`<div class="row"><span class="auc">${esc(i.auction||"")}${nthTag}</span><span class="pill ${PCLS[i.status]||"p-plan"}">${ST[i.status]||""}</span></div>
       <div class="meta">${meta}</div>${i.memo?`<div class="memo">${esc(i.memo)}</div>`:""}`;
     if(selMode){const on=selected.has(i.id);
       html+=`<div class="card sel-mode${i.status==="bid"?" is-bid":""}${on?" checked":""}" data-sel="${i.id}"><div class="cbox">${on?"✓":""}</div><div class="cbody">${inner}</div></div>`;}
