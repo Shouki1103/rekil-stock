@@ -36,7 +36,9 @@ h1 small{font-size:12px;color:var(--sub);font-weight:400}
 select,input,textarea,button{font:inherit}
 .tools select{flex:1;min-width:0;padding:9px;border:1px solid var(--line);border-radius:10px;background:var(--field);color:var(--ink)}
 main{padding:12px 14px 100px;max-width:760px;margin:0 auto}
-.day{margin:18px 0 8px;font-size:14px;color:var(--acc);font-weight:700;letter-spacing:.02em}
+.day{margin:22px 0 10px;font-size:19px;color:#fff;font-weight:800;letter-spacing:.02em;background:#23262d;border-left:5px solid var(--acc);border-radius:8px;padding:9px 12px}
+.day small{font-size:13px;font-weight:700;color:var(--acc);margin-left:6px}
+.cdate{font-size:13px;color:#cfd3da;font-weight:700;margin-bottom:4px}
 .card{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--done);border-radius:12px;padding:14px;margin-bottom:10px}
 .card.is-bid{border-left-color:var(--bid);opacity:.8}
 .row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
@@ -151,7 +153,7 @@ label{display:block;font-size:12px;color:var(--sub);margin:10px 0 4px}
 <script>
 /* ▼ Apps Script をデプロイしたときの「ウェブアプリのURL」 */
 const API_URL = "https://script.google.com/macros/s/AKfycbw7kz9QQt6CMQvwIC4IhtSekntc4xGCUAWuop6U7LO_3U6FMRo--X6wKI0F6hSx3n3Vng/exec";
-const APP_VERSION = "2026-11-22-1";
+const APP_VERSION = "2026-11-22-2";
 let selMode=false,selected=new Set(),shownIds=[];
 const DEF_AUC=["オークネット","エコオク","エコトレ[関東]","エコトレ[関西]","JDS","JBA","コメ兵","モノバンク","プライム","浜屋","大吉","JWA","トレファク","ペンギン","アプレ","リバオク"];
 const DEF_STAFF=["俊輔","祥貴"],DEF_WHO="俊輔";
@@ -223,14 +225,14 @@ function render(){
   let html="",last=null;
   for(const i of list){
     const nthTag=nth[i.id]>1?`<span class="nth">${nth[i.id]}回目</span>`:"";
-    if(i.date!==last){html+=`<div class="day">${dayLabel(i.date)}</div>`;last=i.date}
+    if(i.date!==last){html+=`<div class="day">${dayLabel(i.date)}<small>${i.date?"開催分":""}</small></div>`;last=i.date}
     const acts=readOnly?"":[
       i.status!=="bid"?`<button class="btn bidb" data-a="bid" data-id="${i.id}">指値登録済にする</button>`:"",
       i.status==="bid"?`<button class="btn ghost" data-a="done" data-id="${i.id}">指値待ちに戻す</button>`:"",
       `<button class="btn ghost" data-a="edit" data-id="${i.id}">編集</button>`,
       `<button class="btn del" data-a="del" data-id="${i.id}">削除</button>`].join("");
     const meta=[i.staff?`下見：${esc(i.staff)}`:"下見担当 未設定", i.doneAt?`下見済 ${fmtTs(i.doneAt)}`:"", i.bidAt?`指値登録 ${fmtTs(i.bidAt)}`:""].filter(Boolean).join("　");
-    const inner=`<div class="row"><span class="auc">${esc(i.auction||"")}${nthTag}</span><span class="pill ${PCLS[i.status]||"p-plan"}">${ST[i.status]||""}</span></div>
+    const inner=`<div class="cdate">📅 ${i.date?dayLabel(i.date)+" 開催":"開催日なし"}</div><div class="row"><span class="auc">${esc(i.auction||"")}${nthTag}</span><span class="pill ${PCLS[i.status]||"p-plan"}">${ST[i.status]||""}</span></div>
       <div class="meta">${meta}</div>${i.memo?`<div class="memo">${esc(i.memo)}</div>`:""}`;
     if(selMode){const on=selected.has(i.id);
       html+=`<div class="card sel-mode${i.status==="bid"?" is-bid":""}${on?" checked":""}" data-sel="${i.id}"><div class="cbox">${on?"✓":""}</div><div class="cbody">${inner}</div></div>`;}
