@@ -157,7 +157,7 @@ const $ = (s, r = document) => r.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 /* ▼ Apps Script をデプロイしたときの「ウェブアプリのURL」 */
 const API_URL = "https://script.google.com/macros/s/AKfycbymxFtpBAd8KiZMjoAyHEl8Tz8GQRjaVLlpAZfm3KGTeOa4Ifz4IHGjO_PZpiTJfx31/exec";
-const APP_VERSION = "2026-11-18-3";
+const APP_VERSION = "2026-11-22-1";
 const CACHE = "saisun-data";
 let items = [], tpls = [], query = "";
 let pass = ""; try{ pass = localStorage.getItem("rekil-saisun-pass") || localStorage.getItem("rekil-pass") || ""; }catch(_){}
@@ -242,6 +242,25 @@ const tplById = id => tpls.find(t=>t.id===id);
 const sortedTpls = () => tpls.slice().sort((a,b)=>(a.order??0)-(b.order??0)||(a.createdAt||0)-(b.createdAt||0));
 const CONDITIONS = ["新品、未使用","未使用に近い","目立った傷や汚れなし","やや傷や汚れあり","傷や汚れあり","全体的に状態が悪い"];
 const PICKS = {"accessories": {"o": ["なし", "保存袋", "箱", "ショルダーストラップ", "ポーチ", "ギャランティカード", "パドロック", "鍵", "チャーム", "ミラー"], "sep": "、"}, "material": {"o": ["レザー", "キャンバス", "PVC", "ナイロン", "スエード", "エナメル", "デニム", "ファブリック", "ベロア", "ラフィア", "ポリエステル", "ウール", "カシミヤ", "シルク", "レーヨン", "キュプラ", "アクリル", "ポリウレタン", "リネン", "コットン"], "sep": "×"}, "color": {"o": ["ブラウン", "ブラック", "ベージュ", "ピンク", "レッド", "ホワイト", "ネイビー", "ブルー", "グレー", "カーキ", "グリーン", "イエロー", "オレンジ", "パープル", "ゴールド", "シルバー", "マルチカラー"], "sep": "×"}};
+/* テンプレート名で付属品の候補を切り替える（トップス・ボトム／靴）。その他で追加したものは同じ種類の候補に出る */
+const ACC_BY_CAT = {
+  cloth: ["なし","ハンガー","タグ","ギャランティカード"],
+  shoes: ["なし","箱","替え紐","保存袋","タグ","ギャランティカード"],
+};
+const splitPick = v=>String(v||"").split(/[、,，×・\/／\s]+/).filter(Boolean);
+function accCat(tid){ const n=(tplById(tid)?.name)||""; if(/トップス|ボトム/i.test(n)) return "cloth"; if(/靴|シューズ|スニーカー|ブーツ|パンプス|サンダル/i.test(n)) return "shoes"; return ""; }
+function pickOpts(k, d){
+  if(k!=="accessories") return PICKS[k].o;
+  const cat = accCat(d.templateId), base = ACC_BY_CAT[cat] || PICKS.accessories.o;
+  const extra = [];
+  if(cat){ items.filter(i=>accCat(i.templateId)===cat).forEach(i=>splitPick(i.accessories).forEach(x=>{ if(!base.includes(x)&&!extra.includes(x)) extra.push(x); })); }
+  splitPick(d.accessories).forEach(x=>{ if(!base.includes(x)&&!extra.includes(x)) extra.push(x); });
+  return [...base, ...extra];
+}
+function pickInner(k, d){
+  return `<div class="pickl">${pickOpts(k,d).map(o=>`<label><input type="checkbox" value="${esc(o)}">${esc(o)}</label>`).join("")}</div>`
+    + (k==="accessories" ? `<div class="row" style="padding:0 10px 10px;gap:6px"><input data-padd="${k}" placeholder="その他の付属品（例：替えボタン）" style="flex:1;min-width:0"><button class="btn sm" data-paddbtn="${k}">＋ 追加</button></div>` : "");
+}
 const TEXT_FIELDS = [
   {key:"gimmick", label:"ギミック", ph:"例：内ポケット×2、マグネット開閉"},
   {key:"accessories", label:"付属品", ph:"空欄なら「なし」になります"},
@@ -374,7 +393,7 @@ function openItem(it){
     <div class="field"><label>採寸（cm）</label><div class="mrows" id="mrows"></div>
       <div class="row" style="margin-top:6px"><button class="btn sm" id="addrow">＋ 項目を追加</button></div></div>
     <div class="field"><label for="cond">状態</label><select id="cond">${CONDITIONS.map(c=>`<option ${c===d.condition?"selected":""}>${esc(c)}</option>`).join("")}</select></div>
-    ${TEXT_FIELDS.map(f=>`<div class="field"><label for="tx-${f.key}">${f.label}</label><input id="tx-${f.key}" data-tx="${f.key}" value="${esc(d[f.key]||"")}" placeholder="${esc(f.ph)}">${PICKS[f.key]?`<details class="pick" data-pick="${f.key}"><summary>一覧から選ぶ（複数可）</summary><div class="pickl">${PICKS[f.key].o.map(o=>`<label><input type="checkbox" value="${esc(o)}">${esc(o)}</label>`).join("")}</div></details>`:""}</div>`).join("")}
+    ${TEXT_FIELDS.map(f=>`<div class="field"><label for="tx-${f.key}">${f.label}</label><input id="tx-${f.key}" data-tx="${f.key}" value="${esc(d[f.key]||"")}" placeholder="${esc(f.ph)}">${PICKS[f.key]?`<details class="pick" data-pick="${f.key}"><summary>一覧から選ぶ（複数可）</summary><div class="pbox">${pickInner(f.key,d)}</div></details>`:""}</div>`).join("")}
     <div class="field"><label for="kanri">管理番号</label><input id="kanri" value="${esc(d.kanri||"")}" placeholder="例：R-1108-01"></div>
     <div class="field"><label for="memo">メモ（出品文には入りません）</label><textarea id="memo" rows="2" placeholder="社内用のメモ">${esc(d.memo)}</textarea></div>
     <div class="field"><label>タイトル（自動作成）</label>
@@ -409,14 +428,20 @@ function openItem(it){
   $("#cond").onchange = e=>{ d.condition=e.target.value; drawOut(); };
   $("#kanri").oninput = e=>{ d.kanri=e.target.value; drawOut(); };
   document.querySelectorAll("[data-tx]").forEach(el=>el.oninput=e=>{ d[e.target.dataset.tx]=e.target.value; drawOut(); });
+  const pickSyncs = {};
   document.querySelectorAll("[data-pick]").forEach(dd=>{ const k=dd.dataset.pick, P=PICKS[k], inp=document.getElementById("tx-"+k);
-    const split=v=>String(v||"").split(/[、,，×・\/／\s]+/).filter(Boolean);
-    const sync=()=>{ const cur=split(inp.value); const none=cur.includes("なし"); dd.querySelectorAll("input").forEach(c=>{ c.checked=cur.includes(c.value); if(c.value!=="なし"){ c.disabled=none; c.parentElement.style.opacity=none?".35":""; } }); };
+    const sync=()=>{ const cur=splitPick(inp.value); const none=cur.includes("なし"); dd.querySelectorAll(".pickl input").forEach(c=>{ c.checked=cur.includes(c.value); if(c.value!=="なし"){ c.disabled=none; c.parentElement.style.opacity=none?".35":""; } }); };
+    pickSyncs[k] = ()=>{ dd.querySelector(".pbox").innerHTML = pickInner(k,d); sync(); };
     sync(); inp.addEventListener("input",sync);
-    dd.addEventListener("change",e=>{ const c=e.target; let cur=split(inp.value);
+    dd.addEventListener("change",e=>{ const c=e.target; if(!c.closest(".pickl")) return; let cur=splitPick(inp.value);
       if(c.checked){ if(c.value==="なし") cur=["なし"]; else { cur=cur.filter(x=>x!=="なし"); if(!cur.includes(c.value)) cur.push(c.value); } }
       else cur=cur.filter(x=>x!==c.value);
       inp.value=cur.join(P.sep); d[k]=inp.value; drawOut(); sync(); });
+    const addOne=()=>{ const box=dd.querySelector("[data-padd]"); const v=(box?.value||"").trim().replace(/[、,，×・\/／\s]+/g,""); if(!v) return;
+      let cur=splitPick(inp.value).filter(x=>x!=="なし"); if(!cur.includes(v)) cur.push(v);
+      inp.value=cur.join(P.sep); d[k]=inp.value; pickSyncs[k](); drawOut(); toast(`「${v}」を追加しました`); };
+    dd.addEventListener("click",e=>{ if(e.target.closest("[data-paddbtn]")){ e.preventDefault(); addOne(); } });
+    dd.addEventListener("keydown",e=>{ if(e.key==="Enter"&&e.target.closest("[data-padd]")){ e.preventDefault(); addOne(); } });
   });
   $("#tsel").onchange = e=>{
     d.templateId = e.target.value; const t = tplById(d.templateId);
@@ -424,6 +449,7 @@ function openItem(it){
       const fs = (t.fields||[]).map(parseField);
       const next = fs.map(f=>{ const o=old.get(f.label); return o ? {...o, unit:f.unit} : {label:f.label, value:"", unit:f.unit}; });
       d.measures = next; drawRows(); }
+    pickSyncs.accessories?.();
     drawOut();
   };
   $("#mrows").addEventListener("input", e=>{ const i=e.target.dataset.i; if(i==null) return; d.measures[i][e.target.dataset.k]=e.target.value; drawOut(); });
