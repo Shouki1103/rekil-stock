@@ -157,7 +157,7 @@ const $ = (s, r = document) => r.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 /* ▼ Apps Script をデプロイしたときの「ウェブアプリのURL」 */
 const API_URL = "https://script.google.com/macros/s/AKfycbymxFtpBAd8KiZMjoAyHEl8Tz8GQRjaVLlpAZfm3KGTeOa4Ifz4IHGjO_PZpiTJfx31/exec";
-const APP_VERSION = "2026-11-22-1";
+const APP_VERSION = "2026-11-22-2";
 const CACHE = "saisun-data";
 let items = [], tpls = [], query = "";
 let pass = ""; try{ pass = localStorage.getItem("rekil-saisun-pass") || localStorage.getItem("rekil-pass") || ""; }catch(_){}
@@ -242,13 +242,14 @@ const tplById = id => tpls.find(t=>t.id===id);
 const sortedTpls = () => tpls.slice().sort((a,b)=>(a.order??0)-(b.order??0)||(a.createdAt||0)-(b.createdAt||0));
 const CONDITIONS = ["新品、未使用","未使用に近い","目立った傷や汚れなし","やや傷や汚れあり","傷や汚れあり","全体的に状態が悪い"];
 const PICKS = {"accessories": {"o": ["なし", "保存袋", "箱", "ショルダーストラップ", "ポーチ", "ギャランティカード", "パドロック", "鍵", "チャーム", "ミラー"], "sep": "、"}, "material": {"o": ["レザー", "キャンバス", "PVC", "ナイロン", "スエード", "エナメル", "デニム", "ファブリック", "ベロア", "ラフィア", "ポリエステル", "ウール", "カシミヤ", "シルク", "レーヨン", "キュプラ", "アクリル", "ポリウレタン", "リネン", "コットン"], "sep": "×"}, "color": {"o": ["ブラウン", "ブラック", "ベージュ", "ピンク", "レッド", "ホワイト", "ネイビー", "ブルー", "グレー", "カーキ", "グリーン", "イエロー", "オレンジ", "パープル", "ゴールド", "シルバー", "マルチカラー"], "sep": "×"}};
-/* テンプレート名で付属品の候補を切り替える（トップス・ボトム／靴）。その他で追加したものは同じ種類の候補に出る */
+/* テンプレート名で付属品の候補を切り替える（トップス・ボトム／靴／時計）。その他で追加したものは同じ種類の候補に出る */
 const ACC_BY_CAT = {
   cloth: ["なし","ハンガー","タグ","ギャランティカード"],
   shoes: ["なし","箱","替え紐","保存袋","タグ","ギャランティカード"],
+  watch: ["なし","箱","保存袋","ギャランティカード","タグ","コマ","説明書"],
 };
 const splitPick = v=>String(v||"").split(/[、,，×・\/／\s]+/).filter(Boolean);
-function accCat(tid){ const n=(tplById(tid)?.name)||""; if(/トップス|ボトム/i.test(n)) return "cloth"; if(/靴|シューズ|スニーカー|ブーツ|パンプス|サンダル/i.test(n)) return "shoes"; return ""; }
+function accCat(tid){ const n=(tplById(tid)?.name)||""; if(/トップス|ボトム/i.test(n)) return "cloth"; if(/靴|シューズ|スニーカー|ブーツ|パンプス|サンダル/i.test(n)) return "shoes"; if(/時計|ウォッチ|watch/i.test(n)) return "watch"; return ""; }
 function pickOpts(k, d){
   if(k!=="accessories") return PICKS[k].o;
   const cat = accCat(d.templateId), base = ACC_BY_CAT[cat] || PICKS.accessories.o;
