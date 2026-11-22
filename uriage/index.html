@@ -130,6 +130,15 @@ button.sect{appearance:none;border:0;background:none;width:100%;font-family:inhe
 .filters select{padding:8px;font-size:15px}
 .mhead{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;color:var(--muted);margin:6px 0 -2px;font-family:var(--f-num)}
 .mhead::after{content:"";flex:1;height:1px;background:var(--line)}
+.mhead .tot{font-weight:500;order:3}
+.views{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 10px}
+.views .chip.on{background:var(--acc);color:var(--acc-ink);border-color:var(--acc);font-weight:700}
+.agg{width:100%;border-collapse:collapse;font-size:13px;margin:0 0 14px;background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.agg th,.agg td{padding:6px 8px;border-top:1px solid var(--line);text-align:right;font-family:var(--f-num);font-variant-numeric:tabular-nums;white-space:nowrap}
+.agg th{font-family:var(--f-body);font-size:12px;color:var(--muted);font-weight:700;border-top:0}
+.agg td:first-child,.agg th:first-child{text-align:left;font-family:var(--f-body);white-space:normal}
+.agg tr.all td{font-weight:700;border-top:2px solid var(--line)}
+.agg tr[data-g]{cursor:pointer}
 </style>
 </head>
 <body>
@@ -152,9 +161,11 @@ button.sect{appearance:none;border:0;background:none;width:100%;font-family:inhe
   <div id="sec-todo"><div class="sect">俊輔の入力待ち <span class="count" id="c-todo">0</span></div>
     <p class="hint" style="margin:-4px 0 10px">業者オークションの開催日の3日後（売上入力のお知らせと同じ日）に自動で出ます。入力したら、売上伝票の点数と金額を入れて「照合して済みにする」を押してください。分からない商品があればメモして祥貴へ渡してください。</p>
     <div class="list" id="todo"></div></div>
-  <button class="sect" id="done-toggle" aria-expanded="false" aria-controls="done-wrap"><span class="caret" aria-hidden="true">▶</span>済み（開催日・オークションで見返す） <span class="count" id="c-done">0</span></button>
+  <button class="sect" id="done-toggle" aria-expanded="false" aria-controls="done-wrap"><span class="caret" aria-hidden="true">▶</span>済み（月別・オークション別・年別・期別で見返す） <span class="count" id="c-done">0</span></button>
   <div id="done-wrap" hidden>
-    <div class="filters"><select id="f-month" aria-label="開催月"></select><select id="f-site" aria-label="オークション"></select></div>
+    <div class="views" role="group" aria-label="まとめ方"><button class="chip" data-view="month">月別</button><button class="chip" data-view="site">オークション別</button><button class="chip" data-view="year">年別</button><button class="chip" data-view="ki">期別</button></div>
+    <div class="filters"><select id="f-month" aria-label="期間"></select><select id="f-site" aria-label="オークション"></select></div>
+    <div id="agg"></div>
     <div class="list" id="done"></div>
   </div>
 </div>
@@ -174,7 +185,7 @@ const $ = (s, r = document) => r.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 /* ▼ Apps Script をデプロイしたときの「ウェブアプリのURL」 */
 const API_URL = "https://script.google.com/macros/s/AKfycby_jyb7iNU30-66PBZz1tePhqZDMFmtik2SY48w2lqBxRPTJ38Xiwyxn1i9DQPTvILs/exec";
-const APP_VERSION = "2026-11-22-4";
+const APP_VERSION = "2026-11-22-5";
 const CACHE = "uriage-data";
 const ST = {todo:"俊輔の入力待ち", ask:"祥貴の確認待ち", done:"済み"};
 let tasks = [];
@@ -211,7 +222,15 @@ const num = v => { const s=String(v??"").replace(/[^\d-]/g,""); return s===""||s
 const addD = (d,n) => new Date(Date.parse(d+"T00:00:00Z")+n*864e5).toISOString().slice(0,10);
 /* メルカリは出さない。オークションは開催日の3日後から（データ側が古いままでも同じになるように） */
 const visible = t => t.kind!=="メルカリ" && (t.status!==ST.todo || addD(t.date,3) <= today());
-let fMonth="", fSite="";
+let fMonth="", fSite="", view="month"; try{ view = localStorage.getItem("uriage-view") || "month"; }catch(_){}
+/* 法人の期：4月始まり（第1期＝2025/4〜2026/3） */
+const kiOf = d => { const y=+d.slice(0,4), m=+d.slice(5,7); return (m>=4?y:y-1)-2024; };
+const kiLabel = k => `第${k}期（${2024+k}/4〜${2025+k}/3）`;
+const KEY = { month: t=>t.date.slice(0,7), year: t=>t.date.slice(0,4), ki: t=>"k"+String(kiOf(t.date)).padStart(3,"0"), site: t=>t.site };
+const gLabel = (v,k) => v==="month" ? `${+k.slice(0,4)}年${+k.slice(5)}月` : v==="year" ? `${k}年` : v==="ki" ? kiLabel(+k.slice(1)) : k;
+/* 期間の絞り込み：p=期 y=年 m=月 */
+const inPeriod = (t,f) => !f || (f[0]==="p" ? kiOf(t.date)===+f.slice(1) : f[0]==="y" ? t.date.startsWith(f.slice(1)) : t.date.startsWith(f.slice(1)));
+const nz = v => v===""||v==null ? 0 : Number(v)||0;
 const when = ms => ms ? new Date(ms).toLocaleString("ja-JP",{month:"numeric",day:"numeric",hour:"2-digit",minute:"2-digit"}) : "";
 
 function card(t){
@@ -234,21 +253,41 @@ function draw(){
   const vis = tasks.filter(visible);
   const todo = vis.filter(t=>t.status===ST.todo).sort(asc), ask = vis.filter(t=>t.status===ST.ask).sort(asc);
   const doneAll = vis.filter(t=>t.status===ST.done).sort((a,b)=>b.date.localeCompare(a.date)||a.site.localeCompare(b.site));
-  /* 見返し用の絞り込み（開催月・オークション） */
-  const months=[...new Set(doneAll.map(t=>t.date.slice(0,7)))], sites=[...new Set(doneAll.map(t=>t.site))].sort();
-  if(fMonth && !months.includes(fMonth)) fMonth=""; if(fSite && !sites.includes(fSite)) fSite="";
-  $("#f-month").innerHTML = `<option value="">すべての月</option>`+months.map(m=>`<option value="${m}">${+m.slice(0,4)}年${+m.slice(5)}月（${doneAll.filter(t=>t.date.startsWith(m)).length}件）</option>`).join("");
+  /* 見返し用の絞り込み（期間＝期・年・月／オークション） */
+  const kis=[...new Set(doneAll.map(t=>kiOf(t.date)))].sort((a,b)=>b-a), years=[...new Set(doneAll.map(t=>t.date.slice(0,4)))].sort().reverse(),
+        months=[...new Set(doneAll.map(t=>t.date.slice(0,7)))], sites=[...new Set(doneAll.map(t=>t.site))].sort();
+  const pv=[...kis.map(k=>"p"+k),...years.map(y=>"y"+y),...months.map(m=>"m"+m)];
+  if(fMonth && !pv.includes(fMonth)) fMonth=""; if(fSite && !sites.includes(fSite)) fSite="";
+  const cnt = f => doneAll.filter(t=>inPeriod(t,f)).length;
+  $("#f-month").innerHTML = `<option value="">すべての期間</option>`
+    + `<optgroup label="期">${kis.map(k=>`<option value="p${k}">${kiLabel(k)}（${cnt("p"+k)}件）</option>`).join("")}</optgroup>`
+    + `<optgroup label="年">${years.map(y=>`<option value="y${y}">${y}年（${cnt("y"+y)}件）</option>`).join("")}</optgroup>`
+    + `<optgroup label="月">${months.map(m=>`<option value="m${m}">${+m.slice(0,4)}年${+m.slice(5)}月（${cnt("m"+m)}件）</option>`).join("")}</optgroup>`;
   $("#f-site").innerHTML = `<option value="">すべてのオークション</option>`+sites.map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join("");
   $("#f-month").value=fMonth; $("#f-site").value=fSite;
-  const done = doneAll.filter(t=>(!fMonth||t.date.startsWith(fMonth))&&(!fSite||t.site===fSite));
+  document.querySelectorAll(".views .chip").forEach(b=>b.classList.toggle("on", b.dataset.view===view));
+  const done = doneAll.filter(t=>inPeriod(t,fMonth)&&(!fSite||t.site===fSite));
   const ym = today().slice(0,7);
   $("#n-todo").textContent=todo.length; $("#n-ask").textContent=ask.length;
   $("#n-done").textContent=doneAll.filter(t=>new Date((t.doneAt||0)+9*3600e3).toISOString().slice(0,7)===ym).length;
   $("#c-todo").textContent=todo.length; $("#c-ask").textContent=ask.length; $("#c-done").textContent=doneAll.length;
   $("#todo").innerHTML = todo.length ? todo.map(card).join("") : `<div class="empty">入力待ちはありません</div>`;
   $("#ask").innerHTML = ask.length ? ask.map(card).join("") : `<div class="empty">確認待ちはありません</div>`;
-  let last="", h="";
-  for(const t of done){ const m=t.date.slice(0,7); if(m!==last){ last=m; h+=`<div class="mhead">${+m.slice(0,4)}年${+m.slice(5)}月<span class="count">${done.filter(x=>x.date.startsWith(m)).length}</span></div>`; } h+=card(t); }
+  /* まとめ方ごとにグループ化して、件数・伝票の点数・金額を集計 */
+  const kf=KEY[view]||KEY.month, groups=new Map();
+  for(const t of done){ const k=kf(t); if(!groups.has(k)) groups.set(k,[]); groups.get(k).push(t); }
+  const keys=[...groups.keys()].sort((a,b)=> view==="site" ? a.localeCompare(b,"ja") : b.localeCompare(a));
+  const tot = arr => ({n:arr.length, c:arr.reduce((s,t)=>s+nz(t.slipCount),0), a:arr.reduce((s,t)=>s+nz(t.slipAmount),0)});
+  if(done.length){
+    const all=tot(done);
+    $("#agg").innerHTML = `<table class="agg"><tr><th>${{month:"月",site:"オークション",year:"年",ki:"期"}[view]||"月"}</th><th>開催</th><th>点数</th><th>金額</th></tr>`
+      + keys.map(k=>{ const r=tot(groups.get(k)); return `<tr data-g="${esc(k)}"><td>${esc(gLabel(view,k))}</td><td>${r.n}</td><td>${r.c.toLocaleString("ja-JP")}</td><td>${esc(yen(r.a))}</td></tr>`; }).join("")
+      + (keys.length>1?`<tr class="all"><td>合計</td><td>${all.n}</td><td>${all.c.toLocaleString("ja-JP")}</td><td>${esc(yen(all.a))}</td></tr>`:"") + `</table>`;
+  } else $("#agg").innerHTML="";
+  let h="";
+  for(const k of keys){ const arr=groups.get(k), r=tot(arr);
+    h+=`<div class="mhead" id="g-${esc(k)}">${esc(gLabel(view,k))}<span class="count">${r.n}</span><span class="tot">${r.c}点 ${esc(yen(r.a))}</span></div>`;
+    h+=arr.map(card).join(""); }
   $("#done").innerHTML = done.length ? h : `<div class="empty">${doneAll.length?"該当なし":"まだありません"}</div>`;
   /* 祥貴が使うときは確認待ちを上に、俊輔のときは入力待ちを上に */
   const w=$(".wrap"), sa=$("#sec-ask"), st=$("#sec-todo");
@@ -261,6 +300,8 @@ function setDoneOpen(open){ $("#done-toggle").setAttribute("aria-expanded", open
 $("#done-toggle").onclick = ()=>setDoneOpen($("#done-wrap").hidden);
 $("#f-month").onchange=e=>{ fMonth=e.target.value; draw(); };
 $("#f-site").onchange=e=>{ fSite=e.target.value; draw(); };
+document.querySelectorAll(".views .chip").forEach(b=>b.onclick=()=>{ view=b.dataset.view; try{ localStorage.setItem("uriage-view", view); }catch(_){} draw(); });
+$("#agg").addEventListener("click", e=>{ const r=e.target.closest("tr[data-g]"); if(!r) return; const el=document.getElementById("g-"+r.dataset.g); if(el) el.scrollIntoView({behavior:"smooth",block:"start"}); });
 
 function closeSheet(){ $("#sheet-root").innerHTML=""; }
 function chkBox(r){
