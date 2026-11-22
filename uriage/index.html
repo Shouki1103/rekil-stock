@@ -174,7 +174,7 @@ const $ = (s, r = document) => r.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 /* ▼ Apps Script をデプロイしたときの「ウェブアプリのURL」 */
 const API_URL = "https://script.google.com/macros/s/AKfycby_jyb7iNU30-66PBZz1tePhqZDMFmtik2SY48w2lqBxRPTJ38Xiwyxn1i9DQPTvILs/exec";
-const APP_VERSION = "2026-11-22-3";
+const APP_VERSION = "2026-11-22-4";
 const CACHE = "uriage-data";
 const ST = {todo:"俊輔の入力待ち", ask:"祥貴の確認待ち", done:"済み"};
 let tasks = [];
@@ -225,6 +225,7 @@ function card(t){
       <span class="name" style="display:block">${esc(title(t))}</span>
       <span class="need">${tags.join("")}</span>
       ${t.unknown?`<span class="reason" style="display:block">分からない：${esc(t.unknown.replace(/\n/g," / "))}</span>`:""}
+      ${t.reply?`<span class="reason" style="display:block;color:var(--ok)">祥貴の備考：${esc(t.reply.replace(/\n/g," / "))}</span>`:""}
       ${t.note?`<span class="meta" style="display:block">${esc(t.note)}</span>`:""}
     </span><span class="arrow" aria-hidden="true">›</span></button>`;
 }
@@ -282,14 +283,16 @@ function openTask(t, lastCheck){
     ${chkBox(lastCheck)}
     ${isDone?"":`<div class="field"><label>売上伝票の点数と金額（落札分の合計・税込。管理シートの「売上」と同じ基準で）</label>
       <div class="two"><input id="sc" inputmode="numeric" placeholder="点数" value="${esc(t.slipCount??"")}"><input id="sa" inputmode="numeric" placeholder="金額（円）" value="${t.slipAmount!==""&&t.slipAmount!=null?esc(Number(t.slipAmount).toLocaleString("ja-JP")):""}"></div></div>`}
-    <div class="field"><label for="unk">分からない商品（商品名・番号・金額など）</label>
+    ${isTodo&&t.reply?`<div class="field"><label>祥貴の備考（どの商品か）</label><div class="memo" style="border-left-color:var(--ok)">${esc(t.reply)}</div></div>`:""}
+    <div class="field"><label for="unk">分からない商品の備考（商品名・番号・金額など）</label>
       <textarea id="unk" rows="5" placeholder="例：No.12 黒のバッグ 15,000円（管理番号の記載なし）">${esc(t.unknown||"")}</textarea></div>`;
-  if(!isTodo) html += `<div class="field"><label for="rep">祥貴の対応メモ</label><textarea id="rep" rows="3" placeholder="例：No.12 は3695のPRADAで入力済み">${esc(t.reply||"")}</textarea></div>`;
+  if(!isTodo) html += `<div class="field"><label for="rep">祥貴の備考（どの商品か。俊輔が入力できるように）</label><textarea id="rep" rows="3" placeholder="例：No.12 は管理番号3695のPRADA ショルダー">${esc(t.reply||"")}</textarea></div>`;
   html += `<div class="btns">` + (isTodo
       ? `<button class="btn primary" data-to="done">照合して済みにする</button><button class="btn sm" data-to="check">照合だけする</button><button class="btn ask" data-to="ask">分からない分を祥貴へ渡す</button><button class="btn sm" data-to="memo">メモだけ保存</button>`
-      : isAsk ? `<button class="btn primary" data-to="done">照合して済みにする</button><button class="btn sm" data-to="check">照合だけする</button><button class="btn sm" data-to="todo">俊輔に戻す</button><button class="btn sm" data-to="memo">メモだけ保存</button>`
+      : isAsk ? `<button class="btn primary" data-to="back">備考を書いて俊輔に戻す</button><button class="btn" data-to="done">自分で入力した（照合して済みにする）</button><button class="btn sm" data-to="check">照合だけする</button><button class="btn sm" data-to="memo">メモだけ保存</button>`
       : `<button class="btn sm" data-to="memo">メモだけ保存</button><button class="btn sm" data-to="todo">入力待ちに戻す</button>`) + `</div>`;
   if(isTodo) html += `<p class="hint">「祥貴へ渡す」と、rekil.usedclothing@gmail.com にメールでお知らせが届きます。</p>`;
+  if(isAsk) html += `<p class="hint">「俊輔に戻す」と、rekil.usedclothing@gmail.com と俊輔（saku02233）にメールでお知らせが届き、俊輔の入力待ちに戻ります。</p>`;
   $("#sheet-root").innerHTML = `<div class="scrim" id="scrim"><div class="sheet" role="dialog" aria-modal="true">${html}</div></div>`;
   $("#close").onclick=closeSheet;
   $("#scrim").addEventListener("click", e=>{ if(e.target.id==="scrim") closeSheet(); });
@@ -297,11 +300,12 @@ function openTask(t, lastCheck){
     const to=e.target.dataset.to; if(!to) return;
     if(!API_URL){ toast("データ側がまだ設定されていません"); return; }
     const unknown=$("#unk").value.trim(), reply=$("#rep")?$("#rep").value.trim():(t.reply||"");
-    if(to==="ask" && !unknown){ toast("分からない商品をメモに書いてください"); $("#unk").focus(); return; }
+    if(to==="ask" && !unknown){ toast("分からない商品を備考に書いてください"); $("#unk").focus(); return; }
+    if(to==="back" && !reply){ toast("どの商品か、祥貴の備考に書いてください"); $("#rep").focus(); return; }
     const slipCount = $("#sc") ? num($("#sc").value) : "", slipAmount = $("#sa") ? num($("#sa").value) : "";
     const keepT = Object.assign({}, t, {unknown, reply, slipCount, slipAmount});
     if((to==="check"||to==="done") && (slipCount===""||slipAmount==="")){ toast("売上伝票の点数と金額を入れてください"); $(slipCount===""?"#sc":"#sa").focus(); return; }
-    const status = to==="memo"||to==="check" ? t.status : ST[to];
+    const status = to==="memo"||to==="check" ? t.status : to==="back" ? ST.todo : ST[to];
     const btns=[...document.querySelectorAll(".btns .btn")]; btns.forEach(b=>b.disabled=true); e.target.textContent= to==="check"||to==="done" ? "照合中…" : "保存中…";
     const base = {id:t.id, kind:t.kind, date:t.date, site:t.site, unknown, reply};
     try{
@@ -313,7 +317,7 @@ function openTask(t, lastCheck){
       }
       await api("save", {task:Object.assign({}, base, {status})});
       closeSheet();
-      toast(to==="ask" ? "祥貴へ渡しました（メールでお知らせしました）" : to==="done" ? "一致したので済みにしました" : to==="todo" ? "入力待ちに戻しました" : "保存しました");
+      toast(to==="ask" ? "祥貴へ渡しました（メールでお知らせしました）" : to==="done" ? "一致したので済みにしました" : to==="todo" ? "入力待ちに戻しました" : to==="back" ? "俊輔に戻しました（メールでお知らせしました）" : "保存しました");
     }catch(err){ openTask(keepT, lastCheck);
       toast(err.code==="network" ? "通信できず保存できませんでした。もう一度押してください"
         : err.code==="old_backend" ? "データ側（Apps Script）の更新がまだです。更新すると照合できます"
