@@ -54,7 +54,7 @@ header{gap:8px}.brand{white-space:nowrap;flex:0 0 auto}.hctl{display:flex;align-
   <div id="groups"></div>
 </main>
 <script>
-const APP_VERSION = "2026-11-19-5";
+const APP_VERSION = "2026-11-22-1";
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const today = () => new Date(Date.now()+9*3600e3).toISOString().slice(0,10);
@@ -158,7 +158,7 @@ async function call(url, pass, action="list"){
   const res = await fetch(url, {method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"}, body: JSON.stringify({action, pass})});
   const j = await res.json(); if(!j.ok) throw new Error(j.error||"error"); return j;
 }
-const SRC_NAME = {okurijo:"送り状控え", henpin:"出品・返品・外注", shitami:"下見・指値", irai:"eBay出品依頼"};
+const SRC_NAME = {okurijo:"送り状控え", henpin:"出品・返品・外注", shitami:"下見・指値", irai:"eBay出品依頼", uriage:"売上入力", haiki:"廃棄記録"};
 const failed = [];
 const SRC = {
   okurijo: async () => {
@@ -187,6 +187,19 @@ const SRC = {
     const j = await call("https://script.google.com/macros/s/AKfycbyt_sbyLWtGgD8TODNx7kvs2gEOlisN6X8XWqFYGyVQVHkmqvrIRTo6RWZXgYSPjRCB/exec", needPass("rekil-irai-pass"));
     const n = (j.requests||[]).filter(r=>r.status!=="done").length;
     return {n, items: n ? [{t:"eBay下書きの未作成・修正待ち", v:`${n}件`, u:"../irai/"}] : []};
+  },
+  uriage: async () => {
+    const j = await call("https://script.google.com/macros/s/AKfycby_jyb7iNU30-66PBZz1tePhqZDMFmtik2SY48w2lqBxRPTJ38Xiwyxn1i9DQPTvILs/exec", needPass("rekil-uriage-pass"));
+    const t = today(), add3 = d => new Date(Date.parse(d+"T00:00:00Z")+3*864e5).toISOString().slice(0,10);
+    const ts = ((j.data||{}).tasks||[]).filter(x=>x.kind!=="メルカリ" && (x.status!=="俊輔の入力待ち" || add3(x.date) <= t));
+    const a = ts.filter(x=>x.status==="俊輔の入力待ち").length, b = ts.filter(x=>x.status==="祥貴の確認待ち").length;
+    const out = []; if(a) out.push({t:"売上入力（俊輔の入力待ち）", v:`${a}件`, u:"../uriage/"}); if(b) out.push({t:"売上入力（祥貴の確認待ち）", v:`${b}件`, u:"../uriage/"});
+    return {n: a+b, items: out};
+  },
+  haiki: async () => {
+    const j = await call("https://script.google.com/macros/s/AKfycbxkxy7ZrqL9cnVaCq6ROX0OMRfYMeDVoYT7C_U-H1D2ENsS3nax-hfNFT7dDMOsItiHTQ/exec", needPass("rekil-haiki-pass"));
+    const n = ((j.data||{}).items||[]).filter(i=>i.inSheet!==false && !((i.photos||[]).length && String(i.reason||"").trim())).length;
+    return {n, items: n ? [{t:"廃棄記録の写真・理由が未登録", v:`${n}件`, u:"../haiki/"}] : []};
   },
 };
 async function refresh(){

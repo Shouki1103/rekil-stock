@@ -50,7 +50,8 @@
      "id": "haiki",
      "name": "廃棄記録",
      "url": "../haiki/",
-     "icon": "../haiki/icon-180.png"
+     "icon": "../haiki/icon-180.png",
+     "badge": "haiki"
     }
    ]
   },
@@ -94,7 +95,8 @@
      "id": "uriage",
      "name": "売上入力",
      "url": "../uriage/",
-     "icon": "../uriage/icon-180.png"
+     "icon": "../uriage/icon-180.png",
+     "badge": "uriage"
     }
    ]
   },
