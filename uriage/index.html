@@ -117,6 +117,7 @@ button.sect{appearance:none;border:0;background:none;width:100%;font-family:inhe
 .sum .ask b{color:var(--warn)}
 .tag.ok{background:#123326;color:var(--ok)}
 .tag.ng{background:#3a1f1c;color:#ff9b8f}
+.alert{display:block;width:100%;text-align:left;font:inherit;font-weight:700;color:#ffb3a8;background:#2a1412;border:1px solid #7a2e26;border-radius:10px;padding:10px 12px;margin:10px 0 0;cursor:pointer}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .two input{font-size:16px;font-family:var(--f-num)}
 .chk{border-radius:10px;padding:10px 12px;margin:0 0 14px;font-size:14px;border:1px solid var(--line);background:var(--surface)}
@@ -156,6 +157,7 @@ button.sect{appearance:none;border:0;background:none;width:100%;font-family:inhe
     <div class="who">使う人：<button class="chip" data-who="俊輔">俊輔</button><button class="chip" data-who="祥貴">祥貴</button></div>
   </header>
   <p class="status" id="status">読み込み中…</p>
+  <button class="alert" id="seisanAlert" hidden></button>
 
   <div id="sec-ask"><div class="sect">祥貴の確認待ち <span class="count" id="c-ask">0</span></div><div class="list" id="ask"></div></div>
   <div id="sec-todo"><div class="sect">俊輔の入力待ち <span class="count" id="c-todo">0</span></div>
@@ -185,7 +187,7 @@ const $ = (s, r = document) => r.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 /* ▼ Apps Script をデプロイしたときの「ウェブアプリのURL」 */
 const API_URL = "https://script.google.com/macros/s/AKfycby_jyb7iNU30-66PBZz1tePhqZDMFmtik2SY48w2lqBxRPTJ38Xiwyxn1i9DQPTvILs/exec";
-const APP_VERSION = "2026-11-22-5";
+const APP_VERSION = "2026-11-22-6";
 const CACHE = "uriage-data";
 const ST = {todo:"俊輔の入力待ち", ask:"祥貴の確認待ち", done:"済み"};
 let tasks = [];
@@ -238,6 +240,7 @@ function card(t){
   if(t.checkResult) tags.push(`<span class="tag ${t.checkResult==="一致"?"ok":"ng"}">照合${esc(t.checkResult)}${t.slipCount!==""&&t.slipCount!=null?` ${t.slipCount}点 ${yen(t.slipAmount)}`:""}</span>`);
   if(t.status!==ST.done){ const a = t.status===ST.ask ? Math.round((Date.now()-(t.askedAt||Date.now()))/864e5) : ago(t.date)-3;
     if(a>=3) tags.push(`<span class="tag late">${a}日経過</span>`); }
+  if(t.seisanResult) tags.push(`<span class="tag ${t.seisanResult==="一致"?"ok":t.seisanResult==="差異あり"?"ng":""}">${t.seisanResult==="差異あり"?"⚠ 精算書と差異":t.seisanResult==="一致"?"精算書一致":"精算書 "+esc(t.seisanResult)}</span>`);
   if(t.status===ST.done && t.doneAt) tags.push(`<span class="tag">済み ${esc(when(t.doneAt))}</span>`);
   return `<button class="item" data-id="${esc(t.id)}">
     <span class="body">
@@ -268,6 +271,9 @@ function draw(){
   document.querySelectorAll(".views .chip").forEach(b=>b.classList.toggle("on", b.dataset.view===view));
   const done = doneAll.filter(t=>inPeriod(t,fMonth)&&(!fSite||t.site===fSite));
   const ym = today().slice(0,7);
+  const diff = vis.filter(t=>t.seisanResult==="差異あり");
+  $("#seisanAlert").hidden = !diff.length;
+  if(diff.length) $("#seisanAlert").textContent = `⚠ 精算書と差異あり ${diff.length}件：${diff.map(title).join("、")}（タップで確認）`;
   $("#n-todo").textContent=todo.length; $("#n-ask").textContent=ask.length;
   $("#n-done").textContent=doneAll.filter(t=>new Date((t.doneAt||0)+9*3600e3).toISOString().slice(0,7)===ym).length;
   $("#c-todo").textContent=todo.length; $("#c-ask").textContent=ask.length; $("#c-done").textContent=doneAll.length;
@@ -298,6 +304,7 @@ document.addEventListener("click", e=>{ const b=e.target.closest(".item"); if(!b
 document.querySelectorAll(".who .chip").forEach(b=>b.onclick=()=>{ who=b.dataset.who; try{ localStorage.setItem("uriage-who", who); }catch(_){} draw(); });
 function setDoneOpen(open){ $("#done-toggle").setAttribute("aria-expanded", open); $("#done-wrap").hidden=!open; }
 $("#done-toggle").onclick = ()=>setDoneOpen($("#done-wrap").hidden);
+$("#seisanAlert").onclick = ()=>{ const t=tasks.find(x=>visible(x)&&x.seisanResult==="差異あり"); if(t) openTask(t); };
 $("#f-month").onchange=e=>{ fMonth=e.target.value; draw(); };
 $("#f-site").onchange=e=>{ fSite=e.target.value; draw(); };
 document.querySelectorAll(".views .chip").forEach(b=>b.onclick=()=>{ view=b.dataset.view; try{ localStorage.setItem("uriage-view", view); }catch(_){} draw(); });
@@ -318,6 +325,7 @@ function openTask(t, lastCheck){
   let html = `<h2><span>${esc(title(t))}</span><button class="btn sm" id="close">閉じる</button></h2>
     <dl class="info"><dt>状態</dt><dd>${esc(t.status)}</dd><dt>開催日</dt><dd>${esc(md(t.date))}</dd><dt>オークション</dt><dd>${esc(t.site)}</dd>
       ${t.checkResult?`<dt>照合</dt><dd>${esc(t.checkResult)}（伝票 ${esc(t.slipCount)}点 ${esc(yen(t.slipAmount))}／シート ${esc(t.sheetCount)}点 ${esc(yen(t.sheetAmount))}）${t.checkedAt?" "+esc(when(t.checkedAt)):""}</dd>`:""}
+      ${t.seisanResult?`<dt>精算書照合</dt><dd${t.seisanResult==="差異あり"?' style="color:#ff9b8f"':""}>${esc(t.seisanResult)}${t.seisanCount!==""&&t.seisanCount!=null?`（精算書 ${esc(t.seisanCount)}点 ${esc(yen(t.seisanAmount))}）`:""}${t.seisanMemo?"<br>"+esc(t.seisanMemo):""}</dd>`:""}
       ${t.note?`<dt>出品メモ</dt><dd>${esc(t.note)}</dd>`:""}
       ${t.askedAt?`<dt>祥貴へ渡した</dt><dd>${esc(when(t.askedAt))}</dd>`:""}
       ${t.doneAt?`<dt>済み</dt><dd>${esc(when(t.doneAt))}${t.by?"（"+esc(t.by)+"）":""}</dd>`:""}</dl>
