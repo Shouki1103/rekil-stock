@@ -106,6 +106,8 @@ label{display:block;font-size:12px;color:var(--sub);margin:12px 0 4px}
 .pbtn{flex:none;width:56px;height:56px;border:1px dashed var(--sub);border-radius:8px;background:var(--field) center/cover no-repeat;color:var(--sub);font-size:11px;display:flex;align-items:center;justify-content:center;cursor:pointer;text-align:center;line-height:1.2}
 .prow .pwrap{display:flex;gap:8px;align-items:flex-start;margin-top:6px}.prow .pwrap .two{flex:1;margin-top:0;flex-direction:column;gap:6px}
 #zoom{position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:60;display:none;align-items:center;justify-content:center}#zoom.open{display:flex}#zoom img{max-width:94vw;max-height:90vh;border-radius:10px}
+.kchips{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}.kchip{border:1px solid var(--line);background:var(--field);color:var(--ink);border-radius:99px;padding:6px 10px;font-size:13px;cursor:pointer}.kchip.on{background:var(--shup);color:#111;border-color:var(--shup);font-weight:700}
+.prow .pm .sug{font-family:inherit;font-size:11px;color:var(--ret)}
 .toast{position:fixed;left:50%;bottom:96px;transform:translateX(-50%);background:#f2f2f3;color:#111;padding:8px 14px;border-radius:8px;font-size:13px;display:none;z-index:50;max-width:90vw;text-align:center}
 </style>
 </head>
@@ -132,6 +134,7 @@ label{display:block;font-size:12px;color:var(--sub);margin:12px 0 4px}
   <span class="cnt" id="selCnt">0件選択</span>
   <button class="btn" id="selAll">全選択</button>
   <button class="btn main" id="selReg">業者に出品登録</button>
+  <button class="btn okb" id="selRel" hidden>再出品済にする</button>
   <button class="btn del" id="selDel">削除</button>
   <button class="btn ghost" id="selCancel">やめる</button>
 </div>
@@ -145,6 +148,8 @@ label{display:block;font-size:12px;color:var(--sub);margin:12px 0 4px}
     <div><label>業者オークション</label><select id="aAuc"></select></div>
     <div><label>開催日</label><input type="date" id="aDate"></div>
   </div>
+  <div id="aKaisai" hidden><label>出品・返品・外注アプリに登録済みの開催（タップで選択）</label><div class="kchips" id="aKchips"></div></div>
+  <div id="aXlsBox" hidden><button class="btn sm" id="aXls" type="button" style="margin-top:12px">📄 出品リスト（Excel）から出品番号を入れる</button><input type="file" id="aXlsIn" accept=".xlsx,.xlsm,.xls,.csv" hidden><p class="hint" id="aXlsMsg" style="margin-top:6px"></p></div>
   <div id="aRows"></div>
   <div class="foot"><button class="btn" id="aCancel">キャンセル</button><button class="btn main" id="aSave">保存</button></div>
 </div></div>
@@ -204,7 +209,7 @@ label{display:block;font-size:12px;color:var(--sub);margin:12px 0 4px}
 <script>
 /* ▼ Apps Script をデプロイしたときの「ウェブアプリのURL」 */
 const API_URL = "https://script.google.com/macros/s/AKfycbzc7ND5p6X7nAyZ5AImSXScpj59BJQUo9Ht1SlBvO5Km6wNUIW7eG3iQfpghGJJq3Mk/exec";
-const APP_VERSION = "2026-11-23-5";
+const APP_VERSION = "2026-11-24-1";
 const DEF_AUC=["オークネット","エコオク","エコトレ[関東]","エコトレ[関西]","JDS","JBA","コメ兵","モノバンク","プライム","浜屋","大吉","JWA","トレファク","ペンギン","アプレ","リバオク"];
 const ST={hikae:"業者未登録",shuppin:"出品中",sold:"落札",return:"戻り・再出品待ち",relisted:"再出品済"};
 const ACTIVE=["hikae","shuppin","return"];
@@ -293,7 +298,7 @@ function render(){
     if(cc&&catOf(i)!==cc)return false;
     if(q&&!((i.name||"")+" "+i.mid+" "+(i.lot||"")).toLowerCase().includes(q))return false;return true});
   shownIds=list.map(i=>i.id);
-  for(const id of [...selected])if(!items.some(i=>i.id===id&&i.status==="hikae"))selected.delete(id);
+  for(const id of [...selected])if(!items.some(i=>i.id===id&&i.status===(view==="return"?"return":"hikae")))selected.delete(id);
   selSync();
   const el=$("list");
   if(!list.length){el.innerHTML=`<div class="empty">${{hikae:"業者に未登録のメルカリ商品はありません",shuppin:"業者に出品中の商品はありません",return:"再出品待ちはありません 🎉",done:"完了した商品はまだありません"}[view]}<br>右下の「＋ リンク追加」からメルカリのリンクを貼り付けて登録できます</div>`;return}
@@ -304,7 +309,7 @@ function render(){
     const t=today();
     for(const k of keys){const a=g[k],f=a[0];const past=f.date&&f.date<=t;
       a.sort((x,y)=>(nLot(x.lot)||"").localeCompare(nLot(y.lot)||"",undefined,{numeric:true}));
-      const btn=view==="shuppin"&&!selMode?`<button class="btn sm ${past?"main":""}" data-a="result" data-k="${esc(k)}">${past?"結果を入力":"結果入力"}</button>`:"";
+      const btn=view==="shuppin"&&!selMode?`<button class="btn sm ${past?"main":""}" data-a="result" data-k="${esc(k)}">${past?"結果を入力":"結果入力"}</button>`:view==="return"&&!selMode?`<button class="btn sm" data-a="cpall" data-k="${esc(k)}">番号をまとめてコピー</button>`:"";
       html+=`<div class="grp${view==="return"?" ret":""}"><span class="gt">${esc(f.auction||"オークション未設定")}　${dayLabel(f.date)}<small>${a.length}点${view==="shuppin"&&past?"・開催済み":""}</small></span>${btn}</div>`;
       html+=a.map(i=>cardHtml(i,{noAuc:true})).join("");}
   }else{
@@ -328,6 +333,62 @@ function commit(recs,msg){
 function removeIds(ids,msg){const prev=items.slice();ids.forEach(i=>pending.set(i,{del:true}));items=items.filter(x=>!ids.includes(x.id));cacheLocal();render();toast(msg);
   api("removeMany",{ids}).then(()=>ids.forEach(i=>pending.delete(i))).catch(e=>{ids.forEach(i=>pending.delete(i));items=prev;cacheLocal();render();handleErr(e)})}
 
+// ---- 出品・返品・外注アプリ（業者出品）とつなぐ ----
+const HP_URL="https://script.google.com/macros/s/AKfycbzuakHA841y3KMQTn32E6L6UOebKO9LZGEqX1IHAAQ3Xkb5Y2tvp4ZlIOVnr1u9T5KD/exec";
+const RR_URL="https://script.google.com/macros/s/AKfycbxGqX3SpjyG9EOeR-JoCY5vGO3zIRFtJe1PUDgZB956ux8e3UlxX4cesXzXdWY7qahBpw/exec";
+const HP_AUC=["オークネット","エコリング","JDS","JBA","コメ兵オークション","モノバンク","プライムオークション","浜屋オークション","大吉オークション","JWAオークション","トレファクオークション","ペンギンオークション","アプレ","リバオク"];
+/* オークション名の呼び方の違いをそろえる（エコオク・エコトレ→エコリング、「オークション」を外す） */
+const canon=a=>{let t=String(a||"").normalize("NFKC").replace(/\[.*?\]|【.*?】|\s/g,"").replace(/オークション$/,"");if(/^エコ/.test(t))return "エコリング";return ({"ものバンク":"モノバンク","ブランドオークション":"オークネット"})[t]||t};
+let hpShup=null,hpAt=0;
+async function post(url,body){let r;try{r=await fetch(url,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({pass,...body})})}catch(_){throw new ApiError("network")}
+  let j;try{j=await r.json()}catch(_){throw new ApiError("bad_response")}if(!j.ok)throw new ApiError(j.error||"error");return j}
+async function loadHp(force){if(!force&&hpShup&&Date.now()-hpAt<60000)return hpShup;const j=await post(HP_URL,{action:"list"});hpShup=(j.data&&j.data.shuppin)||[];hpAt=Date.now();return hpShup}
+function drawKaisai(){const box=$("aKaisai");if(!regIds||!hpShup){box.hidden=true;return}
+  const from=new Date(Date.now()+9*3600e3-7*864e5).toISOString().slice(0,10);
+  const list=hpShup.filter(r=>r.kaisai&&r.kaisai>=from).sort((a,b)=>a.kaisai.localeCompare(b.kaisai));
+  box.hidden=!list.length;const ca=canon($("aAuc").value),cd=$("aDate").value;
+  $("aKchips").innerHTML=list.map(r=>`<button type="button" class="kchip${canon(r.auction)===ca&&r.kaisai===cd?" on":""}" data-ka="${esc(r.auction)}" data-kd="${esc(r.kaisai)}">${dayLabel(r.kaisai)} ${esc(r.auction)}</button>`).join("")}
+$("aKchips").onclick=e=>{const b=e.target.closest("[data-kd]");if(!b)return;const c=canon(b.dataset.ka);
+  const hit=settings.auctions.find(a=>canon(a)===c)||b.dataset.ka;fillAuc($("aAuc"),hit,false);$("aDate").value=b.dataset.kd;renderARows();drawKaisai()};
+/* 業者出品に同じ開催が無ければ、出品・返品・外注アプリにも自動で登録する（開催の登録が1回で済む） */
+async function ensureHp(auc,date){try{const list=await loadHp(true);if(list.some(r=>r.kaisai===date&&canon(r.auction)===canon(auc)))return;
+  const name=HP_AUC.find(a=>canon(a)===canon(auc))||auc;const id=new Date(Date.now()+9*3600e3).toISOString().replace(/\D/g,"").slice(0,14)+"-"+Math.random().toString(36).slice(2,6);
+  await post(HP_URL,{action:"save",table:"shuppin",item:{id,kaisai:date,auction:name,status:date<=today()?"出品中":"出品予定",item:"メルカリ再出品アプリから登録"}});hpAt=0;
+  toast(`出品・返品・外注アプリにも ${dayLabel(date)} ${name} を登録しました`)}catch(_){}}
+/* 戻りが出たら ReKiL 連絡に作業依頼を出し、全部再出品したら完了にする */
+const rrId=k=>"mercari-"+k.replace(/[^0-9A-Za-z]/g,"")+"-"+Array.from(k).reduce((h,c)=>(h*31+c.charCodeAt(0))>>>0,7).toString(36);
+async function rrTask(k,recs){const rets=recs.filter(r=>r.status==="return");if(!rets.length)return;const f=rets[0];
+  try{await post(RR_URL,{action:"saveTask",item:{id:rrId(k),title:`メルカリ再出品 ${rets.length}点（${f.auction||""} ${dayLabel(f.date)}の戻り）`,assignee:"",
+    due:new Date(Date.now()+9*3600e3+2*864e5).toISOString().slice(0,10),memo:rets.map(r=>`${r.mid} ${r.name||""}`).join("\n")+"\nメルカリ再出品アプリ：https://shouki1103.github.io/rekil-stock/mercari/",createdBy:"メルカリ再出品アプリ",createdAt:new Date().toISOString(),done:"",doneAt:""}}).then(()=>toast("ReKiL 連絡に再出品の作業依頼を出しました"))}catch(_){}}
+function rrDoneCheck(keys){keys.forEach(k=>{if(!items.some(i=>i.status==="return"&&gkey(i)===k))post(RR_URL,{action:"doneTask",id:rrId(k),done:true,by:"メルカリ再出品アプリ"}).catch(()=>{})})}
+
+// ---- 出品リスト（Excel）から出品番号を入れる ----
+let xlsLoading=null;
+function loadXlsx(){if(window.XLSX)return Promise.resolve();return xlsLoading||(xlsLoading=new Promise((ok,ng)=>{const sc=document.createElement("script");sc.src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js";sc.onload=ok;sc.onerror=()=>{xlsLoading=null;ng(new Error("load"))};document.head.appendChild(sc)}))}
+const normT=s=>String(s??"").normalize("NFKC").toUpperCase().replace(/[\s・\/\-_,.、。()（）【】\[\]「」"']/g,"");
+const bigr=s=>{const t=normT(s),o=new Set();for(let i=0;i<t.length-1;i++)o.add(t.slice(i,i+2));return o};
+function sim(a,b){const A=bigr(a),B=bigr(b);if(!A.size||!B.size)return 0;let n=0;A.forEach(x=>{if(B.has(x))n++});return n/Math.min(A.size,B.size)}
+async function fillFromXls(file){const msg=$("aXlsMsg");msg.textContent="読み込み中…";
+  try{await loadXlsx();const wb=XLSX.read(await file.arrayBuffer(),{type:"array"});
+    let rows=[];wb.SheetNames.forEach(n=>{rows=rows.concat(XLSX.utils.sheet_to_json(wb.Sheets[n],{header:1,raw:false,defval:""}))});
+    rows=rows.filter(r=>r.some(c=>String(c).trim()));
+    // 見出し行と出品番号の列を探す
+    let hi=-1,lc=-1;for(let i=0;i<Math.min(rows.length,15)&&lc<0;i++){const r=rows[i].map(c=>String(c).normalize("NFKC"));
+      const k=r.findIndex(c=>/出品番号|受付番号|出品No|ロット|LOT|商品番号|管理番号|^No\.?$|^番号$/i.test(c.trim())&&!/メルカリ/.test(c));if(k>=0){hi=i;lc=k}}
+    if(lc<0){const cols=Math.max(...rows.slice(0,30).map(r=>r.length));let best=-1,bc=0;
+      for(let c=0;c<cols;c++){const n=rows.slice(0,60).filter(r=>/^\s*[A-Za-z]?\d{1,6}\s*$/.test(String(r[c]??"").normalize("NFKC"))).length;if(n>bc){bc=n;best=c}}lc=best}
+    if(lc<0){msg.textContent="出品番号の列が見つかりませんでした。番号は手で入れてください";return}
+    const data=rows.slice(hi+1).map(r=>({lot:String(r[lc]??"").trim(),text:r.filter((_,i)=>i!==lc).join(" ")})).filter(d=>d.lot);
+    let filled=0,miss=[];const used=new Set();
+    aRows.forEach(r=>{let hit=data.find(d=>r.mid&&normT(d.text).includes(normT(r.mid)));let sc=1;
+      if(!hit){let b=null,bs=0,second=0;data.forEach(d=>{if(used.has(d.lot))return;const v=sim(r.name,d.text);if(v>bs){second=bs;bs=v;b=d}else if(v>second)second=v});
+        if(b&&bs>=.35&&bs-second>=.08){hit=b;sc=bs}}
+      if(hit&&!r.lot){r.lot=hit.lot;r.sug=sc<1?"出品リストから（要確認）":"出品リストから";used.add(hit.lot);filled++}else if(!r.lot)miss.push(r.name||r.mid)});
+    renderARows();msg.textContent=`${filled}件の出品番号を入れました。`+(miss.length?`見つからなかった：${miss.join("、")}`:"")+"（青字の行は念のため確認してください）"}
+  catch(e){msg.textContent="Excelを読み込めませんでした。番号は手で入れてください"}}
+$("aXls").onclick=()=>$("aXlsIn").click();
+$("aXlsIn").onchange=e=>{const f=e.target.files[0];e.target.value="";if(f)fillFromXls(f)};
+
 // ---- 追加・業者登録 ----
 let aRows=[];
 function openAdd(ids){
@@ -339,21 +400,23 @@ function openAdd(ids){
   $("aDate").value=ids?(items.find(x=>x.id===ids[0])?.date||""):"";
   aRows=ids?ids.map(id=>{const i=items.find(x=>x.id===id);return{mid:i.mid,name:i.name||"",lot:i.lot||"",photo:i.photo||"",id}}):[];
   renderARows();$("add").classList.add("open");if(!ids)setTimeout(()=>$("aLinks").focus(),150);
+  $("aXlsBox").hidden=!ids;$("aXlsMsg").textContent="";$("aKaisai").hidden=true;
+  if(ids)loadHp().then(drawKaisai).catch(()=>{});
 }
 function renderARows(){
   const hasAuc=!!$("aAuc").value;
   $("aDate").parentElement.style.opacity=hasAuc?1:.4;
   $("aRows").innerHTML=aRows.length?aRows.map((r,k)=>{
     const ex=!r.id&&items.find(x=>x.mid===r.mid&&ACTIVE.includes(x.status));
-    const w=ex?`<span class="warn">登録済（${ST[ex.status]}）${ex.status==="shuppin"?"→飛ばします":"→上書き"}</span>`:"";
+    const w=r.sug&&r.lot?`<span class="sug">${esc(r.sug)}</span>`:ex?`<span class="warn">登録済（${ST[ex.status]}）${ex.status==="shuppin"?"→飛ばします":"→上書き"}</span>`:"";
     return `<div class="prow"><div class="pm"><span>${k+1}. ${esc(r.mid)}</span>${w}</div><div class="pwrap"><div class="pbtn" data-pk="${k}" style="${r.photo?`background-image:url('${r.photo}');border-style:solid`:""}">${r.photo?"":"＋写真"}</div><div class="two"><input data-k="${k}" data-f="name" value="${esc(r.name)}" placeholder="商品名（例：PRADAバッグ）">${hasAuc?`<input data-k="${k}" data-f="lot" value="${esc(r.lot)}" placeholder="出品番号" autocomplete="off">`:""}</div></div></div>`}).join(""):(regIds?"":'<p class="hint" style="margin-top:10px">リンクを貼ると、ここに番号が並びます。</p>');
 }
 $("aLinks").oninput=()=>{const mids=parseMids($("aLinks").value);
   const keep=Object.fromEntries(aRows.map(r=>[r.mid,r]));
   aRows=mids.map(m=>{const ex=items.find(x=>x.mid===m)||{};return keep[m]||{mid:m,name:ex.name||"",lot:"",photo:ex.photo||""}});renderARows()};
 $("aRows").onclick=e=>{const b=e.target.closest("[data-pk]");if(!b)return;pickPhoto(d=>{aRows[+b.dataset.pk].photo=d;renderARows()})};
-$("aRows").oninput=e=>{const t=e.target;if(t.dataset.k!=null)aRows[+t.dataset.k][t.dataset.f]=t.value};
-$("aAuc").onchange=renderARows;
+$("aRows").oninput=e=>{const t=e.target;if(t.dataset.k!=null){aRows[+t.dataset.k][t.dataset.f]=t.value;if(t.dataset.f==="lot")aRows[+t.dataset.k].sug=""}};
+$("aAuc").onchange=()=>{renderARows();drawKaisai()};$("aDate").addEventListener("change",drawKaisai);
 $("aDate").addEventListener("click",()=>{try{$("aDate").showPicker()}catch(e){}});
 $("aCancel").onclick=()=>$("add").classList.remove("open");
 $("aSave").onclick=()=>{
@@ -370,7 +433,7 @@ $("aSave").onclick=()=>{
     recs.push(rec);}
   $("add").classList.remove("open");selMode=false;selected.clear();
   if(recs.length)commit(recs,`${recs.length}件保存しました${skip?`（出品中の${skip}件は飛ばしました）`:""}`);else toast("出品中のため保存しませんでした");
-  if(auc&&recs.length)setView("shuppin");
+  if(auc&&recs.length){setView("shuppin");ensureHp(auc,date)}
 };
 
 // ---- 結果入力 ----
@@ -395,7 +458,7 @@ $("rCancel").onclick=()=>$("result").classList.remove("open");
 $("rSave").onclick=()=>{const now=Date.now();
   const recs=items.filter(i=>i.status==="shuppin"&&gkey(i)===resKey).map(i=>({...i,status:resMap[i.id]||"return",resultAt:now,updatedAt:now}));
   const r=recs.filter(x=>x.status==="return").length;$("result").classList.remove("open");
-  commit(recs,`確定しました（戻り ${r}点は「再出品待ち」へ）`);if(r)setView("return")};
+  commit(recs,`確定しました（戻り ${r}点は「再出品待ち」へ）`);if(r){setView("return");rrTask(resKey,recs)}};
 
 // ---- 編集 ----
 let ePhotoVal="";function ePhotoSync(){const b=$("ePhoto");b.style.backgroundImage=ePhotoVal?`url('${ePhotoVal}')`:"";b.style.borderStyle=ePhotoVal?"solid":"dashed";b.textContent=ePhotoVal?"":"＋写真"}
@@ -435,16 +498,19 @@ $("list").onclick=e=>{
   if(a==="edit")openEdit(it);
   else if(a==="reg1")openAdd([id]);
   else if(a==="result")openResult(b.dataset.k);
-  else if(a==="relist"){const now=Date.now();commit([{...it,status:"relisted",relistedAt:now,updatedAt:now}],"再出品済にしました")}
+  else if(a==="relist"){const now=Date.now();commit([{...it,status:"relisted",relistedAt:now,updatedAt:now}],"再出品済にしました");rrDoneCheck([gkey(it)])}
+  else if(a==="cpall"){const ms=items.filter(i=>i.status==="return"&&gkey(i)===b.dataset.k).map(i=>i.mid);copyText(ms.join("\n"),null);toast(`${ms.length}件のメルカリ番号をまとめてコピーしました`)}
 };
 $("addBtn").onclick=()=>openAdd(null);
 function selSync(){$("selbar").hidden=!selMode;$("addBtn").style.display=selMode?"none":"";
   $("selBtn").textContent=selMode?"選択中":"選択";$("selCnt").textContent=`${selected.size}件選択`;
-  $("selReg").hidden=view!=="hikae";$("selReg").disabled=$("selDel").disabled=!selected.size}
+  $("selReg").hidden=view!=="hikae";$("selRel").hidden=view!=="return";$("selReg").disabled=$("selRel").disabled=$("selDel").disabled=!selected.size}
 $("selBtn").onclick=()=>{selMode=!selMode;selected.clear();render()};
 $("selCancel").onclick=()=>{selMode=false;selected.clear();render()};
 $("selAll").onclick=()=>{const all=shownIds.length&&shownIds.every(i=>selected.has(i));shownIds.forEach(i=>all?selected.delete(i):selected.add(i));render()};
 $("selReg").onclick=()=>{if(selected.size)openAdd([...selected])};
+$("selRel").onclick=()=>{if(!selected.size)return;const now=Date.now();const recs=items.filter(i=>selected.has(i.id)&&i.status==="return").map(i=>({...i,status:"relisted",relistedAt:now,updatedAt:now}));
+  const keys=[...new Set(recs.map(gkey))];selMode=false;selected.clear();commit(recs,`${recs.length}件を再出品済にしました`);rrDoneCheck(keys)};
 $("selDel").onclick=()=>{if(selected.size)askDel([...selected],`選択した${selected.size}件を削除しますか？（元に戻せません）`)};
 let delIds=null;
 function askDel(ids,msg){delIds=ids;$("cMsg").textContent=msg;$("confirm").classList.add("open")}
