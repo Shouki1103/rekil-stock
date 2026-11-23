@@ -100,6 +100,11 @@ label{display:block;font-size:12px;color:var(--sub);margin:12px 0 4px}
 .seg{display:flex;gap:6px;flex-wrap:wrap}
 .seg button{flex:1;padding:10px 6px;border:1px solid var(--line);border-radius:10px;background:var(--field);color:var(--ink);cursor:pointer;font-size:13px;min-width:70px}
 .seg button.on{background:var(--ink);color:#111;font-weight:700}
+.thumb{width:64px;height:64px;border-radius:8px;object-fit:cover;flex:none;background:var(--field);border:1px solid var(--line);cursor:zoom-in}
+.cflex{display:flex;gap:10px;align-items:flex-start}.cflex>.cmain{flex:1;min-width:0}
+.pbtn{flex:none;width:56px;height:56px;border:1px dashed var(--sub);border-radius:8px;background:var(--field) center/cover no-repeat;color:var(--sub);font-size:11px;display:flex;align-items:center;justify-content:center;cursor:pointer;text-align:center;line-height:1.2}
+.prow .pwrap{display:flex;gap:8px;align-items:flex-start;margin-top:6px}.prow .pwrap .two{flex:1;margin-top:0;flex-direction:column;gap:6px}
+#zoom{position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:60;display:none;align-items:center;justify-content:center}#zoom.open{display:flex}#zoom img{max-width:94vw;max-height:90vh;border-radius:10px}
 .toast{position:fixed;left:50%;bottom:96px;transform:translateX(-50%);background:#f2f2f3;color:#111;padding:8px 14px;border-radius:8px;font-size:13px;display:none;z-index:50;max-width:90vw;text-align:center}
 </style>
 </head>
@@ -157,6 +162,7 @@ label{display:block;font-size:12px;color:var(--sub);margin:12px 0 4px}
 <div class="sheet" id="edit"><div class="panel">
   <h2>編集</h2>
   <label>メルカリ番号</label><input id="eMid" autocapitalize="off" autocomplete="off">
+  <label>写真</label><div class="pbtn" id="ePhoto">＋写真</div>
   <label>商品名</label><input id="eName">
   <div class="two">
     <div><label>業者オークション</label><select id="eAuc"></select></div>
@@ -184,6 +190,7 @@ label{display:block;font-size:12px;color:var(--sub);margin:12px 0 4px}
   <div class="foot"><button class="btn" id="cNo">やめる</button><button class="btn del" id="cYes">削除する</button></div>
 </div></div>
 <div class="toast" id="toast"></div>
+<div id="zoom"><img id="zoomImg" alt=""></div>
 <div id="lock" hidden><form id="lockForm">
   <h1>ReKiL メルカリ再出品</h1>
   <p class="meta" id="lockMsg"></p>
@@ -194,7 +201,7 @@ label{display:block;font-size:12px;color:var(--sub);margin:12px 0 4px}
 <script>
 /* ▼ Apps Script をデプロイしたときの「ウェブアプリのURL」 */
 const API_URL = "";
-const APP_VERSION = "2026-11-23-1";
+const APP_VERSION = "2026-11-23-2";
 const DEF_AUC=["オークネット","エコオク","エコトレ[関東]","エコトレ[関西]","JDS","JBA","コメ兵","モノバンク","プライム","浜屋","大吉","JWA","トレファク","ペンギン","アプレ","リバオク"];
 const ST={hikae:"業者未登録",shuppin:"出品中",sold:"落札",return:"戻り・再出品待ち",relisted:"再出品済"};
 const ACTIVE=["hikae","shuppin","return"];
@@ -253,8 +260,8 @@ function cardHtml(i,opt={}){
     if(i.status==="hikae")acts+=`<button class="btn sm main" data-a="reg1" data-id="${i.id}">業者に出品登録</button>`;
     acts+=`<button class="btn sm ghost" data-a="edit" data-id="${i.id}">編集</button>`;
   }
-  const body=`<div class="row"><span class="nm">${esc(i.name||"（商品名なし）")}</span><span class="pill p-${i.status}">${ST[i.status]||""}</span></div>
-    <div class="mid"><code>${esc(i.mid)}</code><button class="cp" data-cp="${esc(i.mid)}">コピー</button></div>
+  const body=`<div class="cflex">${i.photo?`<img class="thumb" src="${i.photo}" data-zoom="1" alt="">`:""}<div class="cmain"><div class="row"><span class="nm">${esc(i.name||"（商品名なし）")}</span><span class="pill p-${i.status}">${ST[i.status]||""}</span></div>
+    <div class="mid"><code>${esc(i.mid)}</code><button class="cp" data-cp="${esc(i.mid)}">コピー</button></div></div></div>
     ${meta?`<div class="meta">${meta}</div>`:""}${i.memo?`<div class="memo">${esc(i.memo)}</div>`:""}${acts?`<div class="acts">${acts}</div>`:""}`;
   if(selMode){const on=selected.has(i.id);return `<div class="card sel s-${i.status}${on?" checked":""}" data-sel="${i.id}"><div class="cbox">${on?"✓":""}</div><div class="cbody">${body}</div></div>`}
   return `<div class="card s-${i.status}">${body}</div>`;
@@ -317,7 +324,7 @@ function openAdd(ids){
   $("aLinkBox").hidden=!!ids;$("aLinks").value="";
   fillAuc($("aAuc"),ids?(items.find(x=>x.id===ids[0])?.auction||settings.auctions[0]):"",!ids);
   $("aDate").value=ids?(items.find(x=>x.id===ids[0])?.date||""):"";
-  aRows=ids?ids.map(id=>{const i=items.find(x=>x.id===id);return{mid:i.mid,name:i.name||"",lot:i.lot||"",id}}):[];
+  aRows=ids?ids.map(id=>{const i=items.find(x=>x.id===id);return{mid:i.mid,name:i.name||"",lot:i.lot||"",photo:i.photo||"",id}}):[];
   renderARows();$("add").classList.add("open");if(!ids)setTimeout(()=>$("aLinks").focus(),150);
 }
 function renderARows(){
@@ -326,11 +333,12 @@ function renderARows(){
   $("aRows").innerHTML=aRows.length?aRows.map((r,k)=>{
     const ex=!r.id&&items.find(x=>x.mid===r.mid&&ACTIVE.includes(x.status));
     const w=ex?`<span class="warn">登録済（${ST[ex.status]}）${ex.status==="shuppin"?"→飛ばします":"→上書き"}</span>`:"";
-    return `<div class="prow"><div class="pm"><span>${k+1}. ${esc(r.mid)}</span>${w}</div><div class="two"><div style="flex:2"><input data-k="${k}" data-f="name" value="${esc(r.name)}" placeholder="商品名（例：PRADAバッグ）"></div>${hasAuc?`<div><input data-k="${k}" data-f="lot" value="${esc(r.lot)}" placeholder="出品番号" autocomplete="off"></div>`:""}</div></div>`}).join(""):(regIds?"":'<p class="hint" style="margin-top:10px">リンクを貼ると、ここに番号が並びます。</p>');
+    return `<div class="prow"><div class="pm"><span>${k+1}. ${esc(r.mid)}</span>${w}</div><div class="pwrap"><div class="pbtn" data-pk="${k}" style="${r.photo?`background-image:url('${r.photo}');border-style:solid`:""}">${r.photo?"":"＋写真"}</div><div class="two"><input data-k="${k}" data-f="name" value="${esc(r.name)}" placeholder="商品名（例：PRADAバッグ）">${hasAuc?`<input data-k="${k}" data-f="lot" value="${esc(r.lot)}" placeholder="出品番号" autocomplete="off">`:""}</div></div></div>`}).join(""):(regIds?"":'<p class="hint" style="margin-top:10px">リンクを貼ると、ここに番号が並びます。</p>');
 }
 $("aLinks").oninput=()=>{const mids=parseMids($("aLinks").value);
   const keep=Object.fromEntries(aRows.map(r=>[r.mid,r]));
-  aRows=mids.map(m=>keep[m]||{mid:m,name:(items.find(x=>x.mid===m)||{}).name||"",lot:""});renderARows()};
+  aRows=mids.map(m=>{const ex=items.find(x=>x.mid===m)||{};return keep[m]||{mid:m,name:ex.name||"",lot:"",photo:ex.photo||""}});renderARows()};
+$("aRows").onclick=e=>{const b=e.target.closest("[data-pk]");if(!b)return;pickPhoto(d=>{aRows[+b.dataset.pk].photo=d;renderARows()})};
 $("aRows").oninput=e=>{const t=e.target;if(t.dataset.k!=null)aRows[+t.dataset.k][t.dataset.f]=t.value};
 $("aAuc").onchange=renderARows;
 $("aDate").addEventListener("click",()=>{try{$("aDate").showPicker()}catch(e){}});
@@ -343,7 +351,7 @@ $("aSave").onclick=()=>{
   for(const r of aRows){
     let base=r.id?items.find(x=>x.id===r.id):items.find(x=>x.mid===r.mid&&ACTIVE.includes(x.status));
     if(!r.id&&base&&base.status==="shuppin"){skip++;continue}
-    const rec={...(base||{id:uid(),createdAt:now,memo:""}),mid:r.mid,name:r.name.trim()||base?.name||"",updatedAt:now};
+    const rec={...(base||{id:uid(),createdAt:now,memo:""}),mid:r.mid,name:r.name.trim()||base?.name||"",photo:r.photo||base?.photo||"",updatedAt:now};
     if(auc){rec.auction=auc;rec.date=date;rec.lot=String(r.lot||"").trim();rec.status="shuppin";rec.resultAt="";rec.relistedAt=""}
     else if(!base||base.status!=="return"){rec.status=base?.status||"hikae"}
     recs.push(rec);}
@@ -377,20 +385,30 @@ $("rSave").onclick=()=>{const now=Date.now();
   commit(recs,`確定しました（戻り ${r}点は「再出品待ち」へ）`);if(r)setView("return")};
 
 // ---- 編集 ----
-function openEdit(i){editing=i;$("eMid").value=i.mid;$("eName").value=i.name||"";fillAuc($("eAuc"),i.auction||"",true);$("eDate").value=i.date||"";$("eLot").value=i.lot||"";$("eMemo").value=i.memo||"";eStatus=i.status;segSync();$("edit").classList.add("open")}
+let ePhotoVal="";function ePhotoSync(){const b=$("ePhoto");b.style.backgroundImage=ePhotoVal?`url('${ePhotoVal}')`:"";b.style.borderStyle=ePhotoVal?"solid":"dashed";b.textContent=ePhotoVal?"":"＋写真"}
+$("ePhoto").onclick=()=>pickPhoto(d=>{ePhotoVal=d;ePhotoSync()});
+function openEdit(i){editing=i;ePhotoVal=i.photo||"";ePhotoSync();$("eMid").value=i.mid;$("eName").value=i.name||"";fillAuc($("eAuc"),i.auction||"",true);$("eDate").value=i.date||"";$("eLot").value=i.lot||"";$("eMemo").value=i.memo||"";eStatus=i.status;segSync();$("edit").classList.add("open")}
 function segSync(){document.querySelectorAll("#eStat button").forEach(b=>b.classList.toggle("on",b.dataset.s===eStatus))}
 document.querySelectorAll("#eStat button").forEach(b=>b.onclick=()=>{eStatus=b.dataset.s;segSync()});
 $("eDate").addEventListener("click",()=>{try{$("eDate").showPicker()}catch(e){}});
 $("eCancel").onclick=()=>$("edit").classList.remove("open");
 $("eSave").onclick=()=>{const p=editing,now=Date.now();const mid=(parseMids($("eMid").value)[0])||$("eMid").value.trim();
   if(!mid){toast("メルカリ番号を入れてください");return}
-  const r={...p,mid,name:$("eName").value.trim(),auction:$("eAuc").value,date:$("eDate").value,lot:$("eLot").value.trim(),memo:$("eMemo").value.trim(),status:eStatus,updatedAt:now};
+  const r={...p,mid,name:$("eName").value.trim(),auction:$("eAuc").value,date:$("eDate").value,lot:$("eLot").value.trim(),photo:ePhotoVal,memo:$("eMemo").value.trim(),status:eStatus,updatedAt:now};
   if(eStatus==="relisted"&&!r.relistedAt)r.relistedAt=now;if(eStatus!=="relisted")r.relistedAt="";
   $("edit").classList.remove("open");commit([r],"保存しました")};
 $("eDel").onclick=()=>{const p=editing;$("edit").classList.remove("open");askDel([p.id],`${p.name||p.mid} を削除しますか？`)};
 
+// ---- 写真（端末側で小さくしてから保存＝軽い） ----
+function pickPhoto(cb){const f=document.createElement("input");f.type="file";f.accept="image/*";
+  f.onchange=()=>{const file=f.files[0];if(!file)return;const url=URL.createObjectURL(file);const img=new Image();
+    img.onload=()=>{const m=320,r=Math.min(1,m/Math.max(img.width,img.height));const c=document.createElement("canvas");c.width=Math.round(img.width*r);c.height=Math.round(img.height*r);
+      c.getContext("2d").drawImage(img,0,0,c.width,c.height);URL.revokeObjectURL(url);cb(c.toDataURL("image/jpeg",.7))};
+    img.onerror=()=>toast("写真を読み込めませんでした");img.src=url};f.click()}
+$("zoom").onclick=()=>$("zoom").classList.remove("open");
 // ---- 一覧の操作 ----
 $("list").onclick=e=>{
+  const z=e.target.closest("[data-zoom]");if(z&&!selMode){$("zoomImg").src=z.src;$("zoom").classList.add("open");return}
   const cp=e.target.closest("[data-cp]");if(cp){e.stopPropagation();copyText(cp.dataset.cp,cp);return}
   const sc=e.target.closest("[data-sel]");if(selMode&&sc){const id=sc.dataset.sel;selected.has(id)?selected.delete(id):selected.add(id);render();return}
   const b=e.target.closest("button[data-a]");if(!b)return;const id=b.dataset.id,a=b.dataset.a,it=items.find(x=>x.id===id);
