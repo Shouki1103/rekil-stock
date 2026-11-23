@@ -102,6 +102,7 @@ button.sect{appearance:none;border:0;background:none;width:100%;font-family:inhe
 #lock form{width:100%;max-width:360px;display:flex;flex-direction:column;gap:12px}
 #lock h2{margin:0;font-size:20px}
 @media (prefers-reduced-motion:no-preference){.sheet{animation:up .18s ease-out}@keyframes up{from{transform:translateY(24px);opacity:.6}}}
+.lthumbs{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0}.lthumbs a{width:84px;height:112px;border-radius:6px;overflow:hidden;background:var(--chip);display:block;position:relative}.lthumbs img{width:100%;height:100%;object-fit:cover;display:block}.lthumbs .pg{position:absolute;left:3px;bottom:3px;background:#000a;color:#fff;font-size:11px;border-radius:4px;padding:0 4px}
 </style><style>
 .who{display:flex;gap:6px;margin-top:10px;align-items:center;font-size:12px;color:var(--muted)}
 .who .chip.on{background:var(--acc);color:var(--acc-ink);border-color:var(--acc);font-weight:700}
@@ -187,7 +188,7 @@ const $ = (s, r = document) => r.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 /* ▼ Apps Script をデプロイしたときの「ウェブアプリのURL」 */
 const API_URL = "https://script.google.com/macros/s/AKfycby_jyb7iNU30-66PBZz1tePhqZDMFmtik2SY48w2lqBxRPTJ38Xiwyxn1i9DQPTvILs/exec";
-const APP_VERSION = "2026-11-22-6";
+const APP_VERSION = "2026-11-23-1";
 const CACHE = "uriage-data";
 const ST = {todo:"俊輔の入力待ち", ask:"祥貴の確認待ち", done:"済み"};
 let tasks = [];
@@ -195,6 +196,65 @@ let pass = ""; try{ pass = localStorage.getItem("rekil-uriage-pass") || localSto
 let who = "俊輔"; try{ who = localStorage.getItem("uriage-who") || "俊輔"; }catch(_){}
 try{ const c = JSON.parse(localStorage.getItem(CACHE)||"null"); if(c) tasks = c.tasks||[]; }catch(_){}
 let busy = 0, online = false;
+/* ---------- 出品リスト：出品・返品・外注アプリ（業者出品）に登録した写真・PDFを読む／追加する ---------- */
+const HP_URL = "https://script.google.com/macros/s/AKfycbzuakHA841y3KMQTn32E6L6UOebKO9LZGEqX1IHAAQ3Xkb5Y2tvp4ZlIOVnr1u9T5KD/exec";
+let lists = {}, hpRows = null; try{ lists = JSON.parse(localStorage.getItem("uriage-lists")||"{}"); }catch(_){}
+const hpId = t => String(t.id||"").replace(/^auc-/,"");
+const listOf = t => String(lists[hpId(t)]||"").split(",").filter(Boolean);
+const thumbUrl = id => `https://drive.google.com/thumbnail?id=${encodeURIComponent(id)}&sz=w600`;
+const viewUrl = id => `https://drive.google.com/file/d/${encodeURIComponent(id)}/view`;
+async function hp(action, params={}){
+  let res; try{ res = await fetch(HP_URL, {method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"}, body: JSON.stringify({action, pass, ...params})}); }
+  catch(_){ throw new ApiError("network"); }
+  let j; try{ j = await res.json(); }catch(_){ throw new ApiError("bad_response"); }
+  if(!j.ok) throw new ApiError(j.error||"error");
+  if(j.data && j.data.shuppin){ lists = {}; hpRows = new Set();
+    j.data.shuppin.forEach(r=>{ hpRows.add(String(r.id)); if(r.photos) lists[r.id] = r.photos; });
+    try{ localStorage.setItem("uriage-lists", JSON.stringify(lists)); }catch(_){} }
+  return j.result;
+}
+let listsAt = 0;
+async function loadLists(force){ if(!pass || (!force && Date.now()-listsAt < 30000)) return; listsAt = Date.now();
+  try{ await hp("list"); draw(); drawLst(); }catch(_){} }
+function shrinkImg(file, max){
+  return new Promise((ok, ng)=>{ const img = new Image(), url = URL.createObjectURL(file);
+    img.onload = ()=>{ const s = Math.min(1, max/Math.max(img.width, img.height)); const c = document.createElement("canvas");
+      c.width = Math.round(img.width*s); c.height = Math.round(img.height*s); c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(url); ok(c.toDataURL("image/jpeg", .85).split(",")[1]); };
+    img.onerror = ()=>{ URL.revokeObjectURL(url); ng(new ApiError("image")); }; img.src = url; });
+}
+let lstTask = null;
+function lstHtml(t){
+  return `<div class="field" id="lstBox"><label>出品リスト（出品・返品・外注アプリの「業者出品」で登録した分）</label><div id="lst"></div>
+    <button class="btn sm" id="lstAdd" type="button">＋ 出品リストを追加（写真・PDF）</button><input type="file" id="lstIn" accept="image/*,application/pdf,.pdf" multiple hidden></div>`;
+}
+function drawLst(){
+  const t = lstTask, el = $("#lst"); if(!t || !el) return;
+  const ids = listOf(t);
+  el.innerHTML = ids.length
+    ? `<div class="lthumbs">${ids.map((p,i)=>`<a href="${viewUrl(p)}" target="_blank" rel="noopener"><img src="${thumbUrl(p)}" alt="出品リスト${i+1}" loading="lazy"><span class="pg">${i+1}</span></a>`).join("")}</div><p class="hint">タップで大きく表示します。</p>`
+    : `<p class="hint">${hpRows ? "まだ登録されていません。" : "読み込み中…"}</p>`;
+  const add = $("#lstAdd"); if(add) add.hidden = !!hpRows && !hpRows.has(hpId(t));
+}
+async function addLst(files){
+  const t = lstTask; if(!t || !files.length) return;
+  const btn = $("#lstAdd"); btn.disabled = true;
+  try{
+    if(!hpRows) await hp("list");
+    if(!hpRows.has(hpId(t))){ toast("出品・返品・外注アプリにこの開催がありません"); return; }
+    const ids = listOf(t);
+    for(let i=0;i<files.length;i++){
+      const f = files[i]; let imgs;
+      if(window.isPdf && isPdf(f)){ try{ imgs = await pdfToJpegs(f, 2200, (p,n)=>{ btn.textContent = `PDFを読み込み中…（${p}/${n}ページ）`; }); }catch(_){ throw new ApiError("pdf"); } }
+      else imgs = [await shrinkImg(f, 2200)];
+      for(let j=0;j<imgs.length;j++){ btn.textContent = `アップロード中…（${i+1}/${files.length}${imgs.length>1?`・${j+1}/${imgs.length}ページ`:""}）`;
+        const r = await hp("photo", {image: imgs[j]}); ids.push(r.id); }
+    }
+    await hp("save", {table:"shuppin", item:{id: hpId(t), photos: ids.join(",")}});
+    draw(); drawLst(); toast("出品リストを追加しました");
+  }catch(err){ toast(err.code==="network" ? "通信できませんでした。電波を確認してください" : err.code==="pdf" ? "PDFを読み込めませんでした。スクショや写真で追加してください" : `追加できませんでした（${err.code||"error"}）`); }
+  finally{ if($("#lstAdd")===btn){ btn.disabled = false; btn.textContent = "＋ 出品リストを追加（写真・PDF）"; } }
+}
 class ApiError extends Error{ constructor(c){ super(c); this.code = c; } }
 function keep(){ try{ localStorage.setItem(CACHE, JSON.stringify({tasks})); }catch(_){} }
 function sync(){ const el=$("#sync"); if(el) el.textContent = (!API_URL?"未設定":busy?"保存中…":online?"接続済み":"未接続")+"  ver "+APP_VERSION.slice(5); }
@@ -241,6 +301,7 @@ function card(t){
   if(t.status!==ST.done){ const a = t.status===ST.ask ? Math.round((Date.now()-(t.askedAt||Date.now()))/864e5) : ago(t.date)-3;
     if(a>=3) tags.push(`<span class="tag late">${a}日経過</span>`); }
   if(t.seisanResult) tags.push(`<span class="tag ${t.seisanResult==="一致"?"ok":t.seisanResult==="差異あり"?"ng":""}">${t.seisanResult==="差異あり"?"⚠ 精算書と差異":t.seisanResult==="一致"?"精算書一致":"精算書 "+esc(t.seisanResult)}</span>`);
+  { const n = listOf(t).length; if(n) tags.push(`<span class="tag">出品リスト ${n}枚</span>`); }
   if(t.status===ST.done && t.doneAt) tags.push(`<span class="tag">済み ${esc(when(t.doneAt))}</span>`);
   return `<button class="item" data-id="${esc(t.id)}">
     <span class="body">
@@ -310,7 +371,7 @@ $("#f-site").onchange=e=>{ fSite=e.target.value; draw(); };
 document.querySelectorAll(".views .chip").forEach(b=>b.onclick=()=>{ view=b.dataset.view; try{ localStorage.setItem("uriage-view", view); }catch(_){} draw(); });
 $("#agg").addEventListener("click", e=>{ const r=e.target.closest("tr[data-g]"); if(!r) return; const el=document.getElementById("g-"+r.dataset.g); if(el) el.scrollIntoView({behavior:"smooth",block:"start"}); });
 
-function closeSheet(){ $("#sheet-root").innerHTML=""; }
+function closeSheet(){ $("#sheet-root").innerHTML=""; lstTask = null; }
 function chkBox(r){
   if(!r) return "";
   const rows = (r.rows||[]).map(x=>`<tr><td>${esc(md(x.date))}</td><td>${x.no?"No."+esc(x.no)+" ":""}${esc(x.name)}</td><td class="r">${esc(yen(x.price))}</td></tr>`).join("");
@@ -329,6 +390,7 @@ function openTask(t, lastCheck){
       ${t.note?`<dt>出品メモ</dt><dd>${esc(t.note)}</dd>`:""}
       ${t.askedAt?`<dt>祥貴へ渡した</dt><dd>${esc(when(t.askedAt))}</dd>`:""}
       ${t.doneAt?`<dt>済み</dt><dd>${esc(when(t.doneAt))}${t.by?"（"+esc(t.by)+"）":""}</dd>`:""}</dl>
+    ${lstHtml(t)}
     ${chkBox(lastCheck)}
     ${isDone?"":`<div class="field"><label>売上伝票の点数と金額（落札分の合計・税込。管理シートの「売上」と同じ基準で）</label>
       <div class="two"><input id="sc" inputmode="numeric" placeholder="点数" value="${esc(t.slipCount??"")}"><input id="sa" inputmode="numeric" placeholder="金額（円）" value="${t.slipAmount!==""&&t.slipAmount!=null?esc(Number(t.slipAmount).toLocaleString("ja-JP")):""}"></div></div>`}
@@ -344,6 +406,9 @@ function openTask(t, lastCheck){
   if(isAsk) html += `<p class="hint">「俊輔に戻す」と、rekil.usedclothing@gmail.com と俊輔（saku02233）にメールでお知らせが届き、俊輔の入力待ちに戻ります。</p>`;
   $("#sheet-root").innerHTML = `<div class="scrim" id="scrim"><div class="sheet" role="dialog" aria-modal="true">${html}</div></div>`;
   $("#close").onclick=closeSheet;
+  lstTask = t; drawLst(); loadLists();
+  $("#lstAdd").onclick = ()=>$("#lstIn").click();
+  $("#lstIn").onchange = e=>{ const f=[...e.target.files]; e.target.value=""; addLst(f); };
   $("#scrim").addEventListener("click", e=>{ if(e.target.id==="scrim") closeSheet(); });
   $(".btns").addEventListener("click", async e=>{
     const to=e.target.dataset.to; if(!to) return;
@@ -392,6 +457,7 @@ $("#lockForm").addEventListener("submit", async e=>{
 
 /* ---------- 同期・更新 ---------- */
 async function refresh(){ if(!pass||busy||!API_URL||$("#sheet-root").innerHTML) return;
+  loadLists();
   try{ await api("list"); setStatus(""); }catch(err){ if(err.code==="network"){ online=false; sync(); setStatus("通信できません。表示は前回のデータです。"); } else if(err.code!=="passcode") setStatus(`読み込めませんでした（${err.code}）`); } }
 async function checkUpdate(){ try{
   const r = await fetch(location.pathname+"?v="+Date.now(), {cache:"no-store"}); const t = await r.text();
@@ -410,5 +476,6 @@ else { setStatus(tasks.length ? "" : "読み込み中…"); checkUpdate(); refre
 </script>
 <script>try{history.scrollRestoration="manual"}catch(_){}addEventListener("pageshow",()=>scrollTo(0,0));</script>
 <script>/* 共通：電波がなくても開ける・ホームへ戻るボタン */if("serviceWorker" in navigator&&location.protocol.startsWith("http"))navigator.serviceWorker.register("../sw.js",{scope:"../"}).catch(()=>{});try{if(sessionStorage.getItem("rekil-from-home")&&!/\/home\/?$/.test(location.pathname)){const b=document.createElement("a");b.href="../home/";b.textContent="⌂";b.setAttribute("aria-label","ReKiLホームへ");b.onclick=()=>{try{const a=document.activeElement;if(a&&a.blur)a.blur();scrollTo(0,0)}catch(_){}};b.style.cssText="position:fixed;right:12px;bottom:calc(84px + env(safe-area-inset-bottom,0px));z-index:70;width:44px;height:44px;border-radius:22px;background:#2a313a;color:#fff;font-size:22px;display:flex;align-items:center;justify-content:center;text-decoration:none;box-shadow:0 4px 16px #0008;opacity:.9";document.body.appendChild(b)}}catch(_){}</script>
+<script src="../lib/pdfpages.js" defer></script>
 </body>
 </html>

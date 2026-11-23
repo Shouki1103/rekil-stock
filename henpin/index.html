@@ -154,7 +154,7 @@ body{padding-top:env(safe-area-inset-top,0px)!important}
 <script>
 /* ▼ Apps Script をデプロイしたときの「ウェブアプリのURL」 */
 const API_URL = "https://script.google.com/macros/s/AKfycbzuakHA841y3KMQTn32E6L6UOebKO9LZGEqX1IHAAQ3Xkb5Y2tvp4ZlIOVnr1u9T5KD/exec";
-const APP_VERSION = "2026-11-18-3";
+const APP_VERSION = "2026-11-23-1";
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -180,7 +180,7 @@ const T = {
     flow:["出品予定","出品中","出品済み","保留処理済み"], closed:["保留処理済み","保留なし"], extra:["保留なし"],
     fields:[["kaisai","出品日（開催日）","date",0,null,1,"today"],["auction","オークション","select",0,AUCTIONS,1],
       ["count","出品点数","num"],["horyuCount","保留の点数","num"],
-      ["item","出品内容","textarea",1],["memo","保留の処理メモ（承諾・拒否・再出品など）","textarea",1]]},
+      ["item","出品内容","textarea",1],["photos","出品リスト（写真・スクショ・PDF。売上入力アプリでも見られます）","photos",1],["memo","保留の処理メモ（承諾・拒否・再出品など）","textarea",1]]},
   shiire:{name:"業者仕入の返品", add:"＋ 仕入返品を追加",
     flow:["返品申請","業者回答待ち","返送済み","返金待ち","返金済み"], closed:["返金済み","返品不可"], extra:["返品不可"],
     fields:[["item","商品名","text",1,null,1],["vendor","仕入先","select",0,VENDORS],["kanri","管理番号","text"],
@@ -315,7 +315,7 @@ function cardHtml(r){
     frima:[["販路",r.site],["販売額",yen(r.price)],["依頼日",md(r.applyDate)],["購入者",r.buyer]],
     repair:[["外注先",r.gaichu],["料金",yen(r.price)],["依頼日",md(r.sent)],["支払",r.paid],["仕入先",r.supplier],["受取日",md(r.recv)]]
   }[tab].filter(m=>m[1]);
-  const ph = tab==="repair" ? String(r.photos||"").split(",").filter(Boolean) : [];
+  const ph = tab==="repair"||tab==="shuppin" ? String(r.photos||"").split(",").filter(Boolean) : [];
   const quick = tab==="shuppin" && !D.closed.includes(r.status) && days(r.kaisai)<=0
       ? `<div class="quick"><button type="button" data-q="保留処理済み" data-id="${esc(r.id)}">保留処理済みにする</button><button type="button" data-q="保留なし" data-id="${esc(r.id)}">保留なし</button></div>`
     : tab==="repair" && r.status!=="受取済み" ? `<div class="quick"><button type="button" data-q="受取済み" data-id="${esc(r.id)}">受取済みにする</button></div>` : "";
@@ -326,7 +326,7 @@ function cardHtml(r){
     ${r.reason||r.work?`<div class="meta">${esc(r.reason||r.work)}</div>`:""}
     ${tab==="shuppin"&&r.item?`<div class="meta">${esc(r.item)}</div>`:""}
     ${r.memo?`<div class="meta">メモ：${esc(r.memo)}</div>`:""}
-    ${ph.length?`<div class="thumbs">${ph.map(p=>`<a class="thumb" href="${photoOpen(p)}" target="_blank" rel="noopener"><img src="${photoUrl(p)}" alt="写真" loading="lazy"></a>`).join("")}</div>`:""}
+    ${ph.length?`${tab==="shuppin"?`<div class="meta">出品リスト ${ph.length}枚</div>`:""}<div class="thumbs">${ph.map(p=>`<a class="thumb" href="${photoOpen(p)}" target="_blank" rel="noopener"><img src="${photoUrl(p)}" alt="写真" loading="lazy"></a>`).join("")}</div>`:""}
     ${quick}
   </div>`;
 }
@@ -370,7 +370,7 @@ function openForm(r){
     const raw = r ? (r[k] ?? "") : def==="today" ? today() : (def||"");
     const v = esc(raw);
     let input;
-    if(type==="photos") input = `<div class="thumbs" id="fThumbs"></div><button type="button" class="photoBtn" id="photoBtn">＋ 写真を追加</button><input type="file" id="photoIn" accept="image/*" multiple hidden>`;
+    if(type==="photos") input = `<div class="thumbs" id="fThumbs"></div><button type="button" class="photoBtn" id="photoBtn">${photoLabel()}</button><input type="file" id="photoIn" accept="${tab==="shuppin"?"image/*,application/pdf,.pdf":"image/*"}" multiple hidden>`;
     else if(type==="textarea") input = `<textarea id="f_${k}">${v}</textarea>`;
     else if(type==="select"){
       const list = optionsFor(k, opts, raw), add = ADDABLE.includes(k);
@@ -393,6 +393,7 @@ function closeForm(fromBack){
   if(!fromBack && history.state && history.state.sheet) history.back();
 }
 window.addEventListener("popstate", ()=>{ if(!$("#sheet").hidden) closeForm(true); });
+const photoLabel = () => tab==="shuppin" ? "＋ 出品リストを追加（写真・PDF）" : "＋ 写真を追加";
 function drawThumbs(){ const t = $("#fThumbs"); if(!t) return;
   t.innerHTML = photos.map((p,i)=>`<span class="thumb"><img src="${photoUrl(p)}" alt="写真${i+1}"><button type="button" class="x" data-x="${i}" aria-label="写真を外す">×</button></span>`).join(""); }
 $("#addBtn").addEventListener("click", ()=>openForm(null));
@@ -413,12 +414,19 @@ $("#fields").addEventListener("change", async e=>{
   const btn = $("#photoBtn"); btn.disabled = true; $("#save").disabled = true;
   try{
     for(let i=0;i<files.length;i++){
-      btn.textContent = `アップロード中…（${i+1}/${files.length}）`;
-      const image = await shrink(files[i], 1600);
-      const r = await api("photo", {image}); photos.push(r.id); drawThumbs();
+      const f = files[i], big = tab==="shuppin" ? 2200 : 1600;   /* 出品リストは文字が読めるよう大きめ */
+      let imgs;
+      if(window.isPdf && isPdf(f)){
+        try{ imgs = await pdfToJpegs(f, big, (p,n)=>{ btn.textContent = `PDFを読み込み中…（${p}/${n}ページ）`; }); }
+        catch(_){ throw new ApiError("pdf"); }
+      }else imgs = [await shrink(f, big)];
+      for(let j=0;j<imgs.length;j++){
+        btn.textContent = `アップロード中…（${i+1}/${files.length}${imgs.length>1?`・${j+1}/${imgs.length}ページ`:""}）`;
+        const r = await api("photo", {image: imgs[j]}); photos.push(r.id); drawThumbs();
+      }
     }
-  }catch(err){ toast(err.code==="network" ? "写真を送れませんでした。電波を確認してください" : `写真を保存できませんでした（${err.code}）`); }
-  btn.disabled = false; btn.textContent = "＋ 写真を追加"; $("#save").disabled = false;
+  }catch(err){ toast(err.code==="network" ? "写真を送れませんでした。電波を確認してください" : err.code==="pdf" ? "PDFを読み込めませんでした。スクショや写真で追加してください" : `写真を保存できませんでした（${err.code}）`); }
+  btn.disabled = false; btn.textContent = photoLabel(); $("#save").disabled = false;
 });
 function shrink(file, max){
   return new Promise((ok, ng)=>{
@@ -508,5 +516,6 @@ else if(!pass) showLock(); else { checkUpdate(); refresh(); }
 <script>/* 開いたときは必ず一番上から表示（上が隠れないように） */try{history.scrollRestoration="manual"}catch(_){}addEventListener("pageshow",()=>scrollTo(0,0));addEventListener("load",()=>{scrollTo(0,0);setTimeout(()=>scrollTo(0,0),300)});</script>
 <script>setInterval(()=>{try{if(document.visibilityState==="visible")checkUpdate()}catch(_){}},60000);</script>
 <script>/* 共通：電波がなくても開ける・ホームへ戻るボタン */if("serviceWorker" in navigator&&location.protocol.startsWith("http"))navigator.serviceWorker.register("../sw.js",{scope:"../"}).catch(()=>{});try{if(sessionStorage.getItem("rekil-from-home")&&!/\/home\/?$/.test(location.pathname)){const b=document.createElement("a");b.href="../home/";b.textContent="⌂";b.setAttribute("aria-label","ReKiLホームへ");b.onclick=()=>{try{const a=document.activeElement;if(a&&a.blur)a.blur();scrollTo(0,0)}catch(_){}};b.style.cssText="position:fixed;right:12px;bottom:calc(84px + env(safe-area-inset-bottom,0px));z-index:70;width:44px;height:44px;border-radius:22px;background:#2a313a;color:#fff;font-size:22px;display:flex;align-items:center;justify-content:center;text-decoration:none;box-shadow:0 4px 16px #0008;opacity:.9";document.body.appendChild(b)}}catch(_){}</script>
+<script src="../lib/pdfpages.js" defer></script>
 </body>
 </html>
