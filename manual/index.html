@@ -29,6 +29,9 @@ h3{font-size:13px;color:var(--muted);margin:12px 0 4px}ol,ul{margin:0;padding-le
 .acts{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
 .common{font-size:13px;color:var(--muted)}
 .upd{font-size:12px;color:var(--muted)}
+.sec{font-size:15px;margin:18px 2px 8px;border-left:5px solid var(--accent);padding-left:8px}
+.tag{font-size:11px;font-weight:700;background:#3a2f1c;color:var(--accent);border-radius:6px;padding:1px 6px;margin-right:6px}
+.src{font-size:12px;color:var(--muted);margin-top:6px}
 </style>
 </head>
 <body>
@@ -37,9 +40,11 @@ h3{font-size:13px;color:var(--muted);margin:12px 0 4px}ol,ul{margin:0;padding-le
   <p class="upd" id="upd"></p>
   <details><summary>共通のルール（全アプリ）</summary><div class="body"><ul id="common"></ul></div></details>
   <div id="list"></div>
+  <h2 class="sec">リペア・クリーニング資料</h2>
+  <div id="guides"></div>
 </main>
 <script>
-const APP_VERSION = "2026-11-18-3";
+const APP_VERSION = "2026-11-23-1";
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const BASE = new URL("./", location.href).href;
@@ -55,7 +60,12 @@ fetch("manuals.json?v="+Date.now(), {cache:"no-store"}).then(r=>r.json()).then(m
     <div class="what">${esc(a.what)}</div><h3>使い方</h3><ol>${a.steps.map(s=>`<li>${esc(s)}</li>`).join("")}</ol>
     <h3>ポイント</h3><ul>${a.tips.map(s=>`<li>${esc(s)}</li>`).join("")}</ul>
     <div class="acts"><a class="btn" href="${esc(a.url)}">アプリを開く</a><a class="btn" href="pdf/${esc(a.id)}.pdf" target="_blank" rel="noopener">PDFで見る</a><button class="btn" type="button" data-share="${esc(a.id)}" data-name="${esc(a.name)}">共有</button></div></div></details>`).join("");
+  const g = m.guides || [];
+  $("#guides").innerHTML = g.length ? g.map(x=>`<details><summary><span><span class="tag">${esc(x.category)}</span>${esc(x.name)}</span></summary><div class="body">
+    <div class="what">${esc(x.what)}</div><div class="src">${esc(x.source||"")}　追加 ${esc(x.added||"")}</div>
+    <div class="acts"><a class="btn main" href="${esc(x.pdf)}" target="_blank" rel="noopener">PDFで見る</a><button class="btn" type="button" data-gshare="${esc(x.pdf)}" data-name="${esc(x.name)}">共有</button></div></div></details>`).join("") : `<p class="common">まだありません</p>`;
 });
+$("#guides").addEventListener("click", e=>{ const b = e.target.closest("[data-gshare]"); if(b) share(b.dataset.name, BASE + b.dataset.gshare); });
 $("#list").addEventListener("click", e=>{ const b = e.target.closest("[data-share]"); if(b) share(`${b.dataset.name} 説明書`, BASE + "pdf/" + b.dataset.share + ".pdf"); });
 async function checkUpdate(){ try{ const r=await fetch(location.pathname+"?v="+Date.now(),{cache:"no-store"}); const t=await r.text(); const mm=t.match(/const APP_VERSION = "([^"]+)"/); if(mm && mm[1]!==APP_VERSION) location.replace(location.pathname+"?v="+encodeURIComponent(mm[1])); }catch(_){} }
 if(location.protocol.startsWith("http")){ checkUpdate(); document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="visible") checkUpdate(); }); }
