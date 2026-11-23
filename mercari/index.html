@@ -34,6 +34,7 @@ h1 small{font-size:12px;color:var(--sub);font-weight:400;display:flex;align-item
 .stat.on{outline:2px solid var(--ink)}
 .tools{display:flex;gap:8px}
 select,input,textarea,button{font:inherit}
+.tools{flex-wrap:wrap}.tools #fQ{flex-basis:100%}
 .tools select,.tools input{flex:1;min-width:0;padding:9px;border:1px solid var(--line);border-radius:10px;background:var(--field);color:var(--ink)}
 main{padding:12px 14px 110px;max-width:760px;margin:0 auto}
 .grp{margin:18px 0 8px;background:#23262d;border-left:5px solid var(--shup);border-radius:8px;padding:9px 12px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
@@ -121,6 +122,7 @@ label{display:block;font-size:12px;color:var(--sub);margin:12px 0 4px}
   </div>
   <div class="tools">
     <select id="fAuc"><option value="">全オークション</option></select>
+    <select id="fCat"><option value="">全アイテム</option></select>
     <input id="fQ" type="search" placeholder="商品名・番号で検索">
   </div>
 </header>
@@ -164,6 +166,7 @@ label{display:block;font-size:12px;color:var(--sub);margin:12px 0 4px}
   <label>メルカリ番号</label><input id="eMid" autocapitalize="off" autocomplete="off">
   <label>写真</label><div class="pbtn" id="ePhoto">＋写真</div>
   <label>商品名</label><input id="eName">
+  <label>アイテム</label><select id="eCat"></select>
   <div class="two">
     <div><label>業者オークション</label><select id="eAuc"></select></div>
     <div><label>開催日</label><input type="date" id="eDate"></div>
@@ -201,10 +204,16 @@ label{display:block;font-size:12px;color:var(--sub);margin:12px 0 4px}
 <script>
 /* ▼ Apps Script をデプロイしたときの「ウェブアプリのURL」 */
 const API_URL = "";
-const APP_VERSION = "2026-11-23-3";
+const APP_VERSION = "2026-11-23-4";
 const DEF_AUC=["オークネット","エコオク","エコトレ[関東]","エコトレ[関西]","JDS","JBA","コメ兵","モノバンク","プライム","浜屋","大吉","JWA","トレファク","ペンギン","アプレ","リバオク"];
 const ST={hikae:"業者未登録",shuppin:"出品中",sold:"落札",return:"戻り・再出品待ち",relisted:"再出品済"};
 const ACTIVE=["hikae","shuppin","return"];
+const CATS=["バッグ","財布","ポーチ・小物","アウター","トップス","パンツ・スカート","靴","アクセサリー","その他"];
+const CAT_KW=[["財布",/財布|ウォレット|wallet/i],["ポーチ・小物",/ポーチ|キーケース|カードケース|名刺入れ|小物|コインケース/],["靴",/ブーツ|靴|スニーカー|シューズ|ローファー|パンプス|サンダル/],
+  ["アウター",/ダウン|ベスト|アウター|フリース|ジャケット|コート|ブルゾン|モンジュネーブル|BADIA|TIBET/i],["トップス",/ニット|パーカー|Tシャツ|シャツ|スウェット|カットソー|セーター|カーディガン/],
+  ["パンツ・スカート",/パンツ|スカート|デニム|ジーンズ/],["アクセサリー",/ネックレス|リング|指輪|ブレスレット|ピアス|時計|ベルト|サングラス|マフラー|ストール|帽子/],
+  ["バッグ",/バッグ|リュック|トート|ショルダー|クラッチ|ボストン|巾着|bag/i]];
+function catOf(i){if(i.category)return i.category;const n=i.name||"";for(const [c,re] of CAT_KW)if(re.test(n))return c;return "その他"}
 const $=id=>document.getElementById(id);
 let items=[],settings={auctions:DEF_AUC.slice()},online=false,busy=0,pass="",view="return",selMode=false,selected=new Set(),editing=null,eStatus="hikae",regIds=null,resKey=null,resMap={};
 
@@ -252,7 +261,7 @@ function fillAuc(sel,cur,withNone){const a=settings.auctions.slice();if(cur&&!a.
 
 function cardHtml(i,opt={}){
   const lotTxt=i.lot?`出品番号 <span class="lot">${esc(i.lot)}</span>`:(i.status==="shuppin"?'<span style="color:var(--shup)">出品番号 未入力</span>':"");
-  const meta=[!opt.noAuc&&i.auction?`${esc(i.auction)} ${dayLabel(i.date)}`:"",lotTxt,i.status==="relisted"&&i.relistedAt?`再出品 ${new Date(i.relistedAt).getMonth()+1}/${new Date(i.relistedAt).getDate()}`:""].filter(Boolean).join("　");
+  const meta=[`<span style="color:#cfd2d8">${esc(catOf(i))}</span>`,!opt.noAuc&&i.auction?`${esc(i.auction)} ${dayLabel(i.date)}`:"",lotTxt,i.status==="relisted"&&i.relistedAt?`再出品 ${new Date(i.relistedAt).getMonth()+1}/${new Date(i.relistedAt).getDate()}`:""].filter(Boolean).join("　");
   let acts="";
   if(!selMode){
     if(i.status==="return")acts=`<a class="btn sm" href="${murl(i.mid)}" target="_blank" rel="noopener">メルカリで開く</a><button class="btn okb sm" data-a="relist" data-id="${i.id}">再出品済にする</button>`;
@@ -271,6 +280,9 @@ let shownIds=[];
 function render(){
   const fa=$("fAuc"),cur=fa.value;
   fa.innerHTML='<option value="">全オークション</option>'+settings.auctions.map(a=>`<option>${esc(a)}</option>`).join("");fa.value=cur;
+  const inView=i=>view==="done"?["sold","relisted"].includes(i.status):i.status===view;
+  const fc=$("fCat"),cc=fc.value,cn={};items.filter(inView).forEach(i=>{const c=catOf(i);cn[c]=(cn[c]||0)+1});
+  fc.innerHTML='<option value="">全アイテム</option>'+CATS.map(c=>`<option value="${c}">${c}（${cn[c]||0}）</option>`).join("");fc.value=cc;
   const cnt=s=>items.filter(i=>s.includes(i.status)).length;
   $("cHikae").textContent=cnt(["hikae"]);$("cShup").textContent=cnt(["shuppin"]);$("cRet").textContent=cnt(["return"]);$("cDone").textContent=cnt(["sold","relisted"]);
   document.querySelectorAll(".stat").forEach(s=>s.classList.toggle("on",s.dataset.f===view));
@@ -278,6 +290,7 @@ function render(){
   let list=items.filter(i=>{
     if(view==="done"?!["sold","relisted"].includes(i.status):i.status!==view)return false;
     if(cur&&i.auction!==cur)return false;
+    if(cc&&catOf(i)!==cc)return false;
     if(q&&!((i.name||"")+" "+i.mid+" "+(i.lot||"")).toLowerCase().includes(q))return false;return true});
   shownIds=list.map(i=>i.id);
   for(const id of [...selected])if(!items.some(i=>i.id===id&&i.status==="hikae"))selected.delete(id);
@@ -302,7 +315,7 @@ function render(){
 }
 function setView(v){view=v;selMode=false;selected.clear();try{localStorage.setItem("mercari-view",v)}catch(_){}scrollTo(0,0);render()}
 document.querySelectorAll(".stat").forEach(s=>s.onclick=()=>setView(s.dataset.f));
-$("fAuc").onchange=render;$("fQ").oninput=render;
+$("fAuc").onchange=render;$("fCat").onchange=render;$("fQ").oninput=render;
 
 // ---- 保存（画面はすぐ反映、裏で送信） ----
 function commit(recs,msg){
@@ -387,14 +400,15 @@ $("rSave").onclick=()=>{const now=Date.now();
 // ---- 編集 ----
 let ePhotoVal="";function ePhotoSync(){const b=$("ePhoto");b.style.backgroundImage=ePhotoVal?`url('${ePhotoVal}')`:"";b.style.borderStyle=ePhotoVal?"solid":"dashed";b.textContent=ePhotoVal?"":"＋写真"}
 $("ePhoto").onclick=()=>pickPhoto(d=>{ePhotoVal=d;ePhotoSync()});
-function openEdit(i){editing=i;ePhotoVal=i.photo||"";ePhotoSync();$("eMid").value=i.mid;$("eName").value=i.name||"";fillAuc($("eAuc"),i.auction||"",true);$("eDate").value=i.date||"";$("eLot").value=i.lot||"";$("eMemo").value=i.memo||"";eStatus=i.status;segSync();$("edit").classList.add("open")}
+function openEdit(i){editing=i;ePhotoVal=i.photo||"";ePhotoSync();
+  $("eCat").innerHTML=`<option value="">自動（商品名から：${esc(catOf({name:i.name}))}）</option>`+CATS.map(c=>`<option>${c}</option>`).join("");$("eCat").value=i.category||"";$("eMid").value=i.mid;$("eName").value=i.name||"";fillAuc($("eAuc"),i.auction||"",true);$("eDate").value=i.date||"";$("eLot").value=i.lot||"";$("eMemo").value=i.memo||"";eStatus=i.status;segSync();$("edit").classList.add("open")}
 function segSync(){document.querySelectorAll("#eStat button").forEach(b=>b.classList.toggle("on",b.dataset.s===eStatus))}
 document.querySelectorAll("#eStat button").forEach(b=>b.onclick=()=>{eStatus=b.dataset.s;segSync()});
 $("eDate").addEventListener("click",()=>{try{$("eDate").showPicker()}catch(e){}});
 $("eCancel").onclick=()=>$("edit").classList.remove("open");
 $("eSave").onclick=()=>{const p=editing,now=Date.now();const mid=(parseMids($("eMid").value)[0])||$("eMid").value.trim();
   if(!mid){toast("メルカリ番号を入れてください");return}
-  const r={...p,mid,name:$("eName").value.trim(),auction:$("eAuc").value,date:$("eDate").value,lot:$("eLot").value.trim(),photo:ePhotoVal,memo:$("eMemo").value.trim(),status:eStatus,updatedAt:now};
+  const r={...p,mid,name:$("eName").value.trim(),auction:$("eAuc").value,date:$("eDate").value,lot:$("eLot").value.trim(),photo:ePhotoVal,category:$("eCat").value,memo:$("eMemo").value.trim(),status:eStatus,updatedAt:now};
   if(eStatus==="relisted"&&!r.relistedAt)r.relistedAt=now;if(eStatus!=="relisted")r.relistedAt="";
   $("edit").classList.remove("open");commit([r],"保存しました")};
 $("eDel").onclick=()=>{const p=editing;$("edit").classList.remove("open");askDel([p.id],`${p.name||p.mid} を削除しますか？`)};
