@@ -54,7 +54,7 @@ header{gap:8px}.brand{white-space:nowrap;flex:0 0 auto}.hctl{display:flex;align-
   <div id="groups"></div>
 </main>
 <script>
-const APP_VERSION = "2026-11-23-1";
+const APP_VERSION = "2026-11-23-2";
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const today = () => new Date(Date.now()+9*3600e3).toISOString().slice(0,10);
@@ -202,7 +202,7 @@ const SRC = {
     const n = ((j.data||{}).items||[]).filter(i=>i.inSheet!==false && !((i.photos||[]).length && String(i.reason||"").trim())).length;
     return {n, items: n ? [{t:"廃棄記録の写真・理由が未登録", v:`${n}件`, u:"../haiki/"}] : []};
   },  mercari: async () => {
-    const API = ""; if(!API) return {n:0, items:[]}; /* メルカリ再出品のデータ側URL（設定後に入れる） */
+    const API = "https://script.google.com/macros/s/AKfycbzc7ND5p6X7nAyZ5AImSXScpj59BJQUo9Ht1SlBvO5Km6wNUIW7eG3iQfpghGJJq3Mk/exec"; /* メルカリ再出品のデータ側 */
     const j = await call(API, needPass("rekil-mercari-pass"));
     const t = today(), its = (j.data||{}).items||[];
     const r = its.filter(i=>i.status==="return").length, w = its.filter(i=>i.status==="shuppin" && i.date && i.date < t).length;
