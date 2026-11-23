@@ -80,6 +80,13 @@
      "badge": "henpin"
     },
     {
+     "id": "mercari",
+     "name": "メルカリ再出品",
+     "url": "../mercari/",
+     "icon": "../mercari/icon-180.png",
+     "badge": "mercari"
+    },
+    {
      "id": "ebay",
      "name": "翻訳",
      "url": "../ebay/",

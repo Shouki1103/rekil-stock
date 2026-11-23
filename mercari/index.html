@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="メルカリ再出品">
+<meta name="theme-color" content="#111214">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-192.png">
+<title>ReKiL メルカリ再出品</title>
+<style>
+:root{--bg:#111214;--card:#1c1d21;--field:#25272c;--ink:#f2f2f3;--sub:#9a9ca3;--line:#2f3137;--acc:#e5484d;--hikae:#8b8f99;--shup:#d9a441;--ret:#3d9cf0;--done:#3fa66b;--danger:#ff6b61;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Noto Sans JP",sans-serif;font-size:15px;padding:env(safe-area-inset-top,0px) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+[hidden]{display:none!important}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+#lock{position:fixed;inset:0;background:var(--bg);z-index:40;display:flex;align-items:center;justify-content:center;padding:20px}
+#lock form{width:100%;max-width:340px}
+#lock input{width:100%;padding:12px;border:1px solid var(--line);border-radius:10px;background:var(--field);color:var(--ink);font-size:18px;margin:10px 0}
+#lock .btn{width:100%;padding:12px}
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding:14px 14px 8px;border-bottom:1px solid var(--line)}
+h1{font-size:18px;margin:0 0 10px;display:flex;justify-content:space-between;align-items:center}
+h1 small{font-size:12px;color:var(--sub);font-weight:400;display:flex;align-items:center}
+.sync{font-size:11px;color:var(--sub);margin-right:8px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:8px 4px;text-align:center;cursor:pointer}
+.stat b{display:block;font-size:22px}
+.stat span{font-size:11px;color:var(--sub)}
+.stat[data-f="hikae"] b{color:var(--hikae)}.stat[data-f="shuppin"] b{color:var(--shup)}.stat[data-f="return"] b{color:var(--ret)}.stat[data-f="done"] b{color:var(--done)}
+.stat.on{outline:2px solid var(--ink)}
+.tools{display:flex;gap:8px}
+select,input,textarea,button{font:inherit}
+.tools select,.tools input{flex:1;min-width:0;padding:9px;border:1px solid var(--line);border-radius:10px;background:var(--field);color:var(--ink)}
+main{padding:12px 14px 110px;max-width:760px;margin:0 auto}
+.grp{margin:18px 0 8px;background:#23262d;border-left:5px solid var(--shup);border-radius:8px;padding:9px 12px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.grp.ret{border-left-color:var(--ret)}
+.grp .gt{flex:1;font-weight:800;font-size:16px}
+.grp .gt small{font-weight:700;color:var(--sub);font-size:12px;margin-left:6px}
+.card{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--hikae);border-radius:12px;padding:12px;margin-bottom:8px}
+.card.s-shuppin{border-left-color:var(--shup)}.card.s-return{border-left-color:var(--ret)}.card.s-sold,.card.s-relisted{border-left-color:var(--done);opacity:.85}
+.row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.nm{font-weight:700;font-size:16px;flex:1;min-width:0}
+.pill{font-size:12px;padding:3px 10px;border-radius:99px;color:#111;font-weight:700;white-space:nowrap}
+.p-hikae{background:var(--hikae)}.p-shuppin{background:var(--shup)}.p-return{background:var(--ret)}.p-sold,.p-relisted{background:var(--done)}
+.mid{display:flex;align-items:center;gap:8px;margin-top:8px}
+.mid code{font-size:17px;font-family:ui-monospace,Menlo,monospace;letter-spacing:.02em;background:var(--field);border:1px solid var(--line);border-radius:8px;padding:6px 10px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.cp{background:var(--acc);color:#fff;border:0;border-radius:8px;padding:8px 12px;font-weight:700;cursor:pointer;white-space:nowrap}
+.cp.ok{background:var(--done)}
+.meta{font-size:13px;color:var(--sub);margin-top:6px}
+.lot{color:#fff;font-weight:700}
+.memo{font-size:14px;margin-top:6px;white-space:pre-wrap}
+.acts{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+.btn{border:1px solid var(--line);background:var(--field);color:var(--ink);border-radius:10px;padding:9px 14px;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center}
+.btn.main{background:var(--acc);color:#fff;border-color:var(--acc);font-weight:700}
+.btn.retb{background:var(--ret);color:#fff;border-color:var(--ret);font-weight:700}
+.btn.okb{background:var(--done);color:#fff;border-color:var(--done);font-weight:700;flex:1}
+.btn.ghost{color:var(--sub)}
+.btn.del{color:var(--danger)}
+.btn.sm{padding:6px 10px;font-size:13px}
+.card.sel{cursor:pointer;display:flex;gap:12px;align-items:flex-start}
+.card.sel .cbox{flex:none;width:26px;height:26px;border:2px solid var(--sub);border-radius:7px;margin-top:2px;display:flex;align-items:center;justify-content:center;font-weight:900;color:#111}
+.card.sel.checked{outline:2px solid var(--shup)}
+.card.sel.checked .cbox{background:var(--shup);border-color:var(--shup)}
+.card .cbody{flex:1;min-width:0}
+.selbar{position:fixed;left:0;right:0;bottom:0;z-index:15;background:var(--card);border-top:1px solid var(--line);padding:10px 14px calc(10px + env(safe-area-inset-bottom));display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.selbar .cnt{flex:1;font-weight:700;min-width:70px}
+.fab{position:fixed;right:18px;bottom:calc(18px + env(safe-area-inset-bottom));background:var(--acc);color:#fff;border:0;border-radius:99px;padding:14px 20px;font-size:16px;font-weight:700;box-shadow:0 4px 18px rgba(0,0,0,.6);cursor:pointer}
+.empty{text-align:center;color:var(--sub);padding:40px 10px;line-height:1.7}
+.sheet{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:flex-end;justify-content:center;z-index:20}
+.sheet.open{display:flex}
+.panel{background:var(--card);width:100%;max-width:560px;border-radius:16px 16px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom));max-height:calc(100vh - env(safe-area-inset-top,0px) - 16px);max-height:calc(100dvh - env(safe-area-inset-top,0px) - 16px);overflow:auto}
+.panel h2{font-size:17px;margin:0 0 6px}
+.panel .hint{font-size:12px;color:var(--sub);margin:0 0 8px;line-height:1.6}
+label{display:block;font-size:12px;color:var(--sub);margin:12px 0 4px}
+.panel input,.panel select,.panel textarea{width:100%;padding:11px;border:1px solid var(--line);border-radius:10px;background:var(--field);color:var(--ink);font-size:16px}
+.two{display:flex;gap:8px}.two>div{flex:1;min-width:0}
+.prow{border:1px solid var(--line);border-radius:10px;padding:8px;margin-top:6px;background:#202227}
+.prow .pm{font-family:ui-monospace,Menlo,monospace;font-size:14px;display:flex;justify-content:space-between;align-items:center;gap:6px}
+.prow .pm .warn{font-family:inherit;font-size:11px;color:var(--shup)}
+.prow .two{margin-top:6px}
+.prow input{padding:9px;font-size:15px}
+.foot{display:flex;gap:8px;margin-top:16px;position:sticky;bottom:calc(-16px - env(safe-area-inset-bottom));background:var(--card);padding:8px 0 4px}
+.foot .btn{flex:1;padding:12px}
+.res{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:10px;padding:8px 10px;margin-top:6px;cursor:pointer}
+.res .rl{font-weight:800;min-width:64px}
+.res .rn{flex:1;min-width:0;font-size:14px}
+.res.sold{border-color:var(--done)}.res.sold .rt{color:var(--done)}
+.res.return{border-color:var(--ret)}.res.return .rt{color:var(--ret)}
+.res .rt{font-weight:800;font-size:13px;white-space:nowrap}
+.sumline{font-size:14px;margin-top:10px;font-weight:700}
+.warnline{font-size:13px;color:var(--shup);margin-top:6px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{background:var(--field);border:1px solid var(--line);border-radius:99px;padding:4px 6px 4px 10px;font-size:13px;display:flex;gap:4px;align-items:center}
+.chip button{border:0;background:none;color:var(--danger);cursor:pointer;font-size:14px}
+.addrow{display:flex;gap:6px;margin-top:6px}.addrow input{flex:1}
+.seg{display:flex;gap:6px;flex-wrap:wrap}
+.seg button{flex:1;padding:10px 6px;border:1px solid var(--line);border-radius:10px;background:var(--field);color:var(--ink);cursor:pointer;font-size:13px;min-width:70px}
+.seg button.on{background:var(--ink);color:#111;font-weight:700}
+.toast{position:fixed;left:50%;bottom:96px;transform:translateX(-50%);background:#f2f2f3;color:#111;padding:8px 14px;border-radius:8px;font-size:13px;display:none;z-index:50;max-width:90vw;text-align:center}
+</style>
+</head>
+<body>
+<script>/* rekil-common */try{const K="rekil-mercari-pass",P=localStorage.getItem("rekil-pass");if(P&&!localStorage.getItem(K))localStorage.setItem(K,P)}catch(_){}</script>
+
+<header>
+  <h1>メルカリ再出品 <small><span class="sync" id="sync"></span><button class="btn ghost sm" id="selBtn" style="margin-right:6px">選択</button><button class="btn ghost sm" id="setBtn">設定</button></small></h1>
+  <div class="stats">
+    <div class="stat" data-f="hikae"><b id="cHikae">0</b><span>業者 未登録</span></div>
+    <div class="stat" data-f="shuppin"><b id="cShup">0</b><span>業者に出品中</span></div>
+    <div class="stat" data-f="return"><b id="cRet">0</b><span>戻り・再出品待ち</span></div>
+    <div class="stat" data-f="done"><b id="cDone">0</b><span>完了</span></div>
+  </div>
+  <div class="tools">
+    <select id="fAuc"><option value="">全オークション</option></select>
+    <input id="fQ" type="search" placeholder="商品名・番号で検索">
+  </div>
+</header>
+<main id="list"><div class="empty">読み込み中…</div></main>
+<button class="fab" id="addBtn">＋ リンク追加</button>
+<div class="selbar" id="selbar" hidden>
+  <span class="cnt" id="selCnt">0件選択</span>
+  <button class="btn" id="selAll">全選択</button>
+  <button class="btn main" id="selReg">業者に出品登録</button>
+  <button class="btn del" id="selDel">削除</button>
+  <button class="btn ghost" id="selCancel">やめる</button>
+</div>
+
+<!-- 追加・業者登録 -->
+<div class="sheet" id="add"><div class="panel">
+  <h2 id="aTitle">メルカリのリンクを追加</h2>
+  <p class="hint" id="aHint">メルカリの共有リンクを貼り付けてください（何件でもまとめてOK）。「m」から「?」の手前までの番号を自動で取り出します。</p>
+  <div id="aLinkBox"><textarea id="aLinks" rows="3" placeholder="https://jp.mercari.com/item/m…"></textarea></div>
+  <div class="two">
+    <div><label>業者オークション</label><select id="aAuc"></select></div>
+    <div><label>開催日</label><input type="date" id="aDate"></div>
+  </div>
+  <div id="aRows"></div>
+  <div class="foot"><button class="btn" id="aCancel">キャンセル</button><button class="btn main" id="aSave">保存</button></div>
+</div></div>
+
+<!-- 結果入力 -->
+<div class="sheet" id="result"><div class="panel">
+  <h2 id="rTitle">結果を入力</h2>
+  <p class="hint">精算書で<b>落札された出品番号</b>を入れてください（スペース・改行・カンマ区切りでまとめてOK）。それ以外は「戻り・再出品待ち」になります。下の行をタップしても切り替えられます。</p>
+  <textarea id="rLots" rows="3" placeholder="例）102 115 230"></textarea>
+  <div id="rWarn" class="warnline"></div>
+  <div id="rRows"></div>
+  <div class="sumline" id="rSum"></div>
+  <div class="foot"><button class="btn" id="rCancel">キャンセル</button><button class="btn main" id="rSave">確定</button></div>
+</div></div>
+
+<!-- 編集 -->
+<div class="sheet" id="edit"><div class="panel">
+  <h2>編集</h2>
+  <label>メルカリ番号</label><input id="eMid" autocapitalize="off" autocomplete="off">
+  <label>商品名</label><input id="eName">
+  <div class="two">
+    <div><label>業者オークション</label><select id="eAuc"></select></div>
+    <div><label>開催日</label><input type="date" id="eDate"></div>
+  </div>
+  <label>出品番号</label><input id="eLot" autocomplete="off">
+  <label>状態</label>
+  <div class="seg" id="eStat">
+    <button data-s="hikae">業者未登録</button><button data-s="shuppin">出品中</button><button data-s="sold">落札</button><button data-s="return">戻り</button><button data-s="relisted">再出品済</button>
+  </div>
+  <label>メモ</label><textarea id="eMemo" rows="2"></textarea>
+  <div class="foot"><button class="btn del" id="eDel">削除</button><button class="btn" id="eCancel">キャンセル</button><button class="btn main" id="eSave">保存</button></div>
+</div></div>
+
+<div class="sheet" id="setting"><div class="panel">
+  <h2>設定</h2>
+  <label>オークション一覧</label>
+  <div class="chips" id="sAuc"></div>
+  <div class="addrow"><input id="sAucIn" placeholder="オークション名を追加"><button class="btn" id="sAucAdd">追加</button></div>
+  <div class="foot"><button class="btn main" id="sClose">閉じる</button></div>
+</div></div>
+
+<div class="sheet" id="confirm"><div class="panel">
+  <h2 id="cMsg">削除しますか？</h2>
+  <div class="foot"><button class="btn" id="cNo">やめる</button><button class="btn del" id="cYes">削除する</button></div>
+</div></div>
+<div class="toast" id="toast"></div>
+<div id="lock" hidden><form id="lockForm">
+  <h1>ReKiL メルカリ再出品</h1>
+  <p class="meta" id="lockMsg"></p>
+  <input id="passIn" type="password" inputmode="numeric" autocomplete="current-password" placeholder="暗証番号">
+  <button class="btn main" id="lockGo" type="submit">開く</button>
+</form></div>
+
+<script>
+/* ▼ Apps Script をデプロイしたときの「ウェブアプリのURL」 */
+const API_URL = "";
+const APP_VERSION = "2026-11-23-1";
+const DEF_AUC=["オークネット","エコオク","エコトレ[関東]","エコトレ[関西]","JDS","JBA","コメ兵","モノバンク","プライム","浜屋","大吉","JWA","トレファク","ペンギン","アプレ","リバオク"];
+const ST={hikae:"業者未登録",shuppin:"出品中",sold:"落札",return:"戻り・再出品待ち",relisted:"再出品済"};
+const ACTIVE=["hikae","shuppin","return"];
+const $=id=>document.getElementById(id);
+let items=[],settings={auctions:DEF_AUC.slice()},online=false,busy=0,pass="",view="return",selMode=false,selected=new Set(),editing=null,eStatus="hikae",regIds=null,resKey=null,resMap={};
+
+try{pass=localStorage.getItem("rekil-mercari-pass")||localStorage.getItem("rekil-pass")||""}catch(e){}
+try{const c=JSON.parse(localStorage.getItem("mercari-data")||"null");if(c){items=c.items||[];if(c.settings?.auctions?.length)settings=c.settings}}catch(e){}
+try{const v=localStorage.getItem("mercari-view");if(v)view=v}catch(e){}
+
+const pending=new Map();
+function applyPending(list){if(!pending.size)return list;let out=list.filter(i=>!(pending.get(i.id)||{}).del);
+  for(const [id,p] of pending){if(p.del)continue;const k=out.findIndex(i=>i.id===id);if(k>=0)out[k]=p.rec;else out.unshift(p.rec)}return out}
+function cacheLocal(){try{localStorage.setItem("mercari-data",JSON.stringify({items,settings}))}catch(e){}}
+class ApiError extends Error{constructor(c){super(c);this.code=c}}
+function setSync(){$("sync").textContent=!API_URL?"未設定":busy?"同期中…":online?"接続済み":"未接続"}
+async function api(action,params={}){
+  if(!API_URL)throw new ApiError("no_api");
+  busy++;setSync();
+  try{
+    let res;try{res=await fetch(API_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({action,pass,...params})})}catch(e){throw new ApiError("network")}
+    let j;try{j=await res.json()}catch(e){throw new ApiError("bad_response")}
+    if(!j.ok){if(j.error==="passcode")showLock();throw new ApiError(j.error||"error")}
+    if(j.data){items=applyPending(j.data.items||[]);if(j.data.settings?.auctions?.length)settings=j.data.settings;cacheLocal()}
+    online=true;return j.result;
+  }finally{busy--;setSync();render()}
+}
+function handleErr(e){const c=e?.code;if(c==="passcode")return;
+  toast(c==="network"?"通信できませんでした。電波の良い場所でもう一度お試しください":c==="no_api"?"データ側がまだ設定されていません":`保存できませんでした（${c}）`)}
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const today=()=>new Date(Date.now()+9*3600e3).toISOString().slice(0,10);
+function dayLabel(s){if(!s)return"開催日なし";const d=new Date(s+"T00:00:00");return `${d.getMonth()+1}/${d.getDate()}(${"日月火水木金土"[d.getDay()]})`}
+function toast(m){const t=$("toast");t.textContent=m;t.style.display="block";clearTimeout(t._h);t._h=setTimeout(()=>t.style.display="none",2400)}
+const uid=()=>"tmp-"+Date.now()+"-"+Math.random().toString(36).slice(2,7);
+// 出品番号の比較用（全角→半角・空白除去・数字だけなら先頭の0を無視）
+function nLot(s){let v=String(s??"").normalize("NFKC").replace(/\s+/g,"").toUpperCase();if(/^\d+$/.test(v))v=String(+v);return v}
+function parseMids(t){const out=[];const re=/\b(m\d{6,})/gi;let m;while((m=re.exec(String(t||"").normalize("NFKC")))){const v=m[1].toLowerCase();if(!out.includes(v))out.push(v)}return out}
+const murl=mid=>"https://jp.mercari.com/item/"+encodeURIComponent(mid);
+async function copyText(t,btn){
+  let ok=false;try{await navigator.clipboard.writeText(t);ok=true}catch(_){
+    try{const a=document.createElement("textarea");a.value=t;a.setAttribute("readonly","");a.style.position="fixed";a.style.opacity="0";document.body.appendChild(a);a.select();a.setSelectionRange(0,99);ok=document.execCommand("copy");a.remove()}catch(_){}}
+  if(ok&&btn){btn.textContent="コピー済";btn.classList.add("ok");setTimeout(()=>{btn.textContent="コピー";btn.classList.remove("ok")},1500)}
+  toast(ok?`${t} をコピーしました`:"コピーできませんでした。長押しでコピーしてください")}
+const gkey=i=>(i.date||"")+"|"+(i.auction||"");
+
+function fillAuc(sel,cur,withNone){const a=settings.auctions.slice();if(cur&&!a.includes(cur))a.push(cur);
+  sel.innerHTML=(withNone?'<option value="">（まだ決まっていない）</option>':'')+a.map(x=>`<option>${esc(x)}</option>`).join("");sel.value=cur||""}
+
+function cardHtml(i,opt={}){
+  const lotTxt=i.lot?`出品番号 <span class="lot">${esc(i.lot)}</span>`:(i.status==="shuppin"?'<span style="color:var(--shup)">出品番号 未入力</span>':"");
+  const meta=[!opt.noAuc&&i.auction?`${esc(i.auction)} ${dayLabel(i.date)}`:"",lotTxt,i.status==="relisted"&&i.relistedAt?`再出品 ${new Date(i.relistedAt).getMonth()+1}/${new Date(i.relistedAt).getDate()}`:""].filter(Boolean).join("　");
+  let acts="";
+  if(!selMode){
+    if(i.status==="return")acts=`<a class="btn sm" href="${murl(i.mid)}" target="_blank" rel="noopener">メルカリで開く</a><button class="btn okb sm" data-a="relist" data-id="${i.id}">再出品済にする</button>`;
+    else acts=`<a class="btn sm ghost" href="${murl(i.mid)}" target="_blank" rel="noopener">メルカリで開く</a>`;
+    if(i.status==="hikae")acts+=`<button class="btn sm main" data-a="reg1" data-id="${i.id}">業者に出品登録</button>`;
+    acts+=`<button class="btn sm ghost" data-a="edit" data-id="${i.id}">編集</button>`;
+  }
+  const body=`<div class="row"><span class="nm">${esc(i.name||"（商品名なし）")}</span><span class="pill p-${i.status}">${ST[i.status]||""}</span></div>
+    <div class="mid"><code>${esc(i.mid)}</code><button class="cp" data-cp="${esc(i.mid)}">コピー</button></div>
+    ${meta?`<div class="meta">${meta}</div>`:""}${i.memo?`<div class="memo">${esc(i.memo)}</div>`:""}${acts?`<div class="acts">${acts}</div>`:""}`;
+  if(selMode){const on=selected.has(i.id);return `<div class="card sel s-${i.status}${on?" checked":""}" data-sel="${i.id}"><div class="cbox">${on?"✓":""}</div><div class="cbody">${body}</div></div>`}
+  return `<div class="card s-${i.status}">${body}</div>`;
+}
+
+let shownIds=[];
+function render(){
+  const fa=$("fAuc"),cur=fa.value;
+  fa.innerHTML='<option value="">全オークション</option>'+settings.auctions.map(a=>`<option>${esc(a)}</option>`).join("");fa.value=cur;
+  const cnt=s=>items.filter(i=>s.includes(i.status)).length;
+  $("cHikae").textContent=cnt(["hikae"]);$("cShup").textContent=cnt(["shuppin"]);$("cRet").textContent=cnt(["return"]);$("cDone").textContent=cnt(["sold","relisted"]);
+  document.querySelectorAll(".stat").forEach(s=>s.classList.toggle("on",s.dataset.f===view));
+  const q=$("fQ").value.trim().toLowerCase();
+  let list=items.filter(i=>{
+    if(view==="done"?!["sold","relisted"].includes(i.status):i.status!==view)return false;
+    if(cur&&i.auction!==cur)return false;
+    if(q&&!((i.name||"")+" "+i.mid+" "+(i.lot||"")).toLowerCase().includes(q))return false;return true});
+  shownIds=list.map(i=>i.id);
+  for(const id of [...selected])if(!items.some(i=>i.id===id&&i.status==="hikae"))selected.delete(id);
+  selSync();
+  const el=$("list");
+  if(!list.length){el.innerHTML=`<div class="empty">${{hikae:"業者に未登録のメルカリ商品はありません",shuppin:"業者に出品中の商品はありません",return:"再出品待ちはありません 🎉",done:"完了した商品はまだありません"}[view]}<br>右下の「＋ リンク追加」からメルカリのリンクを貼り付けて登録できます</div>`;return}
+  let html="";
+  if(view==="shuppin"||view==="return"){
+    const g={};list.forEach(i=>(g[gkey(i)]=g[gkey(i)]||[]).push(i));
+    const keys=Object.keys(g).sort((a,b)=>view==="shuppin"?a.localeCompare(b):b.localeCompare(a));
+    const t=today();
+    for(const k of keys){const a=g[k],f=a[0];const past=f.date&&f.date<=t;
+      a.sort((x,y)=>(nLot(x.lot)||"").localeCompare(nLot(y.lot)||"",undefined,{numeric:true}));
+      const btn=view==="shuppin"&&!selMode?`<button class="btn sm ${past?"main":""}" data-a="result" data-k="${esc(k)}">${past?"結果を入力":"結果入力"}</button>`:"";
+      html+=`<div class="grp${view==="return"?" ret":""}"><span class="gt">${esc(f.auction||"オークション未設定")}　${dayLabel(f.date)}<small>${a.length}点${view==="shuppin"&&past?"・開催済み":""}</small></span>${btn}</div>`;
+      html+=a.map(i=>cardHtml(i,{noAuc:true})).join("");}
+  }else{
+    list.sort((a,b)=>view==="done"?(b.updatedAt||0)-(a.updatedAt||0):(a.createdAt||0)-(b.createdAt||0));
+    html=list.map(i=>cardHtml(i)).join("");
+  }
+  el.innerHTML=html;
+}
+function setView(v){view=v;selMode=false;selected.clear();try{localStorage.setItem("mercari-view",v)}catch(_){}scrollTo(0,0);render()}
+document.querySelectorAll(".stat").forEach(s=>s.onclick=()=>setView(s.dataset.f));
+$("fAuc").onchange=render;$("fQ").oninput=render;
+
+// ---- 保存（画面はすぐ反映、裏で送信） ----
+function commit(recs,msg){
+  const prev=items.slice();
+  recs.forEach(r=>{pending.set(r.id,{rec:r});const k=items.findIndex(x=>x.id===r.id);if(k>=0)items[k]=r;else items.unshift(r)});
+  cacheLocal();render();if(msg)toast(msg);
+  api("saveMany",{records:recs}).then(()=>recs.forEach(r=>{if(pending.get(r.id)?.rec===r)pending.delete(r.id)}))
+    .catch(e=>{recs.forEach(r=>pending.delete(r.id));items=prev;cacheLocal();render();handleErr(e)});
+}
+function removeIds(ids,msg){const prev=items.slice();ids.forEach(i=>pending.set(i,{del:true}));items=items.filter(x=>!ids.includes(x.id));cacheLocal();render();toast(msg);
+  api("removeMany",{ids}).then(()=>ids.forEach(i=>pending.delete(i))).catch(e=>{ids.forEach(i=>pending.delete(i));items=prev;cacheLocal();render();handleErr(e)})}
+
+// ---- 追加・業者登録 ----
+let aRows=[];
+function openAdd(ids){
+  regIds=ids||null;
+  $("aTitle").textContent=ids?`業者に出品登録（${ids.length}件）`:"メルカリのリンクを追加";
+  $("aHint").textContent=ids?"出品するオークションと開催日を選び、それぞれの業者の出品番号を入れてください（出品番号は後からでも入れられます）。":"メルカリの共有リンクを貼り付けてください（何件でもまとめてOK）。「m」から「?」の手前までの番号を自動で取り出します。業者がまだ決まっていなければ、オークションは「まだ決まっていない」のままで保存できます。";
+  $("aLinkBox").hidden=!!ids;$("aLinks").value="";
+  fillAuc($("aAuc"),ids?(items.find(x=>x.id===ids[0])?.auction||settings.auctions[0]):"",!ids);
+  $("aDate").value=ids?(items.find(x=>x.id===ids[0])?.date||""):"";
+  aRows=ids?ids.map(id=>{const i=items.find(x=>x.id===id);return{mid:i.mid,name:i.name||"",lot:i.lot||"",id}}):[];
+  renderARows();$("add").classList.add("open");if(!ids)setTimeout(()=>$("aLinks").focus(),150);
+}
+function renderARows(){
+  const hasAuc=!!$("aAuc").value;
+  $("aDate").parentElement.style.opacity=hasAuc?1:.4;
+  $("aRows").innerHTML=aRows.length?aRows.map((r,k)=>{
+    const ex=!r.id&&items.find(x=>x.mid===r.mid&&ACTIVE.includes(x.status));
+    const w=ex?`<span class="warn">登録済（${ST[ex.status]}）${ex.status==="shuppin"?"→飛ばします":"→上書き"}</span>`:"";
+    return `<div class="prow"><div class="pm"><span>${k+1}. ${esc(r.mid)}</span>${w}</div><div class="two"><div style="flex:2"><input data-k="${k}" data-f="name" value="${esc(r.name)}" placeholder="商品名（例：PRADAバッグ）"></div>${hasAuc?`<div><input data-k="${k}" data-f="lot" value="${esc(r.lot)}" placeholder="出品番号" autocomplete="off"></div>`:""}</div></div>`}).join(""):(regIds?"":'<p class="hint" style="margin-top:10px">リンクを貼ると、ここに番号が並びます。</p>');
+}
+$("aLinks").oninput=()=>{const mids=parseMids($("aLinks").value);
+  const keep=Object.fromEntries(aRows.map(r=>[r.mid,r]));
+  aRows=mids.map(m=>keep[m]||{mid:m,name:(items.find(x=>x.mid===m)||{}).name||"",lot:""});renderARows()};
+$("aRows").oninput=e=>{const t=e.target;if(t.dataset.k!=null)aRows[+t.dataset.k][t.dataset.f]=t.value};
+$("aAuc").onchange=renderARows;
+$("aDate").addEventListener("click",()=>{try{$("aDate").showPicker()}catch(e){}});
+$("aCancel").onclick=()=>$("add").classList.remove("open");
+$("aSave").onclick=()=>{
+  if(!aRows.length){toast("メルカリのリンクを貼り付けてください");return}
+  const auc=$("aAuc").value,date=auc?$("aDate").value:"",now=Date.now();
+  if(auc&&!date){toast("開催日を選んでください");return}
+  const recs=[];let skip=0;
+  for(const r of aRows){
+    let base=r.id?items.find(x=>x.id===r.id):items.find(x=>x.mid===r.mid&&ACTIVE.includes(x.status));
+    if(!r.id&&base&&base.status==="shuppin"){skip++;continue}
+    const rec={...(base||{id:uid(),createdAt:now,memo:""}),mid:r.mid,name:r.name.trim()||base?.name||"",updatedAt:now};
+    if(auc){rec.auction=auc;rec.date=date;rec.lot=String(r.lot||"").trim();rec.status="shuppin";rec.resultAt="";rec.relistedAt=""}
+    else if(!base||base.status!=="return"){rec.status=base?.status||"hikae"}
+    recs.push(rec);}
+  $("add").classList.remove("open");selMode=false;selected.clear();
+  if(recs.length)commit(recs,`${recs.length}件保存しました${skip?`（出品中の${skip}件は飛ばしました）`:""}`);else toast("出品中のため保存しませんでした");
+  if(auc&&recs.length)setView("shuppin");
+};
+
+// ---- 結果入力 ----
+function openResult(k){resKey=k;const a=items.filter(i=>i.status==="shuppin"&&gkey(i)===k);const f=a[0]||{};
+  $("rTitle").textContent=`結果を入力：${f.auction||""} ${dayLabel(f.date)}（${a.length}点）`;$("rLots").value="";resMap={};
+  a.forEach(i=>resMap[i.id]="return");renderRes();$("result").classList.add("open")}
+function renderRes(){
+  const a=items.filter(i=>i.status==="shuppin"&&gkey(i)===resKey).sort((x,y)=>(nLot(x.lot)).localeCompare(nLot(y.lot),undefined,{numeric:true}));
+  $("rRows").innerHTML=a.map(i=>`<div class="res ${resMap[i.id]}" data-r="${i.id}"><span class="rl">${i.lot?esc(i.lot):"番号なし"}</span><span class="rn">${esc(i.name||i.mid)}</span><span class="rt">${resMap[i.id]==="sold"?"落札":"戻り"}</span></div>`).join("");
+  const s=a.filter(i=>resMap[i.id]==="sold").length;
+  $("rSum").textContent=`落札 ${s}点 ／ 戻り（再出品待ち）${a.length-s}点`;
+}
+$("rLots").oninput=()=>{
+  const a=items.filter(i=>i.status==="shuppin"&&gkey(i)===resKey);
+  const lots=$("rLots").value.normalize("NFKC").split(/[\s,、，;・\/]+/).map(nLot).filter(Boolean);
+  const set=new Set(lots);a.forEach(i=>resMap[i.id]=i.lot&&set.has(nLot(i.lot))?"sold":"return");
+  const known=new Set(a.map(i=>nLot(i.lot)));const miss=[...set].filter(l=>!known.has(l));
+  $("rWarn").textContent=miss.length?`⚠ この開催に無い出品番号：${miss.join("、")}（メルカリ商品以外の出品なら問題ありません）`:"";
+  renderRes()};
+$("rRows").onclick=e=>{const r=e.target.closest("[data-r]");if(!r)return;resMap[r.dataset.r]=resMap[r.dataset.r]==="sold"?"return":"sold";renderRes()};
+$("rCancel").onclick=()=>$("result").classList.remove("open");
+$("rSave").onclick=()=>{const now=Date.now();
+  const recs=items.filter(i=>i.status==="shuppin"&&gkey(i)===resKey).map(i=>({...i,status:resMap[i.id]||"return",resultAt:now,updatedAt:now}));
+  const r=recs.filter(x=>x.status==="return").length;$("result").classList.remove("open");
+  commit(recs,`確定しました（戻り ${r}点は「再出品待ち」へ）`);if(r)setView("return")};
+
+// ---- 編集 ----
+function openEdit(i){editing=i;$("eMid").value=i.mid;$("eName").value=i.name||"";fillAuc($("eAuc"),i.auction||"",true);$("eDate").value=i.date||"";$("eLot").value=i.lot||"";$("eMemo").value=i.memo||"";eStatus=i.status;segSync();$("edit").classList.add("open")}
+function segSync(){document.querySelectorAll("#eStat button").forEach(b=>b.classList.toggle("on",b.dataset.s===eStatus))}
+document.querySelectorAll("#eStat button").forEach(b=>b.onclick=()=>{eStatus=b.dataset.s;segSync()});
+$("eDate").addEventListener("click",()=>{try{$("eDate").showPicker()}catch(e){}});
+$("eCancel").onclick=()=>$("edit").classList.remove("open");
+$("eSave").onclick=()=>{const p=editing,now=Date.now();const mid=(parseMids($("eMid").value)[0])||$("eMid").value.trim();
+  if(!mid){toast("メルカリ番号を入れてください");return}
+  const r={...p,mid,name:$("eName").value.trim(),auction:$("eAuc").value,date:$("eDate").value,lot:$("eLot").value.trim(),memo:$("eMemo").value.trim(),status:eStatus,updatedAt:now};
+  if(eStatus==="relisted"&&!r.relistedAt)r.relistedAt=now;if(eStatus!=="relisted")r.relistedAt="";
+  $("edit").classList.remove("open");commit([r],"保存しました")};
+$("eDel").onclick=()=>{const p=editing;$("edit").classList.remove("open");askDel([p.id],`${p.name||p.mid} を削除しますか？`)};
+
+// ---- 一覧の操作 ----
+$("list").onclick=e=>{
+  const cp=e.target.closest("[data-cp]");if(cp){e.stopPropagation();copyText(cp.dataset.cp,cp);return}
+  const sc=e.target.closest("[data-sel]");if(selMode&&sc){const id=sc.dataset.sel;selected.has(id)?selected.delete(id):selected.add(id);render();return}
+  const b=e.target.closest("button[data-a]");if(!b)return;const id=b.dataset.id,a=b.dataset.a,it=items.find(x=>x.id===id);
+  if(a==="edit")openEdit(it);
+  else if(a==="reg1")openAdd([id]);
+  else if(a==="result")openResult(b.dataset.k);
+  else if(a==="relist"){const now=Date.now();commit([{...it,status:"relisted",relistedAt:now,updatedAt:now}],"再出品済にしました")}
+};
+$("addBtn").onclick=()=>openAdd(null);
+function selSync(){$("selbar").hidden=!selMode;$("addBtn").style.display=selMode?"none":"";
+  $("selBtn").textContent=selMode?"選択中":"選択";$("selCnt").textContent=`${selected.size}件選択`;
+  $("selReg").hidden=view!=="hikae";$("selReg").disabled=$("selDel").disabled=!selected.size}
+$("selBtn").onclick=()=>{selMode=!selMode;selected.clear();render()};
+$("selCancel").onclick=()=>{selMode=false;selected.clear();render()};
+$("selAll").onclick=()=>{const all=shownIds.length&&shownIds.every(i=>selected.has(i));shownIds.forEach(i=>all?selected.delete(i):selected.add(i));render()};
+$("selReg").onclick=()=>{if(selected.size)openAdd([...selected])};
+$("selDel").onclick=()=>{if(selected.size)askDel([...selected],`選択した${selected.size}件を削除しますか？（元に戻せません）`)};
+let delIds=null;
+function askDel(ids,msg){delIds=ids;$("cMsg").textContent=msg;$("confirm").classList.add("open")}
+$("cNo").onclick=()=>$("confirm").classList.remove("open");
+$("cYes").onclick=()=>{$("confirm").classList.remove("open");const ids=delIds;selMode=false;selected.clear();removeIds(ids,`${ids.length}件削除しました`)};
+
+// ---- 設定 ----
+function renderSettings(){$("sAuc").innerHTML=settings.auctions.map((a,i)=>`<span class="chip">${esc(a)}<button data-i="${i}">×</button></span>`).join("")}
+async function saveSettings(){cacheLocal();try{await api("config",{settings})}catch(e){handleErr(e)}}
+$("setBtn").onclick=()=>{renderSettings();$("setting").classList.add("open")};
+$("sClose").onclick=()=>$("setting").classList.remove("open");
+$("sAuc").onclick=e=>{const b=e.target.closest("button[data-i]");if(!b)return;settings.auctions.splice(+b.dataset.i,1);renderSettings();saveSettings()};
+$("sAucAdd").onclick=()=>{const v=$("sAucIn").value.trim();if(!v||settings.auctions.includes(v))return;settings.auctions.push(v);$("sAucIn").value="";renderSettings();saveSettings()};
+
+// ---- 暗証番号・更新 ----
+function showLock(){online=false;$("lock").hidden=false;
+  $("lockMsg").textContent=pass?"暗証番号が違います。もう一度入力してください。":"社内の暗証番号を入力してください（ReKiL Stockと同じ番号）。一度入力すると、このスマホでは次から入力不要です。";
+  setTimeout(()=>$("passIn").focus(),100)}
+$("lockForm").addEventListener("submit",async e=>{e.preventDefault();pass=$("passIn").value.trim();if(!pass)return;
+  $("lockGo").disabled=true;$("lockGo").textContent="確認中…";
+  try{await api("list");try{localStorage.setItem("rekil-mercari-pass",pass)}catch(_){}$("lock").hidden=true;$("passIn").value="";toast("接続しました")}
+  catch(err){$("lockMsg").textContent=err.code==="network"?"データ側に接続できませんでした。電波を確認してください。":err.code==="no_api"?"データ側（Apps Script）がまだ設定されていません。":err.code!=="passcode"?`データ側でエラーが起きました（${err.code}）`:$("lockMsg").textContent}
+  $("lockGo").disabled=false;$("lockGo").textContent="開く"});
+const anyOpen=()=>[...document.querySelectorAll(".sheet")].some(s=>s.classList.contains("open"));
+async function refresh(){if(!pass||busy||!API_URL||anyOpen())return;try{await api("list")}catch(err){if(err.code==="network"){online=false;setSync()}}}
+async function checkUpdate(){try{const r=await fetch(location.pathname+"?v="+Date.now(),{cache:"no-store"});const t=await r.text();const m=t.match(/const APP_VERSION = "([^"]+)"/);
+  if(m&&m[1]!==APP_VERSION&&(busy||anyOpen())){setTimeout(checkUpdate,3000);return}if(m&&m[1]!==APP_VERSION)location.replace(location.pathname+"?v="+encodeURIComponent(m[1]))}catch(_){}}
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"){checkUpdate();refresh()}});
+setInterval(()=>{if(document.visibilityState==="visible"){refresh();checkUpdate()}},60000);
+render();setSync();
+if(!API_URL){$("list").innerHTML='<div class="empty">データ側（Apps Script）の設定待ちです。<br>設定が終わるとここに表示されます。</div>'}
+else if(!pass)showLock();else{checkUpdate();refresh()}
+</script>
+<script>try{history.scrollRestoration="manual"}catch(_){}addEventListener("pageshow",()=>scrollTo(0,0));</script>
+<script>/* 共通：電波がなくても開ける・ホームへ戻るボタン */if("serviceWorker" in navigator&&location.protocol.startsWith("http"))navigator.serviceWorker.register("../sw.js",{scope:"../"}).catch(()=>{});try{if(sessionStorage.getItem("rekil-from-home")&&!/\/home\/?$/.test(location.pathname)){const b=document.createElement("a");b.href="../home/";b.textContent="⌂";b.setAttribute("aria-label","ReKiLホームへ");b.style.cssText="position:fixed;right:12px;bottom:calc(84px + env(safe-area-inset-bottom,0px));z-index:70;width:44px;height:44px;border-radius:22px;background:#2a313a;color:#fff;font-size:22px;display:flex;align-items:center;justify-content:center;text-decoration:none;box-shadow:0 4px 16px #0008;opacity:.9";document.body.appendChild(b)}}catch(_){}</script>
+</body>
+</html>
