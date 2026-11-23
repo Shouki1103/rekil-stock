@@ -107,7 +107,6 @@ label{display:block;font-size:12px;color:var(--sub);margin:12px 0 4px}
 .prow .pwrap{display:flex;gap:8px;align-items:flex-start;margin-top:6px}.prow .pwrap .two{flex:1;margin-top:0;flex-direction:column;gap:6px}
 #zoom{position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:60;display:none;align-items:center;justify-content:center}#zoom.open{display:flex}#zoom img{max-width:94vw;max-height:90vh;border-radius:10px}
 .kchips{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}.kchip{border:1px solid var(--line);background:var(--field);color:var(--ink);border-radius:99px;padding:6px 10px;font-size:13px;cursor:pointer}.kchip.on{background:var(--shup);color:#111;border-color:var(--shup);font-weight:700}
-.prow .pm .sug{font-family:inherit;font-size:11px;color:var(--ret)}
 .toast{position:fixed;left:50%;bottom:96px;transform:translateX(-50%);background:#f2f2f3;color:#111;padding:8px 14px;border-radius:8px;font-size:13px;display:none;z-index:50;max-width:90vw;text-align:center}
 </style>
 </head>
@@ -149,7 +148,6 @@ label{display:block;font-size:12px;color:var(--sub);margin:12px 0 4px}
     <div><label>開催日</label><input type="date" id="aDate"></div>
   </div>
   <div id="aKaisai" hidden><label>出品・返品・外注アプリに登録済みの開催（タップで選択）</label><div class="kchips" id="aKchips"></div></div>
-  <div id="aXlsBox" hidden><button class="btn sm" id="aXls" type="button" style="margin-top:12px">📄 出品リスト（Excel）から出品番号を入れる</button><input type="file" id="aXlsIn" accept=".xlsx,.xlsm,.xls,.csv" hidden><p class="hint" id="aXlsMsg" style="margin-top:6px"></p></div>
   <div id="aRows"></div>
   <div class="foot"><button class="btn" id="aCancel">キャンセル</button><button class="btn main" id="aSave">保存</button></div>
 </div></div>
@@ -209,7 +207,7 @@ label{display:block;font-size:12px;color:var(--sub);margin:12px 0 4px}
 <script>
 /* ▼ Apps Script をデプロイしたときの「ウェブアプリのURL」 */
 const API_URL = "https://script.google.com/macros/s/AKfycbzc7ND5p6X7nAyZ5AImSXScpj59BJQUo9Ht1SlBvO5Km6wNUIW7eG3iQfpghGJJq3Mk/exec";
-const APP_VERSION = "2026-11-24-1";
+const APP_VERSION = "2026-11-24-2";
 const DEF_AUC=["オークネット","エコオク","エコトレ[関東]","エコトレ[関西]","JDS","JBA","コメ兵","モノバンク","プライム","浜屋","大吉","JWA","トレファク","ペンギン","アプレ","リバオク"];
 const ST={hikae:"業者未登録",shuppin:"出品中",sold:"落札",return:"戻り・再出品待ち",relisted:"再出品済"};
 const ACTIVE=["hikae","shuppin","return"];
@@ -362,33 +360,6 @@ async function rrTask(k,recs){const rets=recs.filter(r=>r.status==="return");if(
     due:new Date(Date.now()+9*3600e3+2*864e5).toISOString().slice(0,10),memo:rets.map(r=>`${r.mid} ${r.name||""}`).join("\n")+"\nメルカリ再出品アプリ：https://shouki1103.github.io/rekil-stock/mercari/",createdBy:"メルカリ再出品アプリ",createdAt:new Date().toISOString(),done:"",doneAt:""}}).then(()=>toast("ReKiL 連絡に再出品の作業依頼を出しました"))}catch(_){}}
 function rrDoneCheck(keys){keys.forEach(k=>{if(!items.some(i=>i.status==="return"&&gkey(i)===k))post(RR_URL,{action:"doneTask",id:rrId(k),done:true,by:"メルカリ再出品アプリ"}).catch(()=>{})})}
 
-// ---- 出品リスト（Excel）から出品番号を入れる ----
-let xlsLoading=null;
-function loadXlsx(){if(window.XLSX)return Promise.resolve();return xlsLoading||(xlsLoading=new Promise((ok,ng)=>{const sc=document.createElement("script");sc.src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js";sc.onload=ok;sc.onerror=()=>{xlsLoading=null;ng(new Error("load"))};document.head.appendChild(sc)}))}
-const normT=s=>String(s??"").normalize("NFKC").toUpperCase().replace(/[\s・\/\-_,.、。()（）【】\[\]「」"']/g,"");
-const bigr=s=>{const t=normT(s),o=new Set();for(let i=0;i<t.length-1;i++)o.add(t.slice(i,i+2));return o};
-function sim(a,b){const A=bigr(a),B=bigr(b);if(!A.size||!B.size)return 0;let n=0;A.forEach(x=>{if(B.has(x))n++});return n/Math.min(A.size,B.size)}
-async function fillFromXls(file){const msg=$("aXlsMsg");msg.textContent="読み込み中…";
-  try{await loadXlsx();const wb=XLSX.read(await file.arrayBuffer(),{type:"array"});
-    let rows=[];wb.SheetNames.forEach(n=>{rows=rows.concat(XLSX.utils.sheet_to_json(wb.Sheets[n],{header:1,raw:false,defval:""}))});
-    rows=rows.filter(r=>r.some(c=>String(c).trim()));
-    // 見出し行と出品番号の列を探す
-    let hi=-1,lc=-1;for(let i=0;i<Math.min(rows.length,15)&&lc<0;i++){const r=rows[i].map(c=>String(c).normalize("NFKC"));
-      const k=r.findIndex(c=>/出品番号|受付番号|出品No|ロット|LOT|商品番号|管理番号|^No\.?$|^番号$/i.test(c.trim())&&!/メルカリ/.test(c));if(k>=0){hi=i;lc=k}}
-    if(lc<0){const cols=Math.max(...rows.slice(0,30).map(r=>r.length));let best=-1,bc=0;
-      for(let c=0;c<cols;c++){const n=rows.slice(0,60).filter(r=>/^\s*[A-Za-z]?\d{1,6}\s*$/.test(String(r[c]??"").normalize("NFKC"))).length;if(n>bc){bc=n;best=c}}lc=best}
-    if(lc<0){msg.textContent="出品番号の列が見つかりませんでした。番号は手で入れてください";return}
-    const data=rows.slice(hi+1).map(r=>({lot:String(r[lc]??"").trim(),text:r.filter((_,i)=>i!==lc).join(" ")})).filter(d=>d.lot);
-    let filled=0,miss=[];const used=new Set();
-    aRows.forEach(r=>{let hit=data.find(d=>r.mid&&normT(d.text).includes(normT(r.mid)));let sc=1;
-      if(!hit){let b=null,bs=0,second=0;data.forEach(d=>{if(used.has(d.lot))return;const v=sim(r.name,d.text);if(v>bs){second=bs;bs=v;b=d}else if(v>second)second=v});
-        if(b&&bs>=.35&&bs-second>=.08){hit=b;sc=bs}}
-      if(hit&&!r.lot){r.lot=hit.lot;r.sug=sc<1?"出品リストから（要確認）":"出品リストから";used.add(hit.lot);filled++}else if(!r.lot)miss.push(r.name||r.mid)});
-    renderARows();msg.textContent=`${filled}件の出品番号を入れました。`+(miss.length?`見つからなかった：${miss.join("、")}`:"")+"（青字の行は念のため確認してください）"}
-  catch(e){msg.textContent="Excelを読み込めませんでした。番号は手で入れてください"}}
-$("aXls").onclick=()=>$("aXlsIn").click();
-$("aXlsIn").onchange=e=>{const f=e.target.files[0];e.target.value="";if(f)fillFromXls(f)};
-
 // ---- 追加・業者登録 ----
 let aRows=[];
 function openAdd(ids){
@@ -400,7 +371,7 @@ function openAdd(ids){
   $("aDate").value=ids?(items.find(x=>x.id===ids[0])?.date||""):"";
   aRows=ids?ids.map(id=>{const i=items.find(x=>x.id===id);return{mid:i.mid,name:i.name||"",lot:i.lot||"",photo:i.photo||"",id}}):[];
   renderARows();$("add").classList.add("open");if(!ids)setTimeout(()=>$("aLinks").focus(),150);
-  $("aXlsBox").hidden=!ids;$("aXlsMsg").textContent="";$("aKaisai").hidden=true;
+  $("aKaisai").hidden=true;
   if(ids)loadHp().then(drawKaisai).catch(()=>{});
 }
 function renderARows(){
@@ -408,14 +379,14 @@ function renderARows(){
   $("aDate").parentElement.style.opacity=hasAuc?1:.4;
   $("aRows").innerHTML=aRows.length?aRows.map((r,k)=>{
     const ex=!r.id&&items.find(x=>x.mid===r.mid&&ACTIVE.includes(x.status));
-    const w=r.sug&&r.lot?`<span class="sug">${esc(r.sug)}</span>`:ex?`<span class="warn">登録済（${ST[ex.status]}）${ex.status==="shuppin"?"→飛ばします":"→上書き"}</span>`:"";
+    const w=ex?`<span class="warn">登録済（${ST[ex.status]}）${ex.status==="shuppin"?"→飛ばします":"→上書き"}</span>`:"";
     return `<div class="prow"><div class="pm"><span>${k+1}. ${esc(r.mid)}</span>${w}</div><div class="pwrap"><div class="pbtn" data-pk="${k}" style="${r.photo?`background-image:url('${r.photo}');border-style:solid`:""}">${r.photo?"":"＋写真"}</div><div class="two"><input data-k="${k}" data-f="name" value="${esc(r.name)}" placeholder="商品名（例：PRADAバッグ）">${hasAuc?`<input data-k="${k}" data-f="lot" value="${esc(r.lot)}" placeholder="出品番号" autocomplete="off">`:""}</div></div></div>`}).join(""):(regIds?"":'<p class="hint" style="margin-top:10px">リンクを貼ると、ここに番号が並びます。</p>');
 }
 $("aLinks").oninput=()=>{const mids=parseMids($("aLinks").value);
   const keep=Object.fromEntries(aRows.map(r=>[r.mid,r]));
   aRows=mids.map(m=>{const ex=items.find(x=>x.mid===m)||{};return keep[m]||{mid:m,name:ex.name||"",lot:"",photo:ex.photo||""}});renderARows()};
 $("aRows").onclick=e=>{const b=e.target.closest("[data-pk]");if(!b)return;pickPhoto(d=>{aRows[+b.dataset.pk].photo=d;renderARows()})};
-$("aRows").oninput=e=>{const t=e.target;if(t.dataset.k!=null){aRows[+t.dataset.k][t.dataset.f]=t.value;if(t.dataset.f==="lot")aRows[+t.dataset.k].sug=""}};
+$("aRows").oninput=e=>{const t=e.target;if(t.dataset.k!=null){aRows[+t.dataset.k][t.dataset.f]=t.value}};
 $("aAuc").onchange=()=>{renderARows();drawKaisai()};$("aDate").addEventListener("change",drawKaisai);
 $("aDate").addEventListener("click",()=>{try{$("aDate").showPicker()}catch(e){}});
 $("aCancel").onclick=()=>$("add").classList.remove("open");
