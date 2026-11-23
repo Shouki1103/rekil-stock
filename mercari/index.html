@@ -201,7 +201,7 @@ label{display:block;font-size:12px;color:var(--sub);margin:12px 0 4px}
 <script>
 /* ▼ Apps Script をデプロイしたときの「ウェブアプリのURL」 */
 const API_URL = "";
-const APP_VERSION = "2026-11-23-2";
+const APP_VERSION = "2026-11-23-3";
 const DEF_AUC=["オークネット","エコオク","エコトレ[関東]","エコトレ[関西]","JDS","JBA","コメ兵","モノバンク","プライム","浜屋","大吉","JWA","トレファク","ペンギン","アプレ","リバオク"];
 const ST={hikae:"業者未登録",shuppin:"出品中",sold:"落札",return:"戻り・再出品待ち",relisted:"再出品済"};
 const ACTIVE=["hikae","shuppin","return"];
@@ -402,8 +402,14 @@ $("eDel").onclick=()=>{const p=editing;$("edit").classList.remove("open");askDel
 // ---- 写真（端末側で小さくしてから保存＝軽い） ----
 function pickPhoto(cb){const f=document.createElement("input");f.type="file";f.accept="image/*";
   f.onchange=()=>{const file=f.files[0];if(!file)return;const url=URL.createObjectURL(file);const img=new Image();
-    img.onload=()=>{const m=320,r=Math.min(1,m/Math.max(img.width,img.height));const c=document.createElement("canvas");c.width=Math.round(img.width*r);c.height=Math.round(img.height*r);
-      c.getContext("2d").drawImage(img,0,0,c.width,c.height);URL.revokeObjectURL(url);cb(c.toDataURL("image/jpeg",.7))};
+    img.onload=()=>{URL.revokeObjectURL(url);let src=img,sx=0,sy=0,sw=img.width,sh=img.height;
+      if(img.height/img.width>1.9){ // メルカリ商品ページのスクショ：商品写真の部分だけ切り抜き、角の「公開停止中」やボタンを白で消す
+        const k=img.width/1185,t=document.createElement("canvas");t.width=img.width;t.height=img.height;const g=t.getContext("2d");g.drawImage(img,0,0);g.fillStyle="#fff";
+        g.beginPath();g.moveTo(118*k,362*k);g.lineTo(440*k,362*k);g.lineTo(118*k,684*k);g.closePath();g.fill();
+        g.beginPath();g.ellipse(209*k,1232*k,60*k,58*k,0,0,7);g.fill();g.fillRect(860*k,1210*k,175*k,68*k);
+        src=t;sx=125*k;sy=370*k;sw=940*k;sh=930*k}
+      const m=320,r=Math.min(1,m/Math.max(sw,sh));const c=document.createElement("canvas");c.width=Math.round(sw*r);c.height=Math.round(sh*r);
+      c.getContext("2d").drawImage(src,sx,sy,sw,sh,0,0,c.width,c.height);cb(c.toDataURL("image/jpeg",.7))};
     img.onerror=()=>toast("写真を読み込めませんでした");img.src=url};f.click()}
 $("zoom").onclick=()=>$("zoom").classList.remove("open");
 // ---- 一覧の操作 ----
