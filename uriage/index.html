@@ -188,7 +188,7 @@ const $ = (s, r = document) => r.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 /* ▼ Apps Script をデプロイしたときの「ウェブアプリのURL」 */
 const API_URL = "https://script.google.com/macros/s/AKfycby_jyb7iNU30-66PBZz1tePhqZDMFmtik2SY48w2lqBxRPTJ38Xiwyxn1i9DQPTvILs/exec";
-const APP_VERSION = "2026-11-23-1";
+const APP_VERSION = "2026-11-23-2";
 const CACHE = "uriage-data";
 const ST = {todo:"俊輔の入力待ち", ask:"祥貴の確認待ち", done:"済み"};
 let tasks = [];
@@ -226,13 +226,13 @@ function shrinkImg(file, max){
 let lstTask = null;
 function lstHtml(t){
   return `<div class="field" id="lstBox"><label>出品リスト（出品・返品・外注アプリの「業者出品」で登録した分）</label><div id="lst"></div>
-    <button class="btn sm" id="lstAdd" type="button">＋ 出品リストを追加（写真・PDF）</button><input type="file" id="lstIn" accept="image/*,application/pdf,.pdf" multiple hidden></div>`;
+    <button class="btn sm" id="lstAdd" type="button">＋ 出品リストを追加（Excel・PDF・写真）</button><input type="file" id="lstIn" accept="image/*,application/pdf,.pdf,.xlsx,.xlsm,.xls,.csv" multiple hidden></div>`;
 }
 function drawLst(){
   const t = lstTask, el = $("#lst"); if(!t || !el) return;
   const ids = listOf(t);
   el.innerHTML = ids.length
-    ? `<div class="lthumbs">${ids.map((p,i)=>`<a href="${viewUrl(p)}" target="_blank" rel="noopener"><img src="${thumbUrl(p)}" alt="出品リスト${i+1}" loading="lazy"><span class="pg">${i+1}</span></a>`).join("")}</div><p class="hint">タップで大きく表示します。</p>`
+    ? `<div class="lthumbs">${ids.map((p,i)=>`<a href="${viewUrl(p)}" target="_blank" rel="noopener"><img src="${thumbUrl(p)}" alt="出品リスト${i+1}" loading="lazy"><span class="pg">${i+1}</span></a>`).join("")}</div><p class="hint">タップで大きく表示します（ExcelはPDFにして保存しています）。</p>`
     : `<p class="hint">${hpRows ? "まだ登録されていません。" : "読み込み中…"}</p>`;
   const add = $("#lstAdd"); if(add) add.hidden = !!hpRows && !hpRows.has(hpId(t));
 }
@@ -245,6 +245,7 @@ async function addLst(files){
     const ids = listOf(t);
     for(let i=0;i<files.length;i++){
       const f = files[i]; let imgs;
+      if(window.isExcel && isExcel(f)){ btn.textContent = `ExcelをPDFに変換中…（${i+1}/${files.length}）`; ids.push(await excelToPdf(f, pass)); continue; }
       if(window.isPdf && isPdf(f)){ try{ imgs = await pdfToJpegs(f, 2200, (p,n)=>{ btn.textContent = `PDFを読み込み中…（${p}/${n}ページ）`; }); }catch(_){ throw new ApiError("pdf"); } }
       else imgs = [await shrinkImg(f, 2200)];
       for(let j=0;j<imgs.length;j++){ btn.textContent = `アップロード中…（${i+1}/${files.length}${imgs.length>1?`・${j+1}/${imgs.length}ページ`:""}）`;
@@ -252,8 +253,8 @@ async function addLst(files){
     }
     await hp("save", {table:"shuppin", item:{id: hpId(t), photos: ids.join(",")}});
     draw(); drawLst(); toast("出品リストを追加しました");
-  }catch(err){ toast(err.code==="network" ? "通信できませんでした。電波を確認してください" : err.code==="pdf" ? "PDFを読み込めませんでした。スクショや写真で追加してください" : `追加できませんでした（${err.code||"error"}）`); }
-  finally{ if($("#lstAdd")===btn){ btn.disabled = false; btn.textContent = "＋ 出品リストを追加（写真・PDF）"; } }
+  }catch(err){ toast(err.code==="network" ? "通信できませんでした。電波を確認してください" : err.code==="pdf" ? "PDFを読み込めませんでした。スクショや写真で追加してください" : err.code==="no_converter" ? "Excelの変換はPCでの準備がまだです。準備が終わると使えます" : `追加できませんでした（${err.code||"error"}）`); }
+  finally{ if($("#lstAdd")===btn){ btn.disabled = false; btn.textContent = "＋ 出品リストを追加（Excel・PDF・写真）"; } }
 }
 class ApiError extends Error{ constructor(c){ super(c); this.code = c; } }
 function keep(){ try{ localStorage.setItem(CACHE, JSON.stringify({tasks})); }catch(_){} }
@@ -477,5 +478,6 @@ else { setStatus(tasks.length ? "" : "読み込み中…"); checkUpdate(); refre
 <script>try{history.scrollRestoration="manual"}catch(_){}addEventListener("pageshow",()=>scrollTo(0,0));</script>
 <script>/* 共通：電波がなくても開ける・ホームへ戻るボタン */if("serviceWorker" in navigator&&location.protocol.startsWith("http"))navigator.serviceWorker.register("../sw.js",{scope:"../"}).catch(()=>{});try{if(sessionStorage.getItem("rekil-from-home")&&!/\/home\/?$/.test(location.pathname)){const b=document.createElement("a");b.href="../home/";b.textContent="⌂";b.setAttribute("aria-label","ReKiLホームへ");b.onclick=()=>{try{const a=document.activeElement;if(a&&a.blur)a.blur();scrollTo(0,0)}catch(_){}};b.style.cssText="position:fixed;right:12px;bottom:calc(84px + env(safe-area-inset-bottom,0px));z-index:70;width:44px;height:44px;border-radius:22px;background:#2a313a;color:#fff;font-size:22px;display:flex;align-items:center;justify-content:center;text-decoration:none;box-shadow:0 4px 16px #0008;opacity:.9";document.body.appendChild(b)}}catch(_){}</script>
 <script src="../lib/pdfpages.js" defer></script>
+<script src="../lib/xlsx2pdf.js" defer></script>
 </body>
 </html>
