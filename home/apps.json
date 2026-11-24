@@ -124,6 +124,14 @@
      "owner": true
     },
     {
+     "id": "shikin",
+     "name": "資金繰り",
+     "url": "../shikin/",
+     "icon": "../shikin/icon-180.png",
+     "badge": "shikin",
+     "owner": true
+    },
+    {
      "id": "portal",
      "name": "ポータル",
      "url": "../portal/",

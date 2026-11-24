@@ -54,7 +54,7 @@ header{gap:8px}.brand{white-space:nowrap;flex:0 0 auto}.hctl{display:flex;align-
   <div id="groups"></div>
 </main>
 <script>
-const APP_VERSION = "2026-11-23-3";
+const APP_VERSION = "2026-11-25-shikin";
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const today = () => new Date(Date.now()+9*3600e3).toISOString().slice(0,10);
@@ -158,7 +158,7 @@ async function call(url, pass, action="list"){
   const res = await fetch(url, {method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"}, body: JSON.stringify({action, pass})});
   const j = await res.json(); if(!j.ok) throw new Error(j.error||"error"); return j;
 }
-const SRC_NAME = {okurijo:"送り状控え", henpin:"出品・返品・外注", shitami:"下見・指値", irai:"eBay出品依頼", uriage:"売上入力", haiki:"廃棄記録", mercari:"メルカリ再出品"};
+const SRC_NAME = {okurijo:"送り状控え", henpin:"出品・返品・外注", shitami:"下見・指値", irai:"eBay出品依頼", uriage:"売上入力", haiki:"廃棄記録", mercari:"メルカリ再出品", shikin:"資金繰り"};
 const failed = [];
 const SRC = {
   okurijo: async () => {
@@ -201,7 +201,16 @@ const SRC = {
     const j = await call("https://script.google.com/macros/s/AKfycbxkxy7ZrqL9cnVaCq6ROX0OMRfYMeDVoYT7C_U-H1D2ENsS3nax-hfNFT7dDMOsItiHTQ/exec", needPass("rekil-haiki-pass"));
     const n = ((j.data||{}).items||[]).filter(i=>i.inSheet!==false && !((i.photos||[]).length && String(i.reason||"").trim())).length;
     return {n, items: n ? [{t:"廃棄記録の写真・理由が未登録", v:`${n}件`, u:"../haiki/"}] : []};
-  },  mercari: async () => {
+  },  shikin: async () => {
+    /* 資金繰り（代表専用）：代表ログイン済みで、資金繰りの暗証番号が入っている端末だけ確認する */
+    const API = ""; /* 資金繰りのデータ側（Apps Script）のURL */
+    let p = ""; try{ p = localStorage.getItem("rekil-bank-pass") || ""; }catch(_){}
+    if(!API || !p || !isOwner()) return {n:0, items:[]};
+    const j = await call(API, p, "summary");
+    const al = (j.alerts||[]).filter(a=>a.lv>=1);
+    return {n: al.length, items: al.map(a=>({t:"資金繰り："+a.t, v:a.v, u:"../shikin/"}))};
+  },
+  mercari: async () => {
     const API = "https://script.google.com/macros/s/AKfycbzc7ND5p6X7nAyZ5AImSXScpj59BJQUo9Ht1SlBvO5Km6wNUIW7eG3iQfpghGJJq3Mk/exec"; /* メルカリ再出品のデータ側 */
     const j = await call(API, needPass("rekil-mercari-pass"));
     const t = today(), its = (j.data||{}).items||[];
@@ -227,7 +236,7 @@ $("#sync").onclick = refresh;
 document.addEventListener("click", e=>{ if(e.target.id!=="setPass") return; const v = prompt("社内の暗証番号（ReKiL Stockなどと同じ番号）。一度入れると、ホームから開くアプリで入力不要になります"); if(!v) return; try{ localStorage.setItem("rekil-pass", v.trim()); }catch(_){} refresh(); });
 $("#edit").onclick = ()=>{ if(!isOwner()){ ownerUnlock(); return; } editing = !editing; render(); };
 document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState==="visible"){ checkUpdate(); refresh(); } });
-async function checkUpdate(){ try{ const r=await fetch(location.pathname+"?v="+Date.now(),{cache:"no-store"}); const t=await r.text(); const m=t.match(/const APP_VERSION = "([^"]+)"/); if(m && m[1]!==APP_VERSION) location.replace(location.pathname+"?v="+encodeURIComponent(m[1])); }catch(_){} }
+async function checkUpdate(){ try{ const r=await fetch(location.pathname+"?v="+Date.now(),{cache:"no-store"}); const t=await r.text(); const m=t.match(/const APP_VERSION = "2026-11-25-shikin"]+)"/); if(m && m[1]!==APP_VERSION) location.replace(location.pathname+"?v="+encodeURIComponent(m[1])); }catch(_){} }
 document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState==="visible"){ loadCatalog(); loadTasks(); loadDone(); renderToday(); } });
 if(location.protocol.startsWith("http")){ checkUpdate(); setInterval(()=>{ if(document.visibilityState==="visible") checkUpdate(); }, 60000); }
 /* アプリから戻ったとき上（ヘッダー）が隠れないよう、表示のたびに一番上へ戻す（iPhoneの画面ずれ対策で数回やり直す。指で触ったら中止） */

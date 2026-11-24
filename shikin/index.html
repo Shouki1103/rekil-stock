@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="資金繰り">
+<meta name="theme-color" content="#0d1014">
+<meta name="robots" content="noindex">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<title>ReKiL 資金繰り</title>
+<style>
+:root{--bg:#14181d;--surface:#1d232a;--line:#2f3740;--fg:#e8ebee;--muted:#9aa4af;--accent:#4fc99a;--steel:#0d1014;--danger:#ff7a6b;--warn:#f2b441;color-scheme:dark}
+*{box-sizing:border-box}
+html,body{background:var(--bg);color:var(--fg);margin:0}
+body{font-family:"Hiragino Sans","Yu Gothic",system-ui,sans-serif;font-size:15px;line-height:1.5;padding-top:env(safe-area-inset-top,0px);padding-bottom:calc(90px + env(safe-area-inset-bottom,0px))}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--steel)}
+[hidden]{display:none!important}
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--steel);padding:10px 14px 10px}
+.top{display:flex;align-items:center;justify-content:space-between}
+.brand{display:flex;align-items:center;gap:10px;font-weight:900;font-size:17px}
+.brand i{display:inline-block;width:12px;height:22px;background:repeating-linear-gradient(-45deg,var(--accent) 0 5px,#1d2228 5px 10px);border-radius:2px}
+.brand small{font-size:11px;color:var(--muted);font-weight:700;border:1px solid var(--line);border-radius:6px;padding:0 6px}
+.sync{color:var(--muted);background:none;border:0;font:inherit;font-size:12px;cursor:pointer}
+.tabs{display:flex;gap:6px;margin-top:8px}
+.tabs button{flex:1;padding:7px 0;border-radius:10px;border:1px solid var(--line);background:transparent;color:var(--muted);font:inherit;font-size:14px;font-weight:700}
+.tabs button.on{border-color:var(--accent);color:var(--accent)}
+main{max-width:640px;margin:0 auto;padding:10px 14px}
+h3{font-size:13px;color:var(--muted);margin:16px 2px 6px;display:flex;justify-content:space-between;align-items:center}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:8px}
+.sum{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;text-align:center}
+.sum b{display:block;font-size:17px;font-variant-numeric:tabular-nums}.sum span{font-size:11px;color:var(--muted)}
+.al{display:flex;gap:8px;align-items:flex-start;padding:8px 10px;border-radius:10px;margin-bottom:6px;font-size:14px;background:#262d35}
+.al.l2{background:#3a2222;color:#ffd1cb}.al.l1{background:#3a3020;color:#ffe3ad}.al.l0{color:var(--muted)}
+.al em{font-style:normal;margin-left:auto;white-space:nowrap;font-weight:800}
+.acc .nm{display:flex;justify-content:space-between;align-items:center;gap:8px;font-weight:800}
+.bd{font-size:12px;border-radius:999px;padding:1px 10px;font-weight:800;white-space:nowrap}
+.bd.OK{background:#1f3b31;color:var(--accent)}.bd.注意{background:#47391d;color:var(--warn)}.bd.不足{background:#4a2420;color:var(--danger)}.bd.未入力{background:#2a313a;color:var(--muted)}
+.bal{font-size:24px;font-weight:900;margin:4px 0 0;font-variant-numeric:tabular-nums}
+.meta{font-size:12px;color:var(--muted)}.meta .old{color:var(--warn);font-weight:700}
+.row{display:flex;gap:8px;margin-top:8px}
+.btn{font:inherit;font-size:14px;font-weight:700;border:1px solid var(--line);background:transparent;color:var(--fg);border-radius:10px;padding:8px 12px;min-height:40px}
+.btn.main{background:var(--accent);border:0;color:#0d1014}
+.need{margin-top:8px;font-size:13px;padding:8px 10px;border-radius:8px;background:#3a2222;color:#ffd1cb}.need.w{background:#3a3020;color:#ffe3ad}
+.ev{width:100%;border-collapse:collapse;margin-top:8px;font-size:13px;font-variant-numeric:tabular-nums}
+.ev td{padding:5px 2px;border-top:1px solid var(--line)}.ev td.r{text-align:right;white-space:nowrap}.ev .m{color:var(--danger)}.ev .p{color:var(--accent)}.ev .neg{color:var(--danger);font-weight:800}
+.tag{font-size:10px;border:1px solid var(--warn);color:var(--warn);border-radius:5px;padding:0 4px;margin-left:4px;white-space:nowrap}
+.tag.k{border-color:var(--line);color:var(--muted)}
+.item{display:flex;gap:10px;align-items:center;padding:10px 12px;border-bottom:1px solid var(--line);cursor:pointer}
+.item:last-child{border-bottom:0}.item .d{width:44px;text-align:center;font-weight:800;font-size:13px;color:var(--muted);line-height:1.2}
+.item .d small{display:block;font-size:10px;font-weight:600}.item .x{flex:1;min-width:0}.item .x div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.item .x small{color:var(--muted);font-size:12px}.item .a{text-align:right;font-weight:800;white-space:nowrap;font-variant-numeric:tabular-nums}.item .a small{display:block;font-weight:600;font-size:11px;color:var(--muted)}
+.list{background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-bottom:8px}
+.empty{color:var(--muted);text-align:center;padding:24px 0;font-size:14px}
+.fab{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom,0px));width:min(560px,calc(100% - 32px));min-height:52px;border-radius:14px;border:0;background:var(--accent);color:#0d1014;font:inherit;font-weight:800;font-size:16px}
+.sheet{position:fixed;inset:0;z-index:30;background:#000a;display:flex;align-items:flex-end;justify-content:center}
+.sheet form{background:var(--surface);width:100%;max-width:600px;max-height:calc(100vh - env(safe-area-inset-top,0px) - 16px);max-height:calc(100dvh - env(safe-area-inset-top,0px) - 16px);overflow:auto;border-radius:14px 14px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:10px}
+.sheet h4{margin:0;font-size:16px}
+.sheet label{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted)}
+.sheet label.ck{flex-direction:row;align-items:center;gap:8px;color:var(--fg);font-size:14px}
+.sheet input,.sheet select,.sheet textarea{font:inherit;font-size:16px;padding:10px;border-radius:9px;border:1px solid var(--line);background:var(--bg);color:var(--fg);width:100%}
+.sheet input[type=checkbox]{width:22px;height:22px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.hint{font-size:12px;color:var(--muted);margin:0}
+.btns{display:flex;gap:8px}.btns button{flex:1;min-height:46px;border-radius:10px;border:1px solid var(--line);background:transparent;color:var(--fg);font:inherit;font-weight:700}
+.btns .main{background:var(--accent);color:#0d1014;border:0}.btns .del{color:var(--danger)}
+.qk{display:flex;flex-wrap:wrap;gap:6px}.qk button{font:inherit;font-size:13px;border:1px solid var(--line);background:transparent;color:var(--muted);border-radius:999px;padding:4px 10px}
+#lock{position:fixed;inset:0;z-index:50;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:24px}
+#lock form{width:100%;max-width:360px;display:flex;flex-direction:column;gap:12px}
+#lock input{font:inherit;font-size:18px;padding:12px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--fg)}
+#lock button{font:inherit;font-weight:800;padding:12px;border-radius:10px;border:0;background:var(--accent);color:#111}
+.toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:#f2f4f6;color:#111;padding:10px 16px;border-radius:8px;font-weight:700;opacity:0;transition:opacity .2s;pointer-events:none;z-index:60}
+.toast.show{opacity:1}
+</style>
+</head>
+<body>
+<header>
+  <div class="top"><div class="brand"><i></i>資金繰り<small>代表専用</small></div><button class="sync" id="sync" type="button"></button></div>
+  <div class="tabs" id="tabs"><button data-t="acc" class="on">口座</button><button data-t="cal">予定表</button><button data-t="reg">登録</button></div>
+</header>
+<main id="main"></main>
+<button class="fab" id="fab" type="button" hidden>＋ 引き落とし・入金を登録</button>
+<div class="sheet" id="sheet" hidden><form id="form" autocomplete="off"></form></div>
+<div id="lock" hidden><form id="lockForm"><h3 style="color:var(--fg);font-size:18px;margin:0">代表専用</h3><p id="lockMsg" style="color:var(--muted);font-size:13px">資金繰り専用の暗証番号を入力してください。</p><input id="passIn" type="password" inputmode="numeric" placeholder="暗証番号"><button type="submit">開く</button></form></div>
+<div class="toast" id="toast"></div>
+<script>
+/* ===== 資金繰りの計算（アプリと Apps Script で同じもの） ===== */
+const HOL = new Set(["2026-01-01","2026-01-12","2026-02-11","2026-02-23","2026-03-20","2026-04-29","2026-05-03","2026-05-04","2026-05-05","2026-05-06","2026-07-20","2026-08-11","2026-09-21","2026-09-22","2026-09-23","2026-10-12","2026-11-03","2026-11-23",
+"2027-01-01","2027-01-11","2027-02-11","2027-02-23","2027-03-21","2027-03-22","2027-04-29","2027-05-03","2027-05-04","2027-05-05","2027-07-19","2027-08-11","2027-09-20","2027-09-23","2027-10-11","2027-11-03","2027-11-23",
+"2028-01-01","2028-01-10","2028-02-11","2028-02-23","2028-03-20","2028-04-29","2028-05-03","2028-05-04","2028-05-05","2028-07-17","2028-08-11","2028-09-18","2028-09-22","2028-10-09","2028-11-03","2028-11-23"]);
+const KINDS = ["融資返済","クレカ","税金・社保","固定費","給与","入金","その他"];
+const D1 = 864e5;
+function fYmd(d){ return new Date(d).toISOString().slice(0,10); }
+function pD(s){ return new Date(String(s).slice(0,10)+"T00:00:00Z"); }
+function lastDay(y,m){ return new Date(Date.UTC(y,m,0)).getUTCDate(); } /* m=1〜12 */
+function isBiz(d){ const w=d.getUTCDay(); if(w===0||w===6) return false; const s=fYmd(d); if(HOL.has(s)) return false; const md=s.slice(5); return !["12-31","01-01","01-02","01-03"].includes(md); }
+function shiftBiz(d, mode){ if(mode==="none") return d; const st = mode==="prev" ? -1 : 1; let x=d; let n=0; while(!isBiz(x) && n++<15) x=new Date(x.getTime()+st*D1); return x; }
+function addYm(ym, k){ let y=+ym.slice(0,4), m=+ym.slice(5,7)+k; while(m>12){m-=12;y++;} while(m<1){m+=12;y--;} return y+"-"+String(m).padStart(2,"0"); }
+function horizonOf(today, months){ const ym=addYm(today.slice(0,7), +months||1); return ym+"-"+String(lastDay(+ym.slice(0,4),+ym.slice(5,7))).padStart(2,"0"); }
+/* 予定 → from〜to の発生日リスト */
+function occurrences(plans, ovr, from, to){
+  const out=[];
+  (plans||[]).forEach(p=>{
+    const push=(date, ym)=>{
+      if(date<from || date>to) return;
+      const o=(ovr||{})[p.id+"|"+ym]||{};
+      const has = o.amount!==undefined && o.amount!=="" && o.amount!==null;
+      const amt = Math.abs(+(has ? o.amount : p.amount) || 0);
+      out.push({id:p.id+"|"+ym, plan:p.id, name:p.name, kind:p.kind, acct:p.acct, date, ym, amount:amt, sign: p.kind==="入金" ? 1 : -1,
+        done: !!(+o.done), est: !!(+p.vary) && !has});
+    };
+    if(p.freq==="1回"){ if(p.date) push(String(p.date).slice(0,10), String(p.date).slice(0,7)); return; }
+    let ym=addYm(from.slice(0,7),-1); const endYm=to.slice(0,7);
+    for(let g=0; ym<=endYm && g<40; g++, ym=addYm(ym,1)){
+      if(p.freq==="毎年" && +p.month!==+ym.slice(5,7)) continue;
+      if(p.start && ym<p.start) continue; if(p.end && ym>p.end) continue;
+      const y=+ym.slice(0,4), m=+ym.slice(5,7), L=lastDay(y,m);
+      const day = (p.day==="末"||!p.day) ? L : Math.min(+p.day||1, L);
+      push(fYmd(shiftBiz(new Date(Date.UTC(y,m-1,day)), p.shift||"next")), ym);
+    }
+  });
+  return out.sort((a,b)=> a.date<b.date?-1:a.date>b.date?1: a.sign-b.sign);
+}
+/* 口座ごとに見込み残高を計算 */
+function forecast(data, today){
+  const st=data.settings||{}, to=horizonOf(today, st.months||1), stale=+st.staleDays||7;
+  const accounts=(data.accounts||[]).map(a=>{
+    const has = a.balance!=="" && a.balance!==null && a.balance!==undefined && !isNaN(+a.balance);
+    const base = has && a.updated ? String(a.updated).slice(0,10) : "";
+    const from = base || today;
+    const ev = occurrences((data.plans||[]).filter(p=>p.acct===a.id), data.ovr, from, to).filter(e=>!e.done);
+    let run = has ? +a.balance : 0, min = run, neg=null, lowHit=null; const lowv = +a.low||0;
+    ev.forEach(e=>{ run += e.sign*e.amount; e.after = run; if(run<min) min=run;
+      if(has && run<0 && !neg) neg={date:e.date, name:e.name, need:-run};
+      if(has && run<lowv && !lowHit) lowHit={date:e.date, name:e.name, need:lowv-run}; });
+    if(has && neg) neg.need = -min;  /* 期間中で一番足りない額 */
+    if(has && lowHit) lowHit.need = lowv-min;
+    const age = base ? Math.round((pD(today)-pD(base))/D1) : null;
+    const status = !has ? "未入力" : neg ? "不足" : lowHit ? "注意" : "OK";
+    return {...a, has, base, events:ev, end:run, min, neg, lowHit, age, stale: has && age>stale, status,
+      out: ev.filter(e=>e.sign<0).reduce((s,e)=>s+e.amount,0), inn: ev.filter(e=>e.sign>0).reduce((s,e)=>s+e.amount,0),
+      est: ev.filter(e=>e.est)};
+  });
+  return {to, accounts};
+}
+/* ホーム・メール用の要約 */
+function alerts(fc, data){
+  const yen=n=>Math.round(n).toLocaleString("ja-JP"), md=s=>(+s.slice(5,7))+"/"+(+s.slice(8,10));
+  const cur=a=>a.cur==="USD"?"$":"", out=[];
+  fc.accounts.forEach(a=>{
+    if(a.status==="不足") out.push({lv:2, t:`${a.name}：${md(a.neg.date)}の「${a.neg.name}」で残高不足`, v:`${cur(a)}${yen(a.neg.need)}足りない`});
+    else if(a.status==="注意") out.push({lv:1, t:`${a.name}：${md(a.lowHit.date)}以降、下限を下回る`, v:`下限まで${cur(a)}${yen(a.lowHit.need)}不足`});
+    if(a.status==="未入力" && (data.plans||[]).some(p=>p.acct===a.id)) out.push({lv:1, t:`${a.name}：残高が未入力`, v:"入力して"});
+    else if(a.stale) out.push({lv:1, t:`${a.name}：残高が${a.age}日前のまま`, v:"更新して"});
+    a.est.forEach(e=>out.push({lv:0, t:`${md(e.date)} ${e.name}：${+e.ym.slice(5)}月分の金額が未入力（目安で計算中）`, v:`目安${yen(e.amount)}`}));
+  });
+  return out.sort((x,y)=>y.lv-x.lv);
+}
+/* ▼ Apps Script をデプロイしたときの「ウェブアプリのURL」（apps-script.gs を参照） */
+const API_URL = "";
+const APP_VERSION = "2026-11-25-1";
+const PASS_KEY = "rekil-bank-pass";
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const today = () => new Date(Date.now()+9*3600e3).toISOString().slice(0,10);
+const yen = n => Math.round(+n||0).toLocaleString("ja-JP");
+const md = s => (+s.slice(5,7))+"/"+(+s.slice(8,10));
+const W = "日月火水木金土";
+const wd = s => W[pD(s).getUTCDay()];
+const cur = a => a && a.cur==="USD" ? "$" : "¥";
+const mon = (c, n) => (n<0?"−":"") + c + yen(Math.abs(n));
+const num = v => { const n = +String(v).replace(/[,，¥$円\s]/g,""); return isNaN(n) ? null : n; };
+let pass = ""; try{ pass = localStorage.getItem(PASS_KEY) || ""; }catch(_){}
+let data = {accounts:[], plans:[], ovr:{}, settings:{}}, tab = "acc", busy = 0, open = {};
+try{ data = JSON.parse(localStorage.getItem("rekil-shikin-cache")) || data; }catch(_){}
+function toast(t){ const el=$("#toast"); el.textContent=t; el.classList.add("show"); clearTimeout(toast.t); toast.t=setTimeout(()=>el.classList.remove("show"),1800); }
+async function api(action, params={}){
+  if(!API_URL){ toast("データ側の設定がまだです"); throw new Error("nourl"); }
+  busy++; status();
+  try{
+    let res; try{ res = await fetch(API_URL, {method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"}, body: JSON.stringify({action, pass, ...params})}); }catch(_){ throw new Error("network"); }
+    const j = await res.json();
+    if(!j.ok){ if(j.error==="passcode"||j.error==="passcode_not_set") showLock(j.error); throw new Error(j.error||"error"); }
+    data = j.data; try{ localStorage.setItem("rekil-shikin-cache", JSON.stringify(data)); }catch(_){}
+    return j;
+  }finally{ busy--; status(); render(); }
+}
+function status(){ $("#sync").textContent = !API_URL ? "設定待ち" : busy ? "保存中…" : "↻ 更新"; }
+
+/* ---------- 画面 ---------- */
+function render(){
+  document.querySelectorAll("#tabs button").forEach(b=>b.classList.toggle("on", b.dataset.t===tab));
+  $("#fab").hidden = tab==="acc";
+  const fc = forecast(data, today());
+  $("#main").innerHTML = tab==="acc" ? viewAcc(fc) : tab==="cal" ? viewCal(fc) : viewReg();
+}
+function viewAcc(fc){
+  if(!data.accounts.length) return `<div class="empty">${API_URL ? "読み込み中…" : "データ側（Apps Script）の設定待ちです。<br>設定が終わるとここに口座が出ます。"}</div>`;
+  const rate = +data.settings.usdRate || 150, toY = (a,v)=> a.cur==="USD" ? v*rate : v;
+  const has = fc.accounts.filter(a=>a.has);
+  const tot = has.reduce((s,a)=>s+toY(a,+a.balance),0), outT = fc.accounts.reduce((s,a)=>s+toY(a,a.out),0), endT = has.reduce((s,a)=>s+toY(a,a.end),0);
+  const al = alerts(fc, data);
+  let h = `<div class="card sum"><div><b>¥${yen(tot)}</b><span>今の合計</span></div><div><b>¥${yen(outT)}</b><span>${md(fc.to)}までの出金</span></div><div><b style="color:${endT<0?"var(--danger)":"inherit"}">${mon("¥",endT)}</b><span>${md(fc.to)}の見込み</span></div></div>`;
+  if(al.length) h += `<h3>お知らせ</h3>` + al.map(x=>`<div class="al l${x.lv}"><span>${x.lv===2?"⚠️":x.lv===1?"⚠":"・"} ${esc(x.t)}</span><em>${esc(x.v)}</em></div>`).join("");
+  else h += `<div class="al" style="color:var(--accent)">✓ ${md(fc.to)}まで、どの口座も足りています</div>`;
+  h += `<h3>口座</h3>`;
+  h += fc.accounts.map(a=>{
+    const c = cur(a);
+    const age = a.base ? (a.age===0 ? "今日" : a.age+"日前") : "";
+    let need = "";
+    if(a.neg) need = `<div class="need">${md(a.neg.date)}（${wd(a.neg.date)}）の「${esc(a.neg.name)}」で足りなくなります。<b>${md(prevBiz(a.neg.date))}までに ${c}${yen(a.neg.need)} 以上</b>の入金が必要です。</div>`;
+    else if(a.lowHit) need = `<div class="need w">${md(a.lowHit.date)}の「${esc(a.lowHit.name)}」のあと、下限（${c}${yen(a.low)}）を下回ります。下限まで ${c}${yen(a.lowHit.need)} 足りません。</div>`;
+    const ev = open[a.id] ? `<table class="ev">${a.has?`<tr><td>${a.base?md(a.base):""}</td><td>今の残高</td><td class="r"></td><td class="r">${c}${yen(a.balance)}</td></tr>`:""}${a.events.map(e=>`<tr><td>${md(e.date)}(${wd(e.date)})</td><td>${esc(e.name)}${e.est?'<span class="tag">目安</span>':""}</td><td class="r ${e.sign<0?"m":"p"}">${e.sign<0?"−":"＋"}${yen(e.amount)}</td><td class="r ${e.after<0?"neg":""}">${a.has?mon(c,e.after):""}</td></tr>`).join("") || `<tr><td colspan="4" class="meta">${md(fc.to)}までの予定はありません</td></tr>`}</table>` : "";
+    return `<div class="card acc"><div class="nm"><span>${esc(a.name)}</span><span class="bd ${a.status}">${a.status==="OK"?"足りる":a.status}</span></div>
+      <div class="bal">${a.has ? c+yen(a.balance) : "—"}</div>
+      <div class="meta">${a.has ? `${esc(a.base)} ${age}${a.by?"・"+esc(a.by):""}${a.stale?' <span class="old">更新が古い</span>':""}　｜　${md(fc.to)}見込み ${mon(c,a.end)}` : "残高が未入力です"}</div>
+      ${need}${ev}
+      <div class="row"><button class="btn main" type="button" data-bal="${esc(a.id)}">残高を入力</button><button class="btn" type="button" data-open="${esc(a.id)}">${open[a.id]?"閉じる":`予定 ${a.events.length}件`}</button></div></div>`;
+  }).join("");
+  return h;
+}
+function prevBiz(s){ let d = new Date(pD(s).getTime()-D1); let n=0; while(!isBiz(d) && n++<10) d = new Date(d.getTime()-D1); return fYmd(d); }
+function viewCal(fc){
+  const accName = {}; data.accounts.forEach(a=>accName[a.id]=a);
+  const from = today().slice(0,7)+"-01";
+  const all = occurrences(data.plans, data.ovr, from, fc.to);
+  const after = {}; fc.accounts.forEach(a=>a.events.forEach(e=>after[e.id]=e.after));
+  if(!all.length) return `<div class="empty">まだ予定がありません。<br>下のボタンから融資の返済やクレカの引き落としを登録してください。</div>`;
+  const by = {}; all.forEach(e=>{ const k = e.date.slice(0,7); (by[k]=by[k]||[]).push(e); });
+  return Object.keys(by).map(ym=>{
+    const list = by[ym], o = list.filter(e=>e.sign<0).reduce((s,e)=>s+e.amount,0), i = list.filter(e=>e.sign>0).reduce((s,e)=>s+e.amount,0);
+    return `<h3><span>${+ym.slice(0,4)}年${+ym.slice(5)}月</span><span>出金 ${yen(o)} ／ 入金 ${yen(i)}</span></h3><div class="list">` + list.map(e=>{
+      const a = accName[e.acct], past = e.date < today();
+      return `<div class="item" data-occ="${esc(e.id)}" style="${e.done?"opacity:.45":""}"><div class="d">${md(e.date)}<small>${wd(e.date)}</small></div>
+        <div class="x"><div>${esc(e.name)}${e.est&&!past?'<span class="tag">金額未入力</span>':""}${e.done?'<span class="tag k">済</span>':past?'<span class="tag k">済？</span>':""}</div><small>${esc(e.kind)}・${esc(a?a.name:"口座未設定")}</small></div>
+        <div class="a" style="color:${e.sign<0?"var(--fg)":"var(--accent)"}">${e.sign<0?"−":"＋"}${cur(a)}${yen(e.amount)}${after[e.id]!==undefined?`<small style="${after[e.id]<0?"color:var(--danger)":""}">残 ${mon("",after[e.id])}</small>`:""}</div></div>`;
+    }).join("") + `</div>`;
+  }).join("") + `<p class="hint">「済？」は残高を入れた日より前の予定です。銀行で引き落とし済みなのに残高を更新していないときは、残高を入れ直すと自動で計算から外れます。</p>`;
+}
+function viewReg(){
+  const accName = {}; data.accounts.forEach(a=>accName[a.id]=a.name);
+  let h = "";
+  KINDS.forEach(k=>{
+    const ps = data.plans.filter(p=>p.kind===k); if(!ps.length) return;
+    h += `<h3><span>${k}</span><span>${ps.length}件</span></h3><div class="list">` + ps.map(p=>{
+      const when = p.freq==="1回" ? (p.date||"日付未設定") : (p.freq==="毎年" ? `毎年${p.month}月` : "毎月") + (p.day==="末"||!p.day ? "末日" : p.day+"日");
+      let left = ""; if(p.end && p.freq==="毎月"){ const t = today().slice(0,7); let n=0, ym=t; while(ym<=p.end && n<600){ n++; ym=addYm(ym,1); } left = ` ・残り約${n}回（最終${p.end.replace("-","/")}）`; }
+      return `<div class="item" data-plan="${esc(p.id)}"><div class="x"><div>${esc(p.name)}${+p.vary?'<span class="tag k">毎月変わる</span>':""}</div><small>${esc(when)}・${esc(accName[p.acct]||"口座未設定")}${esc(left)}</small></div><div class="a">${p.kind==="入金"?"＋":"−"}${yen(p.amount)}${+p.vary?"<small>目安</small>":""}</div></div>`;
+    }).join("") + `</div>`;
+  });
+  if(!h) h = `<div class="empty">まだ予定がありません</div>`;
+  h += `<h3><span>口座</span><button class="btn" type="button" id="addAcc" style="min-height:30px;padding:2px 10px;font-size:12px">＋ 口座</button></h3><div class="list">` + data.accounts.map(a=>`<div class="item" data-acc="${esc(a.id)}"><div class="x"><div>${esc(a.name)}</div><small>${a.cur==="USD"?"ドル口座":"円口座"}・下限 ${cur(a)}${yen(a.low)}</small></div><div class="a">›</div></div>`).join("") + `</div>`;
+  const s = data.settings;
+  h += `<h3>設定</h3><div class="card" style="font-size:14px">見る期間：${+s.months||1}か月先の月末まで ／ 更新が古いと知らせる：${+s.staleDays||7}日 ／ ドル換算：1ドル＝${+s.usdRate||150}円<div class="row"><button class="btn" type="button" id="editSet">設定を変える</button></div>
+    <p class="hint" style="margin-top:8px">不足・下限割れ・残高の更新忘れがあると、毎日11時台に ${esc(s.mail||"rekil.usedclothing@gmail.com")} へメールします。</p></div>`;
+  return h;
+}
+
+/* ---------- 入力シート ---------- */
+function sheet(html, onSubmit){ const f=$("#form"); f.innerHTML = html; $("#sheet").hidden = false; f.onsubmit = e=>{ e.preventDefault(); onSubmit(f); }; const c=f.querySelector("[data-close]"); if(c) c.onclick=()=>$("#sheet").hidden=true; const i=f.querySelector("[autofocus]"); if(i) setTimeout(()=>i.focus(),50); }
+const closeBtn = `<button type="button" data-close>閉じる</button>`;
+function balForm(id){
+  const a = data.accounts.find(x=>x.id===id);
+  sheet(`<h4>${esc(a.name)} の残高</h4><label>今の残高（${a.cur==="USD"?"ドル":"円"}）<input name="b" inputmode="decimal" autofocus value="${a.balance!==""?esc(a.balance):""}" placeholder="例：1234567"></label>
+    <p class="hint">入れた日時より前の引き落としは、残高に反映済みとして計算します。</p><div class="btns">${closeBtn}<button class="main" type="submit">保存</button></div>`, async f=>{
+    const b = num(f.elements.b.value); if(b===null||f.elements.b.value.trim()===""){ toast("数字を入れてください"); return; }
+    $("#sheet").hidden = true; try{ await api("setBalance", {id, balance:b, by:"手入力"}); toast("保存しました"); }catch(e){ if(e.message!=="nourl") toast("保存できませんでした"); }
+  });
+}
+function occForm(oid){
+  const [pid, ym] = oid.split("|"), p = data.plans.find(x=>x.id===pid); if(!p) return;
+  const o = data.ovr[oid] || {}, has = o.amount!==undefined && o.amount!=="";
+  sheet(`<h4>${esc(p.name)}（${+ym.slice(5)}月分）</h4>
+    <label>${+ym.slice(5)}月の金額${+p.vary?"（確定したら入れてください）":""}<input name="amt" inputmode="decimal" autofocus value="${has?esc(o.amount):""}" placeholder="空欄なら いつもの金額 ${yen(p.amount)}"></label>
+    <label class="ck"><input type="checkbox" name="done" ${+o.done?"checked":""}>引き落とし済み（残高に反映済み）なので計算から外す</label>
+    <div class="btns"><button type="button" id="toPlan">予定そのものを編集</button>${closeBtn}<button class="main" type="submit">保存</button></div>`, async f=>{
+    const v = f.elements.amt.value.trim(), amt = v==="" ? "" : num(v); if(amt===null){ toast("数字を入れてください"); return; }
+    $("#sheet").hidden = true; try{ await api("setOvr", {plan:pid, ym, amount:amt, done:f.elements.done.checked}); toast("保存しました"); }catch(e){ if(e.message!=="nourl") toast("保存できませんでした"); }
+  });
+  $("#toPlan").onclick = ()=>planForm(p);
+}
+const QUICK = [["融資返済","融資返済",""],["クレカ","SAISON（アメックス）","1"],["クレカ","JCB","1"],["税金・社保","社会保険料","1"],["税金・社保","源泉所得税","1"],["固定費","社宅家賃",""],["給与","給与振込",""],["入金","eBay売上の入金","1"]];
+function planForm(p){
+  const isNew = !p; p = p || {freq:"毎月", day:"", shift:"next", kind:"融資返済"};
+  const opt = (arr, v) => arr.map(x=>{ const [val,lab] = Array.isArray(x)?x:[x,x]; return `<option value="${esc(val)}" ${String(v)===String(val)?"selected":""}>${esc(lab)}</option>`; }).join("");
+  const days = [["","日を選ぶ"], ...Array.from({length:31},(_,i)=>[String(i+1), (i+1)+"日"]), ["末","末日"]];
+  sheet(`<h4>${isNew?"引き落とし・入金を登録":"予定を編集"}</h4>
+    ${isNew?`<div class="qk">${QUICK.map((q,i)=>`<button type="button" data-q="${i}">${esc(q[1])}</button>`).join("")}</div>`:""}
+    <label>名前<input name="name" required value="${esc(p.name||"")}" placeholder="例：静岡銀行 融資返済"></label>
+    <div class="g2"><label>種類<select name="kind">${opt(KINDS,p.kind)}</select></label><label>口座<select name="acct">${opt(data.accounts.map(a=>[a.id,a.name]),p.acct)}</select></label></div>
+    <label>金額（円・ドル口座はドル）<input name="amount" inputmode="decimal" value="${esc(p.amount??"")}" placeholder="毎月変わるものは目安の金額"></label>
+    <label class="ck"><input type="checkbox" name="vary" ${+p.vary?"checked":""}>毎月金額が変わる（クレカ・社保など。予定表で月ごとに金額を入れる）</label>
+    <div class="g2"><label>くり返し<select name="freq">${opt(["毎月","毎年","1回"],p.freq)}</select></label><label data-f="day">日<select name="day">${opt(days,p.day)}</select></label></div>
+    <label data-f="month">月（毎年のとき）<select name="month">${opt(Array.from({length:12},(_,i)=>[String(i+1),(i+1)+"月"]),p.month||"")}</select></label>
+    <label data-f="date">日付（1回のとき）<input type="date" name="date" value="${esc(p.date||"")}"></label>
+    <div class="g2" data-f="range"><label>開始（空欄＝今から）<input type="month" name="start" value="${esc(p.start||"")}"></label><label>最終回（融資など）<input type="month" name="end" value="${esc(p.end||"")}"></label></div>
+    <label>土日祝のとき<select name="shift">${opt([["next","翌営業日に引き落とし"],["prev","前営業日に引き落とし"],["none","そのままの日"]],p.shift||"next")}</select></label>
+    <label>メモ<textarea name="memo" rows="2">${esc(p.memo||"")}</textarea></label>
+    <div class="btns">${isNew?"":`<button type="button" class="del" id="delP">削除</button>`}${closeBtn}<button class="main" type="submit">保存</button></div>`, async f=>{
+    const E = f.elements, item = {id: p.id || ("p"+Date.now().toString(36))};
+    ["name","kind","acct","freq","day","month","date","start","end","shift","memo"].forEach(k=>item[k]=E[k].value.trim());
+    item.amount = num(E.amount.value||0); item.vary = E.vary.checked ? 1 : "";
+    if(item.amount===null){ toast("金額は数字で入れてください"); return; }
+    if(item.freq==="1回" && !item.date){ toast("日付を入れてください"); return; }
+    if(item.freq!=="1回" && !item.day){ toast("日を選んでください"); return; }
+    $("#sheet").hidden = true; try{ await api("savePlan", {item}); toast("保存しました"); }catch(e){ if(e.message!=="nourl") toast("保存できませんでした"); }
+  });
+  const f = $("#form"), sync = ()=>{ const v = f.elements.freq.value; f.querySelector('[data-f="day"]').hidden = v==="1回"; f.querySelector('[data-f="month"]').hidden = v!=="毎年"; f.querySelector('[data-f="date"]').hidden = v!=="1回"; f.querySelector('[data-f="range"]').hidden = v==="1回"; };
+  f.elements.freq.onchange = sync; sync();
+  f.querySelectorAll("[data-q]").forEach(b=>b.onclick=()=>{ const q = QUICK[+b.dataset.q]; f.elements.kind.value=q[0]; f.elements.name.value=q[1]; f.elements.vary.checked=!!q[2]; f.elements.name.focus(); });
+  const d = $("#delP"); if(d) d.onclick = async ()=>{ if(!d.dataset.arm){ d.dataset.arm=1; d.textContent="もう一度で削除"; return; } $("#sheet").hidden = true; try{ await api("removePlan",{id:p.id}); toast("削除しました"); }catch(_){} };
+}
+function accForm(a){
+  const isNew = !a; a = a || {cur:"JPY", low:0};
+  sheet(`<h4>${isNew?"口座を追加":"口座を編集"}</h4><label>口座名<input name="name" required value="${esc(a.name||"")}"></label>
+    <div class="g2"><label>通貨<select name="cur"><option value="JPY" ${a.cur!=="USD"?"selected":""}>円</option><option value="USD" ${a.cur==="USD"?"selected":""}>ドル</option></select></label><label>並び順<input name="order" inputmode="numeric" value="${esc(a.order||"")}"></label></div>
+    <label>下限（これを下回りそうなら注意）<input name="low" inputmode="decimal" value="${esc(a.low||0)}"></label>
+    <label>メモ<input name="memo" value="${esc(a.memo||"")}"></label>
+    <div class="btns">${isNew?"":`<button type="button" class="del" id="delA">削除</button>`}${closeBtn}<button class="main" type="submit">保存</button></div>`, async f=>{
+    const E = f.elements, item = {...a, id: a.id || ("a"+Date.now().toString(36)), name:E.name.value.trim(), cur:E.cur.value, order:E.order.value.trim(), low:num(E.low.value||0)||0, memo:E.memo.value.trim()};
+    $("#sheet").hidden = true; try{ await api("saveAccount",{item}); toast("保存しました"); }catch(_){}
+  });
+  const d = $("#delA"); if(d) d.onclick = async ()=>{ if(!d.dataset.arm){ d.dataset.arm=1; d.textContent="もう一度で削除"; return; } $("#sheet").hidden = true; try{ await api("removeAccount",{id:a.id}); toast("削除しました"); }catch(_){} };
+}
+function setForm(){
+  const s = data.settings;
+  sheet(`<h4>設定</h4><label>何か月先の月末まで見るか<select name="months">${[1,2,3].map(n=>`<option value="${n}" ${+s.months===n?"selected":""}>${n===1?"来月末まで":n+"か月先の月末まで"}</option>`).join("")}</select></label>
+    <label>残高の更新が何日古いと知らせるか<input name="staleDays" inputmode="numeric" value="${esc(s.staleDays||7)}"></label>
+    <label>ドル→円のレート（Payoneerの合計用）<input name="usdRate" inputmode="decimal" value="${esc(s.usdRate||150)}"></label>
+    <div class="btns">${closeBtn}<button class="main" type="submit">保存</button></div>`, async f=>{
+    const E = f.elements; $("#sheet").hidden = true;
+    try{ await api("saveSettings",{settings:{months:+E.months.value, staleDays:num(E.staleDays.value)||7, usdRate:num(E.usdRate.value)||150}}); toast("保存しました"); }catch(_){}
+  });
+}
+
+/* ---------- 操作 ---------- */
+$("#tabs").onclick = e=>{ const b = e.target.closest("[data-t]"); if(b){ tab = b.dataset.t; render(); scrollTo(0,0); } };
+$("#main").onclick = e=>{
+  const t = e.target.closest("[data-bal],[data-open],[data-occ],[data-plan],[data-acc],#addAcc,#editSet"); if(!t) return;
+  if(t.dataset.bal) balForm(t.dataset.bal);
+  else if(t.dataset.open){ open[t.dataset.open] = !open[t.dataset.open]; render(); }
+  else if(t.dataset.occ) occForm(t.dataset.occ);
+  else if(t.dataset.plan) planForm(data.plans.find(p=>p.id===t.dataset.plan));
+  else if(t.dataset.acc) accForm(data.accounts.find(a=>a.id===t.dataset.acc));
+  else if(t.id==="addAcc") accForm(null);
+  else if(t.id==="editSet") setForm();
+};
+$("#fab").onclick = ()=>planForm(null);
+$("#sheet").onclick = e=>{ if(e.target.id==="sheet") $("#sheet").hidden = true; };
+function showLock(err){ $("#lockMsg").textContent = err==="passcode_not_set" ? "データ側で暗証番号がまだ設定されていません。" : pass ? "暗証番号が違います。" : "資金繰り専用の暗証番号を入力してください。"; $("#lock").hidden = false; }
+$("#lockForm").onsubmit = async e=>{ e.preventDefault(); pass = $("#passIn").value.trim(); if(!pass) return; try{ await api("list"); localStorage.setItem(PASS_KEY, pass); $("#lock").hidden = true; }catch(_){} };
+$("#sync").onclick = ()=>{ if(API_URL && pass) api("list").catch(()=>{}); };
+status();
+if(!pass && API_URL){ data = {accounts:[], plans:[], ovr:{}, settings:{}}; showLock(); }
+render();
+if(API_URL && pass) api("list").catch(()=>{});
+document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState==="visible"){ checkUpdate(); if(API_URL && pass && !busy) api("list").catch(()=>{}); } });
+async function checkUpdate(){ try{ const r=await fetch(location.pathname+"?v="+Date.now(),{cache:"no-store"}); const t=await r.text(); const m=t.match(/const APP_VERSION = "([^"]+)"/); if(m && m[1]!==APP_VERSION && !busy) location.replace(location.pathname+"?v="+encodeURIComponent(m[1])); }catch(_){} }
+if(location.protocol.startsWith("http")){ checkUpdate(); setInterval(()=>{ if(document.visibilityState==="visible") checkUpdate(); }, 60000); }
+try{history.scrollRestoration="manual"}catch(_){} addEventListener("pageshow",()=>scrollTo(0,0));
+</script>
+<script>/* 共通：電波がなくても開ける・ホームへ戻るボタン */if("serviceWorker" in navigator&&location.protocol.startsWith("http"))navigator.serviceWorker.register("../sw.js",{scope:"../"}).catch(()=>{});try{if(sessionStorage.getItem("rekil-from-home")&&!/\/home\/?$/.test(location.pathname)){const b=document.createElement("a");b.href="../home/";b.textContent="⌂";b.setAttribute("aria-label","ReKiLホームへ");b.onclick=()=>{try{const a=document.activeElement;if(a&&a.blur)a.blur();scrollTo(0,0)}catch(_){}};b.style.cssText="position:fixed;right:12px;bottom:calc(84px + env(safe-area-inset-bottom,0px));z-index:70;width:44px;height:44px;border-radius:22px;background:#2a313a;color:#fff;font-size:22px;display:flex;align-items:center;justify-content:center;text-decoration:none;box-shadow:0 4px 16px #0008;opacity:.9";document.body.appendChild(b)}}catch(_){}</script>
+</body>
+</html>
