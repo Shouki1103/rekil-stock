@@ -23,6 +23,6 @@ tmp = "/tmp/rekil-manual"; os.makedirs(tmp, exist_ok=True)
 for a in m["apps"]:
     src = f"{tmp}/{a['id']}.html"; open(src,"w").write(page(a['name']+" 説明書", block(a)))
     pdf(src, os.path.join(D, "pdf", f"{a['id']}.pdf"))
-src = f"{tmp}/all.html"; open(src,"w").write(page("ReKiL アプリ説明書（全部）", common + "".join(block(a) for a in m["apps"])))
+src = f"{tmp}/all.html"; open(src,"w").write(page("ReKiL アプリ説明書（全部）", common + "".join(block(a) for a in m["apps"] if not a.get("owner"))))
 pdf(src, os.path.join(D, "pdf", "all.pdf"))
 print("ok", len(m["apps"]))
