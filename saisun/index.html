@@ -157,7 +157,7 @@ const $ = (s, r = document) => r.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 /* ▼ Apps Script をデプロイしたときの「ウェブアプリのURL」 */
 const API_URL = "https://script.google.com/macros/s/AKfycbymxFtpBAd8KiZMjoAyHEl8Tz8GQRjaVLlpAZfm3KGTeOa4Ifz4IHGjO_PZpiTJfx31/exec";
-const APP_VERSION = "2026-11-22-5";
+const APP_VERSION = "2026-11-25-1";
 const CACHE = "saisun-data";
 let items = [], tpls = [], query = "";
 let pass = ""; try{ pass = localStorage.getItem("rekil-saisun-pass") || localStorage.getItem("rekil-pass") || ""; }catch(_){}
@@ -230,7 +230,8 @@ function render(tpl, it){
   const s = tpl.body || "";
   const map = {"商品名": it.name||"", "採寸": measText(it.measures), "メモ": it.memo||""};
   TEXT_FIELDS.forEach(f=>{ map[f.label] = String(it[f.key]??"").trim(); });
-  if(!map["付属品"]) map["付属品"] = "なし";
+  // 付属品は「、」区切りで保存し、出品文では1行に1つずつ改行で並べる
+  map["付属品"] = String(map["付属品"]||"").split(/[、,，\n]+/).map(x=>x.trim()).filter(Boolean).join("\n") || "なし";
   map["状態"] = it.condition ?? "目立った傷や汚れなし";
   map["管理番号"] = String(it.kanri??"").trim();
   const empty = new Set();
