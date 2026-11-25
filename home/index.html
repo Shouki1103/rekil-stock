@@ -15,13 +15,14 @@
 :root{--bg:#14181d;--surface:#1d232a;--line:#2f3740;--fg:#e8ebee;--muted:#9aa4af;--accent:#f2a541;--steel:#0d1014;--danger:#ff5d4d;color-scheme:dark}
 *{box-sizing:border-box}
 html,body{background:var(--bg);color:var(--fg);margin:0}
-body{font-family:"Hiragino Sans","Yu Gothic",system-ui,sans-serif;font-size:15px;line-height:1.5;padding-top:env(safe-area-inset-top,0px);padding-bottom:calc(24px + env(safe-area-inset-bottom,0px))}
+html{height:100%;overflow:hidden;overscroll-behavior:none}
+body{font-family:"Hiragino Sans","Yu Gothic",system-ui,sans-serif;font-size:15px;line-height:1.5;position:fixed;inset:0;overflow:hidden;display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px)}
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--steel)}
-header{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--steel);padding:12px 16px;display:flex;align-items:center;justify-content:space-between}
+header{position:relative;flex:0 0 auto;z-index:5;background:var(--steel);padding:12px 16px;display:flex;align-items:center;justify-content:space-between}
 .brand{display:flex;align-items:center;gap:10px;font-weight:900;font-size:18px}
 .brand i{display:inline-block;width:12px;height:22px;background:repeating-linear-gradient(-45deg,var(--accent) 0 5px,#1d2228 5px 10px);border-radius:2px}
 .sync{font-size:12px;color:var(--muted);background:none;border:0;cursor:pointer;font:inherit;font-size:12px}
-main{max-width:640px;margin:0 auto;padding:10px 14px}
+main{flex:1 1 auto;min-height:0;width:100%;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:10px max(14px,calc((100% - 612px)/2)) calc(24px + env(safe-area-inset-bottom,0px))}
 .todo{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:6px}
 .todo h2{font-size:13px;color:var(--muted);margin:0 0 6px}
 .todo a{display:flex;justify-content:space-between;align-items:center;gap:8px;color:var(--fg);text-decoration:none;padding:6px 0;border-top:1px solid var(--line);font-size:14px;white-space:nowrap}
@@ -54,7 +55,7 @@ header{gap:8px}.brand{white-space:nowrap;flex:0 0 auto}.hctl{display:flex;align-
   <div id="groups"></div>
 </main>
 <script>
-const APP_VERSION = "2026-11-25-3";
+const APP_VERSION = "2026-11-26-1";
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const today = () => new Date(Date.now()+9*3600e3).toISOString().slice(0,10);
@@ -246,14 +247,14 @@ document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState=
 async function checkUpdate(){ try{ const r=await fetch(location.pathname+"?v="+Date.now(),{cache:"no-store"}); const t=await r.text(); const m=t.match(/const APP_VERSION = "([^"]+)"/); if(m && m[1]!==APP_VERSION) location.replace(location.pathname+"?v="+encodeURIComponent(m[1])); }catch(_){} }
 document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState==="visible"){ loadCatalog(); loadTasks(); loadDone(); renderToday(); } });
 if(location.protocol.startsWith("http")){ checkUpdate(); setInterval(()=>{ if(document.visibilityState==="visible") checkUpdate(); }, 60000); }
-/* アプリから戻ったとき上（ヘッダー）が隠れないよう、表示のたびに一番上へ戻す（iPhoneの画面ずれ対策で数回やり直す。指で触ったら中止） */
+/* ページ全体は動かさず、ヘッダーの下（main）だけをスクロールさせる作り＝上ズレしない。念のため表示のたびに一番上へ戻す（iPhoneの画面ずれ対策で数回やり直す。指で触ったら中止） */
 try{history.scrollRestoration="manual"}catch(_){}
 let touched=false; addEventListener("touchstart",()=>{touched=true},{passive:true});
-function toTop(){ if(touched) return; try{ const a=document.activeElement; if(a&&a!==document.body&&a.blur) a.blur(); }catch(_){} window.scrollTo(0,0); document.documentElement.scrollTop=0; document.body.scrollTop=0; }
+function toTop(){ if(touched) return; try{ const a=document.activeElement; if(a&&a!==document.body&&a.blur) a.blur(); }catch(_){} window.scrollTo(0,0); document.documentElement.scrollTop=0; document.body.scrollTop=0; const m=document.querySelector("main"); if(m) m.scrollTop=0; }
 function fixTop(){ touched=false; toTop(); requestAnimationFrame(toTop); [60,250,600].forEach(t=>setTimeout(toTop,t)); }
 addEventListener("pageshow",fixTop); addEventListener("load",fixTop);
 document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="visible") fixTop(); });
-if(window.visualViewport) visualViewport.addEventListener("resize",()=>{ if(!touched && visualViewport.offsetTop>0) toTop(); });
+if(window.visualViewport){ const vv=()=>{ if(visualViewport.offsetTop>0 || window.scrollY>0){ const a=document.activeElement; if(!(a && /INPUT|TEXTAREA|SELECT/.test(a.tagName))) window.scrollTo(0,0); } }; visualViewport.addEventListener("resize",vv); visualViewport.addEventListener("scroll",vv); }
 </script>
 <script>/* 共通：電波がなくても開ける・ホームへ戻るボタン */if("serviceWorker" in navigator&&location.protocol.startsWith("http"))navigator.serviceWorker.register("../sw.js",{scope:"../"}).catch(()=>{});try{if(sessionStorage.getItem("rekil-from-home")&&!/\/home\/?$/.test(location.pathname)){const b=document.createElement("a");b.href="../home/";b.textContent="⌂";b.setAttribute("aria-label","ReKiLホームへ");b.onclick=()=>{try{const a=document.activeElement;if(a&&a.blur)a.blur();scrollTo(0,0)}catch(_){}};b.style.cssText="position:fixed;right:12px;bottom:calc(84px + env(safe-area-inset-bottom,0px));z-index:70;width:44px;height:44px;border-radius:22px;background:#2a313a;color:#fff;font-size:22px;display:flex;align-items:center;justify-content:center;text-decoration:none;box-shadow:0 4px 16px #0008;opacity:.9";document.body.appendChild(b)}}catch(_){}</script>
 </body>
