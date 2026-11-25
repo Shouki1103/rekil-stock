@@ -154,6 +154,7 @@ label{display:block;font-size:12px;color:var(--sub);margin:12px 0 4px}
     <button class="btn main" id="oDl">⬇ ダウンロード</button>
     <button class="btn main" id="oShare">共有（メールに添付など）</button>
   </div>
+  <div id="oSendW"><p class="hint" id="oHow"></p><a class="btn" id="oLink" target="_blank" rel="noopener" style="width:100%;padding:12px"></a></div>
   <div id="oMailW"><label>送り先</label><div class="row"><span id="oMail" style="flex:1"></span><a class="btn sm" id="oMailBtn">メールを開く</a></div>
     <p class="hint">「メールを開く」は宛先と件名だけ入ったメールを開きます。ダウンロードしたファイルを添付して送ってください（スマホは「共有」からメールを選ぶとそのまま添付できます）。</p></div>
   <div class="foot" style="position:static"><button class="btn" data-close>閉じる</button></div>
@@ -180,8 +181,8 @@ label{display:block;font-size:12px;color:var(--sub);margin:12px 0 4px}
 <script src="auc.js"></script>
 <script>
 /* ▼ Apps Script をデプロイしたときの「ウェブアプリのURL」（空のあいだはこの端末だけに保存） */
-const API_URL = "";
-const APP_VERSION = "2026-11-26-1";
+const API_URL = "https://script.google.com/macros/s/AKfycbzzmGd5tUgSpmr-glVqyCmjSr-657mbbVy6HH7GS6jDQ5cHLWtHS0_qLxG9r3d6KjBXHg/exec";
+const APP_VERSION = "2026-11-26-2";
 const {AUC, build, check, boxOf} = AUCS;
 const RANKS = ["N","S","SA","A","AB","B","BC","C","ジャンク"];
 const BRANDS = ["LOUIS VUITTON","CHANEL","HERMES","GUCCI","PRADA","Christian Dior","CELINE","FENDI","LOEWE","SAINT LAURENT","BOTTEGA VENETA","BALENCIAGA","GOYARD","MIU MIU","BURBERRY","Salvatore Ferragamo","COACH","Chloe","GIVENCHY","VALENTINO","CELINE","Cartier","BVLGARI","MONCLER","CANADA GOOSE","TATRAS","THE NORTH FACE","patagonia","COMME des GARCONS","ARMANI","MCM","Vivienne Westwood","TORY BURCH","FURLA","Kate Spade","MICHAEL KORS","ANYA HINDMARCH","Christian Louboutin","Berluti","dunhill","ETRO","LONGCHAMP","SET"];
@@ -396,6 +397,9 @@ function openOut(){
   $("oMailW").hidden = !a.mail; $("oMail").textContent = a.mail || "";
   $("oMailBtn").href = a.mail ? `mailto:${a.mail}?subject=${encodeURIComponent(a.subject(cur))}` : "#";
   $("oShare").hidden = !(navigator.canShare && navigator.share);
+  const sd = a.send || {}; $("oSendW").hidden = !(sd.how || sd.url); $("oHow").textContent = sd.how || "";
+  $("oLink").hidden = !sd.url; $("oLink").href = sd.url || "#"; $("oLink").textContent = (sd.label || "") + " ↗";
+  $("oShare").textContent = sd.line ? "共有（LINEで送る）" : "共有（メールに添付など）";
   outFile = null; open("osh");
 }
 async function makeFile(){

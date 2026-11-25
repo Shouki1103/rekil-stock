@@ -219,7 +219,7 @@ const SRC = {
     return {n: r+w, items: out};
   },
   shuppin: async () => {
-    const API = ""; /* 出品データのデータ側（Apps Script）のURL */
+    const API = "https://script.google.com/macros/s/AKfycbzzmGd5tUgSpmr-glVqyCmjSr-657mbbVy6HH7GS6jDQ5cHLWtHS0_qLxG9r3d6KjBXHg/exec"; /* 出品データのデータ側（Apps Script）のURL */
     if(!API) return {n:0, items:[]};
     const j = await call(API, needPass("rekil-shuppin-pass"));
     const ls = ((j.data||{}).lists||[]).filter(l=>l.status!=="done" && (l.items||[]).length);

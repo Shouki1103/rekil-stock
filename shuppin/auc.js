@@ -30,7 +30,8 @@ const AUC = [
   { id: "jds", name: "JDS", file: "tpl/jds.xlsx", ext: "xlsx", sheet: "出品商品_テンプレート", first: 2,
     clear: [["出品商品_テンプレート", "A", "Z", 2, 2000]],
     fields: ["rank", "model", "acc", "damage", "kanri"], boxes: "箱番（予約した番号。例：231,233）",
-    mail: "jdss201501@gmail.com", subject: L => `${md(L.date)}開催分 出品リスト`,
+    mail: "", subject: L => `${md(L.date)}開催分 出品リスト`,
+    send: {url: "https://auc.luce-inter.jp/itemlist/", label: "JDSの出品リストページを開く", how: "ダウンロードしたファイルを、JDSの出品リストページからアップロードしてください。"},
     note: "品名にダメージ（破れ・ひび割れ・金具不良など）を書かないと返品対象になることがあります。売り切りは指値0。",
     row: (it, i, L) => { const b = boxOf(L, i); return { A: 1062, C: b.box, D: b.eda, G: S(it.brand).toUpperCase() || (it.set ? "SET" : ""),
       H: join(it.name, it.model, accTxt(it.acc), it.damage), I: S(it.rank), S: num(it.price), U: S(it.kanri) }; } },
@@ -39,6 +40,7 @@ const AUC = [
     clear: [["データ用", "A", "Q", 7, 2000]],
     fields: ["model", "material", "serial", "acc", "betten"], boxes: "箱番号（例：31）",
     mail: "info@jwa29.jp", subject: L => `${md(L.date)} JWAブランド大会 出品リスト`,
+    send: {how: "PDFにせずExcelのまま、メールか公式LINEで送ってください。"},
     note: "指値は50,000円以上が目安。高額・大型・壊れやすいものは別展。",
     head: (sh, L) => { const d = new Date(L.date + "T00:00:00");
       sh.set("A2", `大会日：　　　　${String(d.getFullYear()).slice(2)}年　　　　${d.getMonth()+1}月　　${d.getDate()}日　　　　`); },
@@ -49,6 +51,7 @@ const AUC = [
     clear: [["入力欄 (3)", "E", "L", 6, 505], ["入力欄 (3)", "N", "N", 6, 505], ["入力欄 (2)", "E", "L", 6, 505], ["入力欄 (2)", "N", "N", 6, 505]],
     fields: ["rank", "line", "model", "color", "material", "acc", "damage", "hold"], boxes: "区分＋先頭箱番（例：B195）",
     mail: "", subject: L => `${md(L.date)} アプレオークション 出品リスト`,
+    send: {url: "https://auction.apre-g.com/form/apre_up.php", label: "アプレの送信フォームを開く", how: "ダウンロードしたファイルを、アプレの送信フォームで対象日を選んで送ってください。"},
     note: "箱番は先頭箱番から10点ずつ自動で振られます。ランクは N・S・SA・A・AB・B・BC・C・ジャンク。",
     head: (sh, L, n) => { const m = /^([A-Za-zＡ-Ｚａ-ｚ]*)\s*(\d+)/.exec(S(L.boxes).normalize("NFKC"));
       if(m){ if(m[1]) sh.set("C3", m[1].toUpperCase()); sh.set("D3", +m[2]); }
@@ -61,6 +64,7 @@ const AUC = [
     clear: [["ブランド", "B", "P", 9, 9716]],
     fields: ["rank", "line", "model", "serial", "material", "color", "acc", "damage", "kanri"], boxes: "箱番（例：166,167）",
     mail: "", subject: L => `${md(L.date)} プライムオークション 出品リスト`,
+    send: {line: true, how: "スマホは「共有」→ LINE を選ぶと、ファイルをそのままプライムのトークに送れます。PCはダウンロードしてLINEに添付してください。"},
     note: "ブランドはプライムの一覧にあるものはそのまま、ないものは「その他」になり商品名の先頭にブランド名が入ります。",
     head: (sh, L) => { if(L.date) sh.set("D5", `${md(L.date)}　ブランド大会`); },
     row: (it, i, L) => { const b = boxOf(L, i), pb = primeBrand(it.brand); return { B: b.box, C: b.eda, D: pb.brand,
