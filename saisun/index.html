@@ -157,7 +157,7 @@ const $ = (s, r = document) => r.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 /* ▼ Apps Script をデプロイしたときの「ウェブアプリのURL」 */
 const API_URL = "https://script.google.com/macros/s/AKfycbymxFtpBAd8KiZMjoAyHEl8Tz8GQRjaVLlpAZfm3KGTeOa4Ifz4IHGjO_PZpiTJfx31/exec";
-const APP_VERSION = "2026-11-25-1";
+const APP_VERSION = "2026-11-25-2";
 const CACHE = "saisun-data";
 let items = [], tpls = [], query = "";
 let pass = ""; try{ pass = localStorage.getItem("rekil-saisun-pass") || localStorage.getItem("rekil-pass") || ""; }catch(_){}
@@ -253,7 +253,11 @@ function render(tpl, it){
   });
   // 採寸の項目名と数値のあいだの空白は詰める（例：着丈　{着丈} → 着丈56.5cm）
   const mkeys = (it.measures||[]).map(r=>r.label).filter(Boolean).map(k=>k.replace(/[.*+?^${}()|[\]\\]/g,"\\$&"));
-  const tight = mkeys.length ? lines.map(l=>l.replace(new RegExp("[ \\t　]+(?=『?約?\\{(?:"+mkeys.join("|")+")\\})","g"),"")) : lines;
+  // ただし「上部」「下部」は見出しと数値のあいだに半角スペースを1つ空ける（例：横 上部 21cm 下部 21.5cm）
+  const SPACED = ["上部","下部"];
+  const tkeys = mkeys.filter(k=>!SPACED.includes(k));
+  const tight1 = tkeys.length ? lines.map(l=>l.replace(new RegExp("[ \\t　]+(?=『?約?\\{(?:"+tkeys.join("|")+")\\})","g"),"")) : lines;
+  const tight = tight1.map(l=>l.replace(new RegExp("([^\\s　])[ \\t　]*(?=『?約?\\{(?:"+SPACED.join("|")+")\\})","g"),"$1 "));
   return tight.join("\n").replace(/\{([^{}]+)\}/g,(m,k)=> k in map ? map[k] : m);
 }
 const tplById = id => tpls.find(t=>t.id===id);
