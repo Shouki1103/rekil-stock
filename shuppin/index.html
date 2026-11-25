@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="出品データ">
+<meta name="theme-color" content="#111214">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-192.png">
+<title>ReKiL 出品データ</title>
+<style>
+:root{--bg:#111214;--card:#1c1d21;--field:#25272c;--ink:#f2f2f3;--sub:#9a9ca3;--line:#2f3137;--acc:#2f8f83;--warn:#d9a441;--done:#3fa66b;--danger:#ff6b61;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Noto Sans JP",sans-serif;font-size:15px;padding:env(safe-area-inset-top,0px) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+[hidden]{display:none!important}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+select,input,textarea,button{font:inherit}
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding:14px 14px 10px;border-bottom:1px solid var(--line)}
+h1{font-size:18px;margin:0 0 10px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+h1 small{font-size:12px;color:var(--sub);font-weight:400;display:flex;align-items:center;gap:6px}
+.tabs{display:flex;gap:6px}
+.tab{flex:1;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px 4px;text-align:center;cursor:pointer;color:var(--sub)}
+.tab b{display:block;font-size:20px;color:var(--ink)}
+.tab.on{outline:2px solid var(--acc);color:var(--ink)}
+main{padding:12px 14px 120px;max-width:760px;margin:0 auto}
+.card{background:var(--card);border:1px solid var(--line);border-left:5px solid var(--warn);border-radius:12px;padding:12px;margin-bottom:8px;cursor:pointer}
+.card.done{border-left-color:var(--done)}
+.row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.nm{font-weight:800;font-size:16px;flex:1;min-width:0}
+.pill{font-size:12px;padding:3px 10px;border-radius:99px;color:#111;font-weight:700;white-space:nowrap;background:var(--warn)}
+.pill.done{background:var(--done)}
+.meta{font-size:13px;color:var(--sub);margin-top:6px;line-height:1.6}
+.btn{border:1px solid var(--line);background:var(--field);color:var(--ink);border-radius:10px;padding:9px 14px;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:4px}
+.btn.main{background:var(--acc);color:#fff;border-color:var(--acc);font-weight:700}
+.btn.ghost{color:var(--sub)}
+.btn.del{color:var(--danger)}
+.btn.sm{padding:6px 10px;font-size:13px}
+.fab{position:fixed;right:18px;bottom:calc(18px + env(safe-area-inset-bottom));background:var(--acc);color:#fff;border:0;border-radius:99px;padding:14px 20px;font-size:16px;font-weight:700;box-shadow:0 4px 18px rgba(0,0,0,.6);cursor:pointer;z-index:8}
+.empty{text-align:center;color:var(--sub);padding:40px 10px;line-height:1.8}
+/* 詳細 */
+.dhead{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:10px}
+.dhead .t{font-size:18px;font-weight:800}
+.acts{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.it{display:flex;gap:10px;align-items:flex-start;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px;margin-bottom:6px;cursor:pointer}
+.it .no{flex:none;min-width:46px;text-align:center;font-size:12px;color:var(--sub);background:var(--field);border-radius:8px;padding:4px 2px;line-height:1.3}
+.it .no b{display:block;font-size:15px;color:var(--ink)}
+.it .bd{flex:1;min-width:0}
+.it .br{font-size:12px;color:var(--sub)}
+.it .tx{font-size:15px;word-break:break-all}
+.it .pr{flex:none;font-weight:800;white-space:nowrap}
+.it.ng{border-color:var(--warn)}
+.boxsep{font-size:12px;color:var(--sub);margin:12px 2px 4px;font-weight:700}
+/* シート */
+.sheet{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:flex-end;justify-content:center;z-index:20}
+.sheet.open{display:flex}
+.panel{background:var(--card);width:100%;max-width:560px;border-radius:16px 16px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom));max-height:calc(100dvh - env(safe-area-inset-top,0px) - 16px);overflow:auto}
+.panel h2{font-size:17px;margin:0 0 6px}
+.hint{font-size:12px;color:var(--sub);margin:4px 0 8px;line-height:1.6}
+label{display:block;font-size:12px;color:var(--sub);margin:12px 0 4px}
+.panel input,.panel select,.panel textarea{width:100%;padding:11px;border:1px solid var(--line);border-radius:10px;background:var(--field);color:var(--ink);font-size:16px}
+.panel input[type=checkbox]{width:auto}
+.two{display:flex;gap:8px}.two>div{flex:1;min-width:0}
+.foot{display:flex;gap:8px;margin-top:16px;position:sticky;bottom:calc(-16px - env(safe-area-inset-bottom));background:var(--card);padding:8px 0 4px;flex-wrap:wrap}
+.foot .btn{flex:1;padding:12px}
+.ranks{display:flex;flex-wrap:wrap;gap:6px}
+.ranks button{flex:1;min-width:44px;padding:9px 4px;border:1px solid var(--line);border-radius:9px;background:var(--field);color:var(--ink);cursor:pointer}
+.ranks button.on{background:var(--acc);border-color:var(--acc);color:#fff;font-weight:700}
+.warnbox{background:#2b2418;border:1px solid #5a4a26;color:#f0d79a;border-radius:10px;padding:10px;font-size:13px;line-height:1.6;margin-top:8px}
+.okbox{background:#17271e;border:1px solid #2c5a3e;color:#bfe8cc;border-radius:10px;padding:10px;font-size:13px;line-height:1.6;margin-top:8px}
+.chk{display:flex;align-items:center;gap:8px;margin-top:12px;font-size:15px;color:var(--ink)}
+.chk input{width:22px;height:22px}
+#toast{position:fixed;left:50%;bottom:calc(90px + env(safe-area-inset-bottom));transform:translateX(-50%);background:#333;color:#fff;padding:10px 16px;border-radius:10px;z-index:60;display:none;max-width:90vw;font-size:14px}
+#lock{position:fixed;inset:0;background:var(--bg);z-index:40;display:flex;align-items:center;justify-content:center;padding:20px}
+#lock form{width:100%;max-width:340px}
+#lock input{width:100%;padding:12px;border:1px solid var(--line);border-radius:10px;background:var(--field);color:var(--ink);font-size:18px;margin:10px 0}
+#lock .btn{width:100%;padding:12px}
+@media (min-width:900px){main{max-width:900px}}
+</style>
+</head>
+<body>
+<script>/* rekil-common */try{const K="rekil-shuppin-pass",P=localStorage.getItem("rekil-pass");if(P&&!localStorage.getItem(K))localStorage.setItem(K,P)}catch(_){}</script>
+
+<header>
+  <h1><span id="hTitle">出品データ</span> <small><span id="sync"></span><button class="btn ghost sm" id="backBtn" hidden>← 一覧</button></small></h1>
+  <div class="tabs" id="tabs">
+    <div class="tab" data-f="draft"><b id="cDraft">0</b>作成中</div>
+    <div class="tab" data-f="done"><b id="cDone">0</b>出力済み</div>
+    <div class="tab" data-f="all"><b id="cAll">0</b>すべて</div>
+  </div>
+</header>
+<main id="main"><div class="empty">読み込み中…</div></main>
+<button class="fab" id="fab">＋ 新しい出品リスト</button>
+<div id="toast"></div>
+
+<!-- 出品リストの作成・編集 -->
+<div class="sheet" id="lsh"><div class="panel">
+  <h2 id="lTitle">新しい出品リスト</h2>
+  <label>オークション</label><select id="lAuc"></select>
+  <p class="hint" id="lNote"></p>
+  <label>開催日</label><input type="date" id="lDate">
+  <div id="lBoxW"><label id="lBoxL">箱番</label><input id="lBox" autocomplete="off"></div>
+  <div id="lTrW"><label>配送業者の追跡番号（必須）</label><input id="lTr" inputmode="numeric" autocomplete="off" placeholder="あとから入れてもOK"></div>
+  <div id="lArW"><label>販売希望エリア</label><select id="lAr"><option>関東</option><option>関西</option></select></div>
+  <label>メモ（自分用）</label><input id="lMemo" autocomplete="off">
+  <div class="foot"><button class="btn" data-close>キャンセル</button><button class="btn main" id="lSave">保存</button></div>
+</div></div>
+
+<!-- 商品の追加・編集 -->
+<div class="sheet" id="ish"><div class="panel">
+  <h2 id="iTitle">商品を追加</h2>
+  <p class="hint" id="iHint"></p>
+  <div class="two"><div><label>ブランド</label><input id="iBrand" list="brands" autocomplete="off" autocapitalize="characters" placeholder="LOUIS VUITTON"></div>
+    <div style="flex:.7"><label>指値（円）</label><input id="iPrice" inputmode="numeric" autocomplete="off" placeholder="30000"></div></div>
+  <label>商品名</label><input id="iName" autocomplete="off" placeholder="スピーディ30 モノグラム">
+  <div data-f="rank"><label>ランク</label><div class="ranks" id="iRank"></div></div>
+  <div class="two"><div data-f="model"><label>型番・品番</label><input id="iModel" autocomplete="off"></div>
+    <div data-f="kanri"><label>管理番号</label><input id="iKanri" autocomplete="off"></div></div>
+  <div class="two"><div data-f="line"><label>ライン</label><input id="iLine" autocomplete="off" placeholder="モノグラム"></div>
+    <div data-f="color"><label>カラー</label><input id="iColor" autocomplete="off"></div></div>
+  <div class="two"><div data-f="material"><label>素材</label><input id="iMat" autocomplete="off"></div>
+    <div data-f="serial"><label>シリアル</label><input id="iSerial" autocomplete="off"></div></div>
+  <div data-f="acc"><label>付属品（「箱/保存袋」のように）</label><input id="iAcc" autocomplete="off"></div>
+  <div data-f="damage"><label>ダメージ・備考</label><input id="iDmg" autocomplete="off" placeholder="角スレ 破れ 金具不良 など"></div>
+  <div data-f="hold"><label>保留交渉</label><select id="iHold"><option>可</option><option>否</option></select></div>
+  <label class="chk" data-f="betten"><input type="checkbox" id="iBet">別展を希望する</label>
+  <div class="foot">
+    <button class="btn del" id="iDel" hidden>削除</button>
+    <button class="btn" data-close>閉じる</button>
+    <button class="btn" id="iNext">保存して次へ</button>
+    <button class="btn main" id="iSave">保存</button>
+  </div>
+  <div class="acts" id="iMove" hidden><button class="btn sm" id="iUp">↑ 上へ</button><button class="btn sm" id="iDown">↓ 下へ</button><button class="btn sm" id="iDup">複製</button></div>
+</div></div>
+<datalist id="brands"></datalist>
+
+<!-- まとめて追加 -->
+<div class="sheet" id="bsh"><div class="panel">
+  <h2>まとめて追加</h2>
+  <p class="hint">1行に1商品。「ブランド 商品名 指値」の順で、スペースかタブで区切ります。スプレッドシートからコピーした「ブランド｜商品名｜指値｜管理番号」の列もそのまま貼れます。<br>例：GUCCI GGマフラー リバーシブル 30000</p>
+  <textarea id="bTx" rows="9"></textarea>
+  <div id="bPrev" class="hint"></div>
+  <div class="foot"><button class="btn" data-close>キャンセル</button><button class="btn main" id="bAdd">追加</button></div>
+</div></div>
+
+<!-- 出力 -->
+<div class="sheet" id="osh"><div class="panel">
+  <h2 id="oTitle">Excelを作る</h2>
+  <div id="oWarn"></div>
+  <div class="foot" style="position:static">
+    <button class="btn main" id="oDl">⬇ ダウンロード</button>
+    <button class="btn main" id="oShare">共有（メールに添付など）</button>
+  </div>
+  <div id="oMailW"><label>送り先</label><div class="row"><span id="oMail" style="flex:1"></span><a class="btn sm" id="oMailBtn">メールを開く</a></div>
+    <p class="hint">「メールを開く」は宛先と件名だけ入ったメールを開きます。ダウンロードしたファイルを添付して送ってください（スマホは「共有」からメールを選ぶとそのまま添付できます）。</p></div>
+  <div class="foot" style="position:static"><button class="btn" data-close>閉じる</button></div>
+</div></div>
+
+<!-- 別のオークションにコピー -->
+<div class="sheet" id="csh"><div class="panel">
+  <h2>別のオークションにコピー</h2>
+  <p class="hint">この出品リストの商品をそのまま別のオークション用の新しいリストにコピーします（戻ってきた商品を別のオークションに出すときなど）。</p>
+  <label>コピー先のオークション</label><select id="cAuc"></select>
+  <label>開催日</label><input type="date" id="cDate">
+  <div class="foot"><button class="btn" data-close>キャンセル</button><button class="btn main" id="cGo">コピーする</button></div>
+</div></div>
+
+<div id="lock" hidden><form id="lockForm">
+  <h1>ReKiL 出品データ</h1>
+  <p class="meta" id="lockMsg"></p>
+  <input id="passIn" type="password" inputmode="numeric" autocomplete="current-password" placeholder="暗証番号">
+  <button class="btn main" type="submit">開く</button>
+</form></div>
+
+<script src="../lib/jszip.min.js"></script>
+<script src="xl.js"></script>
+<script src="auc.js"></script>
+<script>
+/* ▼ Apps Script をデプロイしたときの「ウェブアプリのURL」（空のあいだはこの端末だけに保存） */
+const API_URL = "";
+const APP_VERSION = "2026-11-26-1";
+const {AUC, build, check, boxOf} = AUCS;
+const RANKS = ["N","S","SA","A","AB","B","BC","C","ジャンク"];
+const BRANDS = ["LOUIS VUITTON","CHANEL","HERMES","GUCCI","PRADA","Christian Dior","CELINE","FENDI","LOEWE","SAINT LAURENT","BOTTEGA VENETA","BALENCIAGA","GOYARD","MIU MIU","BURBERRY","Salvatore Ferragamo","COACH","Chloe","GIVENCHY","VALENTINO","CELINE","Cartier","BVLGARI","MONCLER","CANADA GOOSE","TATRAS","THE NORTH FACE","patagonia","COMME des GARCONS","ARMANI","MCM","Vivienne Westwood","TORY BURCH","FURLA","Kate Spade","MICHAEL KORS","ANYA HINDMARCH","Christian Louboutin","Berluti","dunhill","ETRO","LONGCHAMP","SET"];
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const today = () => new Date(Date.now()+9*3600e3).toISOString().slice(0,10);
+const uid = () => "L" + Date.now().toString(36) + Math.random().toString(36).slice(2,6);
+const yen = n => (+n || 0).toLocaleString("ja-JP");
+const pnum = v => { const n = +String(v ?? "").normalize("NFKC").replace(/[,円\s]/g, ""); return isFinite(n) ? n : 0; };
+const aOf = id => AUC.find(a => a.id === id) || AUC[0];
+function dayLabel(s){ if(!s) return "開催日なし"; const d = new Date(s+"T00:00:00"); return `${d.getMonth()+1}/${d.getDate()}(${"日月火水木金土"[d.getDay()]})`; }
+function toast(m, ms = 2600){ const t = $("toast"); t.textContent = m; t.style.display = "block"; clearTimeout(t._h); t._h = setTimeout(() => t.style.display = "none", ms); }
+
+let lists = [], pass = "", filter = "draft", cur = null, editIdx = -1, rank = "", online = false, busy = 0;
+const dirty = new Set();
+try{ pass = localStorage.getItem("rekil-shuppin-pass") || ""; }catch(_){}
+try{ const c = JSON.parse(localStorage.getItem("shuppin-data") || "null"); if(c){ lists = c.lists || []; (c.dirty || []).forEach(x => dirty.add(x)); } }catch(_){}
+try{ filter = localStorage.getItem("shuppin-filter") || "draft"; }catch(_){}
+function cache(){ try{ localStorage.setItem("shuppin-data", JSON.stringify({lists, dirty:[...dirty]})); }catch(_){} }
+
+/* ---- データ側との通信 ---- */
+class ApiError extends Error{ constructor(c){ super(c); this.code = c; } }
+function setSync(){ $("sync").textContent = !API_URL ? "この端末に保存" : busy ? "同期中…" : dirty.size ? `未送信${dirty.size}` : online ? "同期済み" : "未接続"; }
+async function api(action, params = {}){
+  if(!API_URL) throw new ApiError("no_api");
+  busy++; setSync();
+  try{
+    let r; try{ r = await fetch(API_URL, {method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"}, body: JSON.stringify({action, pass, ...params})}); }catch(_){ throw new ApiError("network"); }
+    let j; try{ j = await r.json(); }catch(_){ throw new ApiError("bad_response"); }
+    if(!j.ok){ if(j.error === "passcode") showLock("暗証番号が違います"); throw new ApiError(j.error || "error"); }
+    online = true;
+    if(j.data && j.data.lists){
+      /* 未送信のものは手元を優先 */
+      const mine = new Map(lists.filter(l => dirty.has(l.id)).map(l => [l.id, l]));
+      lists = j.data.lists.map(l => mine.get(l.id) || l); for(const [id, l] of mine) if(!lists.find(x => x.id === id)) lists.push(l);
+      if(cur) cur = lists.find(l => l.id === cur.id) || null;
+      cache();
+    }
+    return j;
+  }finally{ busy--; setSync(); }
+}
+let flushT = null;
+function markDirty(L){ L.updated = Date.now(); dirty.add(L.id); cache(); setSync(); clearTimeout(flushT); flushT = setTimeout(flush, 700); }
+async function flush(){
+  if(!API_URL || !dirty.size || busy) return;
+  const ids = [...dirty]; const send = lists.filter(l => ids.includes(l.id)); const t0 = Date.now();
+  try{ await api("save", {lists: send}); ids.forEach(id => { const l = lists.find(x => x.id === id); if(!l || (l.updated || 0) <= t0) dirty.delete(id); }); }
+  catch(e){ if(e.code === "network") return; toast(`保存できませんでした（${e.code}）`); return; }
+  finally{ cache(); setSync(); }
+  render();
+}
+async function refresh(){ if(!API_URL || !pass) return; try{ if(dirty.size) await flush(); else { await api("list"); render(); } }catch(e){ if(e.code === "network") toast("通信できませんでした。電波の良い場所でもう一度開いてください"); } }
+function showLock(msg){ $("lock").hidden = false; $("lockMsg").textContent = msg || "暗証番号を入れてください（ほかのReKiLアプリと同じ番号）"; $("passIn").focus(); }
+$("lockForm").onsubmit = async e => { e.preventDefault(); pass = $("passIn").value.trim(); try{ localStorage.setItem("rekil-shuppin-pass", pass); }catch(_){}
+  try{ await api("list"); $("lock").hidden = true; render(); }catch(err){ if(err.code === "network"){ $("lock").hidden = true; toast("通信できませんでした"); } } };
+addEventListener("online", () => flush());
+
+/* ---- 一覧 ---- */
+function sumOf(L){ return (L.items || []).reduce((a, i) => a + pnum(i.price), 0); }
+function render(){
+  setSync();
+  const c = {draft: 0, done: 0}; lists.forEach(l => c[l.status === "done" ? "done" : "draft"]++);
+  $("cDraft").textContent = c.draft; $("cDone").textContent = c.done; $("cAll").textContent = lists.length;
+  document.querySelectorAll(".tab").forEach(t => t.classList.toggle("on", t.dataset.f === filter));
+  if(cur) return renderDetail();
+  $("hTitle").textContent = "出品データ"; $("backBtn").hidden = true; $("tabs").hidden = false; $("fab").textContent = "＋ 新しい出品リスト";
+  const ls = lists.filter(l => filter === "all" || (filter === "done" ? l.status === "done" : l.status !== "done"))
+    .sort((a, b) => (a.status === "done") - (b.status === "done") || (filter === "done" ? String(b.date).localeCompare(a.date) : String(a.date || "9").localeCompare(b.date || "9")));
+  $("main").innerHTML = ls.length ? ls.map(l => { const a = aOf(l.auction), n = (l.items || []).length;
+    return `<div class="card ${l.status === "done" ? "done" : ""}" data-open="${esc(l.id)}">
+      <div class="row"><span class="nm">${dayLabel(l.date)} ${esc(a.name)}</span><span class="pill ${l.status === "done" ? "done" : ""}">${l.status === "done" ? "出力済み" : "作成中"}</span></div>
+      <div class="meta">${n}点・指値合計 ${yen(sumOf(l))}円${l.boxes ? `・箱 ${esc(l.boxes)}` : ""}${l.memo ? `<br>${esc(l.memo)}` : ""}${l.outAt ? `<br>出力 ${esc(l.outAt)}` : ""}</div></div>`; }).join("")
+    : `<div class="empty">${filter === "done" ? "出力済みのリストはまだありません" : "「＋ 新しい出品リスト」から、オークションと開催日を選んで作り始めます。<br>商品を入れたら「Excelを作る」で、各オークションの雛形どおりのファイルができます。"}</div>`;
+}
+$("tabs").onclick = e => { const t = e.target.closest(".tab"); if(!t) return; filter = t.dataset.f; try{ localStorage.setItem("shuppin-filter", filter); }catch(_){} render(); };
+$("main").addEventListener("click", e => {
+  const o = e.target.closest("[data-open]"); if(o){ cur = lists.find(l => l.id === o.dataset.open); scrollTo(0,0); render(); return; }
+  const a = e.target.closest("[data-act]"); if(a){ ACT[a.dataset.act](); return; }
+  const it = e.target.closest("[data-it]"); if(it) openItem(+it.dataset.it);
+});
+$("backBtn").onclick = () => { cur = null; render(); };
+$("fab").onclick = () => cur ? openItem(-1) : openList(null);
+
+/* ---- 詳細 ---- */
+function renderDetail(){
+  const L = cur, a = aOf(L.auction), its = L.items || [];
+  $("hTitle").textContent = `${dayLabel(L.date)} ${a.name}`; $("backBtn").hidden = false; $("tabs").hidden = true; $("fab").textContent = "＋ 商品を追加";
+  const w = check(L, its);
+  let h = `<div class="dhead"><div class="t">${its.length}点・指値合計 ${yen(sumOf(L))}円</div>
+    <div class="meta">${a.boxes ? `箱：${esc(L.boxes || "未入力")}` : ""}${a.tracking ? `　追跡番号：${esc(L.tracking || "未入力")}` : ""}${a.area ? `　エリア：${esc(L.area || "関東")}` : ""}${L.memo ? `<br>${esc(L.memo)}` : ""}</div>
+    <div class="acts"><button class="btn main" data-act="out">Excelを作る</button><button class="btn" data-act="bulk">まとめて追加</button>
+      <button class="btn" data-act="edit">リストの設定</button><button class="btn" data-act="copy">別のオークションにコピー</button>
+      ${L.status === "done" ? `<button class="btn" data-act="reopen">作成中に戻す</button>` : ""}<button class="btn del" data-act="del">削除</button></div>
+    ${w.length && its.length ? `<div class="warnbox">${w.map(esc).join("<br>")}</div>` : ""}
+    <p class="hint">${esc(a.note || "")}</p></div>`;
+  const usesBox = a.boxes && a.id !== "apre";
+  its.forEach((it, i) => {
+    let no = `<b>${i+1}</b>`;
+    if(a.id === "apre"){ const m = /^([A-Za-z]*)\s*(\d+)/.exec(String(L.boxes || "").normalize("NFKC")); if(m) no = `<b>${esc(m[1].toUpperCase())}${+m[2] + Math.floor(i/10)}</b>${i%10+1}`; }
+    else if(usesBox){ const b = boxOf(L, i); if(b.box !== "") no = `<b>${esc(b.box)}</b>${b.eda}`; }
+    if(i % 10 === 0 && (usesBox || a.id === "apre") && its.length > 10) h += `<div class="boxsep">${i+1}〜${Math.min(i+10, its.length)}点目</div>`;
+    const ng = !String(it.brand || "").trim() || !pnum(it.price);
+    h += `<div class="it ${ng ? "ng" : ""}" data-it="${i}"><div class="no">${no}</div><div class="bd"><div class="br">${esc(it.brand || "ブランド未入力")}${it.rank ? "・" + esc(it.rank) : ""}${it.kanri ? "・" + esc(it.kanri) : ""}</div>
+      <div class="tx">${esc([it.name, it.model].filter(Boolean).join(" ") || "（商品名なし）")}</div>${it.acc || it.damage ? `<div class="br">${esc([it.acc && "付属：" + it.acc, it.damage].filter(Boolean).join("　"))}</div>` : ""}</div>
+      <div class="pr">${it.price !== "" && it.price != null ? yen(pnum(it.price)) : "—"}</div></div>`;
+  });
+  if(!its.length) h += `<div class="empty">「＋ 商品を追加」か「まとめて追加」で商品を入れてください</div>`;
+  $("main").innerHTML = h;
+}
+const ACT = {
+  out: openOut, bulk: () => { $("bTx").value = ""; $("bPrev").textContent = ""; open("bsh"); setTimeout(() => $("bTx").focus(), 50); },
+  edit: () => openList(cur), copy: () => { fillAuc($("cAuc"), cur.auction === "jds" ? "jwa" : "jds"); $("cDate").value = ""; open("csh"); },
+  reopen: () => { cur.status = "draft"; markDirty(cur); render(); },
+  del: async () => { if(!confirm(`この出品リスト（${(cur.items||[]).length}点）を削除しますか？`)) return;
+    const id = cur.id; lists = lists.filter(l => l.id !== id); dirty.delete(id); cur = null; cache(); render();
+    if(API_URL) api("remove", {id}).then(render).catch(e => toast(`削除を送れませんでした（${e.code}）`)); },
+};
+
+/* ---- シート開閉 ---- */
+function open(id){ $(id).classList.add("open"); }
+function close(id){ $(id).classList.remove("open"); }
+document.querySelectorAll(".sheet").forEach(s => s.addEventListener("click", e => { if(e.target === s || e.target.closest("[data-close]")) close(s.id); }));
+const anyOpen = () => !!document.querySelector(".sheet.open");
+
+/* ---- リストの作成・設定 ---- */
+function fillAuc(sel, v){ sel.innerHTML = AUC.map(a => `<option value="${a.id}">${esc(a.name)}</option>`).join(""); sel.value = v || AUC[0].id; }
+let editingList = null;
+function syncListForm(){ const a = aOf($("lAuc").value);
+  $("lBoxW").hidden = !a.boxes; $("lBoxL").textContent = a.boxes || ""; $("lBox").placeholder = (a.boxes || "").replace(/^.*例：|）$/g, "");
+  $("lTrW").hidden = !a.tracking; $("lArW").hidden = !a.area; $("lNote").textContent = a.note || ""; }
+function openList(L){
+  editingList = L; $("lTitle").textContent = L ? "リストの設定" : "新しい出品リスト";
+  let last = ""; try{ last = localStorage.getItem("shuppin-lastAuc") || ""; }catch(_){}
+  fillAuc($("lAuc"), L ? L.auction : last); $("lDate").value = L ? L.date || "" : "";
+  $("lBox").value = L ? L.boxes || "" : ""; $("lTr").value = L ? L.tracking || "" : ""; $("lAr").value = L ? L.area || "関東" : "関東"; $("lMemo").value = L ? L.memo || "" : "";
+  syncListForm(); open("lsh");
+}
+$("lAuc").onchange = syncListForm;
+$("lSave").onclick = () => {
+  const v = {auction: $("lAuc").value, date: $("lDate").value, boxes: $("lBox").value.trim(), tracking: $("lTr").value.trim(), area: $("lAr").value, memo: $("lMemo").value.trim()};
+  if(!v.date && !confirm("開催日が空です。このまま保存しますか？")) return;
+  try{ localStorage.setItem("shuppin-lastAuc", v.auction); }catch(_){}
+  if(editingList){ Object.assign(editingList, v); markDirty(editingList); }
+  else{ const L = {id: uid(), status: "draft", created: today(), items: [], ...v}; lists.push(L); cur = L; markDirty(L); }
+  close("lsh"); render();
+};
+
+/* ---- 商品 ---- */
+$("iRank").innerHTML = RANKS.map(r => `<button type="button" data-r="${r}">${r}</button>`).join("");
+$("iRank").onclick = e => { const b = e.target.closest("[data-r]"); if(!b) return; rank = rank === b.dataset.r ? "" : b.dataset.r; drawRank(); };
+function drawRank(){ $("iRank").querySelectorAll("button").forEach(b => b.classList.toggle("on", b.dataset.r === rank)); }
+$("brands").innerHTML = [...new Set(BRANDS)].map(b => `<option value="${esc(b)}">`).join("");
+const IF = {brand:"iBrand", price:"iPrice", name:"iName", model:"iModel", kanri:"iKanri", line:"iLine", color:"iColor", material:"iMat", serial:"iSerial", acc:"iAcc", damage:"iDmg", hold:"iHold"};
+function openItem(i){
+  const a = aOf(cur.auction); editIdx = i; const it = i >= 0 ? cur.items[i] : {};
+  document.querySelectorAll("#ish [data-f]").forEach(el => el.hidden = !a.fields.includes(el.dataset.f));
+  for(const [k, id] of Object.entries(IF)) $(id).value = it[k] ?? (k === "hold" ? "可" : "");
+  $("iBet").checked = !!it.betten; rank = it.rank || ""; drawRank();
+  $("iTitle").textContent = i >= 0 ? `商品 ${i+1}点目` : `商品を追加（${(cur.items||[]).length + 1}点目）`;
+  $("iHint").textContent = a.id === "prime" ? "ブランドは英語で入れればプライムの一覧に自動で合わせます" : a.id.startsWith("eco") ? "商品名には「ブランド 商品名 型番 付属品」の順でまとめて入ります" : "";
+  $("iDel").hidden = i < 0; $("iMove").hidden = i < 0; $("iNext").hidden = i >= 0;
+  open("ish"); if(i < 0) setTimeout(() => $("iBrand").focus(), 60);
+}
+function readItem(){ const o = {}; for(const [k, id] of Object.entries(IF)) o[k] = $(id).value.trim();
+  if(o.price) o.price = String(pnum(o.price)); o.rank = rank; o.betten = $("iBet").checked; return o; }
+function saveItem(next){
+  const o = readItem(); if(!o.brand && !o.name){ toast("ブランドか商品名を入れてください"); return; }
+  cur.items = cur.items || [];
+  if(editIdx >= 0) cur.items[editIdx] = Object.assign(cur.items[editIdx], o); else cur.items.push(o);
+  if(cur.status === "done") cur.status = "draft";
+  markDirty(cur); render();
+  if(next){ openItem(-1); toast(`${cur.items.length}点目を保存しました`, 1400); } else close("ish");
+}
+$("iSave").onclick = () => saveItem(false);
+$("iNext").onclick = () => saveItem(true);
+$("ish").addEventListener("keydown", e => { if(e.key === "Enter" && e.target.tagName === "INPUT"){ e.preventDefault(); saveItem(editIdx < 0); } });
+$("iDel").onclick = () => { if(!confirm("この商品を削除しますか？")) return; cur.items.splice(editIdx, 1); markDirty(cur); close("ish"); render(); };
+function move(d){ const j = editIdx + d; if(j < 0 || j >= cur.items.length) return; const t = cur.items[editIdx]; cur.items[editIdx] = cur.items[j]; cur.items[j] = t; editIdx = j; $("iTitle").textContent = `商品 ${j+1}点目`; markDirty(cur); render(); }
+$("iUp").onclick = () => move(-1); $("iDown").onclick = () => move(1);
+$("iDup").onclick = () => { cur.items.splice(editIdx + 1, 0, JSON.parse(JSON.stringify(cur.items[editIdx]))); markDirty(cur); render(); close("ish"); toast("複製しました"); };
+
+/* ---- まとめて追加 ---- */
+function parseBulk(t){
+  return String(t || "").split(/\r?\n/).map(s => s.trim()).filter(Boolean).map(line => {
+    if(line.includes("\t")){ const c = line.split("\t").map(x => x.trim()); return {brand: c[0] || "", name: c[1] || "", price: c[2] ? String(pnum(c[2])) : "", kanri: c[3] || ""}; }
+    const p = line.normalize("NFKC").split(/\s+/); let price = "";
+    if(p.length > 1 && /^[\d,]+円?$/.test(p[p.length-1])){ price = String(pnum(p.pop())); }
+    /* ブランド名が2語のもの */
+    let brand = p.shift() || ""; const two = BRANDS.find(b => b.includes(" ") && (brand + " " + (p[0] || "")).toUpperCase() === b.toUpperCase().split(" ").slice(0,2).join(" "));
+    if(two){ brand += " " + p.shift(); const rest = two.split(" ").slice(2); rest.forEach(w => { if((p[0]||"").toUpperCase() === w.toUpperCase()) brand += " " + p.shift(); }); }
+    return {brand, name: p.join(" "), price};
+  });
+}
+$("bTx").oninput = () => { const r = parseBulk($("bTx").value); $("bPrev").innerHTML = r.length ? `${r.length}件：` + r.slice(0, 5).map(x => `${esc(x.brand)}｜${esc(x.name)}｜${x.price ? yen(x.price) : "指値なし"}`).join("<br>") + (r.length > 5 ? "<br>…" : "") : ""; };
+$("bAdd").onclick = () => { const r = parseBulk($("bTx").value); if(!r.length){ toast("1行以上入れてください"); return; }
+  cur.items = (cur.items || []).concat(r.map(x => ({...x, rank: "", hold: "可"}))); if(cur.status === "done") cur.status = "draft";
+  markDirty(cur); close("bsh"); render(); toast(`${r.length}点を追加しました`); };
+
+/* ---- 別のオークションにコピー ---- */
+$("cGo").onclick = () => { const L = {id: uid(), status: "draft", created: today(), auction: $("cAuc").value, date: $("cDate").value, boxes: "", tracking: "", area: "関東", memo: `${dayLabel(cur.date)} ${aOf(cur.auction).name}からコピー`,
+  items: JSON.parse(JSON.stringify(cur.items || []))}; lists.push(L); markDirty(L); cur = L; close("csh"); render(); toast("コピーしました。箱番などを「リストの設定」で入れてください"); };
+
+/* ---- Excelを作る ---- */
+const tplCache = {};
+async function tpl(a){ if(!tplCache[a.id]){ const r = await fetch(a.file + "?v=" + APP_VERSION); if(!r.ok) throw new Error("tpl"); tplCache[a.id] = await r.arrayBuffer(); } return tplCache[a.id].slice(0); }
+const yymmdd = d => d ? d.slice(2).replace(/-/g, "") : today().slice(2).replace(/-/g, "");
+let outFile = null;
+function openOut(){
+  const a = aOf(cur.auction), w = check(cur, cur.items || []);
+  $("oTitle").textContent = `${a.name}の出品リストを作る（${(cur.items||[]).length}点）`;
+  $("oWarn").innerHTML = w.length ? `<div class="warnbox">${w.map(esc).join("<br>")}<br>このままでも作れます。</div>` : `<div class="okbox">入力に問題はありません。</div>`;
+  $("oMailW").hidden = !a.mail; $("oMail").textContent = a.mail || "";
+  $("oMailBtn").href = a.mail ? `mailto:${a.mail}?subject=${encodeURIComponent(a.subject(cur))}` : "#";
+  $("oShare").hidden = !(navigator.canShare && navigator.share);
+  outFile = null; open("osh");
+}
+async function makeFile(){
+  const a = aOf(cur.auction);
+  const book = await build(cur, cur.items || [], {JSZip, DOMParser, XMLSerializer, XL}, await tpl(a));
+  const type = a.ext === "xlsm" ? "application/vnd.ms-excel.sheet.macroEnabled.12" : "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+  const blob = await book.save("blob");
+  const name = `${yymmdd(cur.date)}_${a.name.replace(/（.*?）/g, "")}_出品リスト.${a.ext}`;
+  return new File([blob], name, {type});
+}
+function doneOut(){ const d = new Date(Date.now()+9*3600e3).toISOString(); cur.status = "done"; cur.outAt = d.slice(5,10).replace("-", "/") + " " + d.slice(11,16); markDirty(cur); render(); }
+$("oDl").onclick = async () => { try{ const f = await makeFile(); const u = URL.createObjectURL(f); const x = document.createElement("a"); x.href = u; x.download = f.name; document.body.appendChild(x); x.click(); x.remove(); setTimeout(() => URL.revokeObjectURL(u), 30000); doneOut(); toast(`${f.name} を保存しました`); }catch(e){ console.error(e); toast("ファイルを作れませんでした（" + (e.message || e) + "）"); } };
+$("oShare").onclick = async () => { try{ const f = await makeFile(); const a = aOf(cur.auction); const d = {files: [f], title: a.subject(cur)};
+  if(!navigator.canShare(d)){ toast("この端末では共有できません。ダウンロードを使ってください"); return; }
+  await navigator.share(d); doneOut(); }catch(e){ if(e && e.name === "AbortError") return; console.error(e); toast("共有できませんでした（" + (e.message || e) + "）"); } };
+
+/* ---- 更新チェック ---- */
+async function checkUpdate(){ try{ const r = await fetch(location.pathname + "?v=" + Date.now(), {cache:"no-store"}); const t = await r.text(); const m = t.match(/const APP_VERSION = "([^"]+)"/);
+  if(m && m[1] !== APP_VERSION){ if(busy || anyOpen() || dirty.size){ setTimeout(checkUpdate, 4000); return; } location.replace(location.pathname + "?v=" + encodeURIComponent(m[1])); } }catch(_){} }
+document.addEventListener("visibilitychange", () => { if(document.visibilityState === "visible"){ checkUpdate(); refresh(); } else flush(); });
+setInterval(() => { if(document.visibilityState === "visible"){ if(dirty.size) flush(); checkUpdate(); } }, 30000);
+
+render();
+if(API_URL){ if(!pass) showLock(); else{ checkUpdate(); refresh(); } } else checkUpdate();
+</script>
+<script>/* 共通：電波がなくても開ける・ホームへ戻るボタン */if("serviceWorker" in navigator&&location.protocol.startsWith("http"))navigator.serviceWorker.register("../sw.js",{scope:"../"}).catch(()=>{});try{if(sessionStorage.getItem("rekil-from-home")&&!/\/home\/?$/.test(location.pathname)){const b=document.createElement("a");b.href="../home/";b.textContent="⌂";b.setAttribute("aria-label","ReKiLホームへ");b.onclick=()=>{try{const a=document.activeElement;if(a&&a.blur)a.blur();scrollTo(0,0)}catch(_){}};b.style.cssText="position:fixed;right:12px;bottom:calc(84px + env(safe-area-inset-bottom,0px));z-index:70;width:44px;height:44px;border-radius:22px;background:#2a313a;color:#fff;font-size:22px;display:flex;align-items:center;justify-content:center;text-decoration:none;box-shadow:0 4px 16px #0008;opacity:.9";document.body.appendChild(b)}}catch(_){}</script>
+</body>
+</html>

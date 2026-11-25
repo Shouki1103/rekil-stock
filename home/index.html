@@ -158,7 +158,7 @@ async function call(url, pass, action="list"){
   const res = await fetch(url, {method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"}, body: JSON.stringify({action, pass})});
   const j = await res.json(); if(!j.ok) throw new Error(j.error||"error"); return j;
 }
-const SRC_NAME = {okurijo:"送り状控え", henpin:"出品・返品・外注", shitami:"下見・指値", irai:"eBay出品依頼", uriage:"売上入力", haiki:"廃棄記録", mercari:"メルカリ再出品", shikin:"資金繰り"};
+const SRC_NAME = {okurijo:"送り状控え", henpin:"出品・返品・外注", shitami:"下見・指値", irai:"eBay出品依頼", uriage:"売上入力", haiki:"廃棄記録", mercari:"メルカリ再出品", shikin:"資金繰り", shuppin:"出品データ"};
 const failed = [];
 const SRC = {
   okurijo: async () => {
@@ -217,6 +217,13 @@ const SRC = {
     const r = its.filter(i=>i.status==="return").length, w = its.filter(i=>i.status==="shuppin" && i.date && i.date < t).length;
     const out = []; if(w) out.push({t:"業者オークションの結果入力待ち（メルカリ商品）", v:`${w}件`, u:"../mercari/"}); if(r) out.push({t:"メルカリ再出品待ち（業者から戻り）", v:`${r}件`, u:"../mercari/"});
     return {n: r+w, items: out};
+  },
+  shuppin: async () => {
+    const API = ""; /* 出品データのデータ側（Apps Script）のURL */
+    if(!API) return {n:0, items:[]};
+    const j = await call(API, needPass("rekil-shuppin-pass"));
+    const ls = ((j.data||{}).lists||[]).filter(l=>l.status!=="done" && (l.items||[]).length);
+    return {n: ls.length, items: ls.length ? [{t:"出品データのExcel未作成（"+ls.map(l=>{const d=l.date?l.date.slice(5).replace("-","/").replace(/^0/,""):"日付なし";return d+" "+({jds:"JDS",jwa:"JWA",apre:"アプレ",prime:"プライム",ecooku:"エコオク",ecotre:"エコトレ"}[l.auction]||l.auction)}).join("・")+"）", v:`${ls.length}件`, u:"../shuppin/"}] : []};
   },
 };
 async function refresh(){

@@ -1,0 +1,16 @@
+{
+  "name": "ReKiL 出品データ",
+  "short_name": "出品データ",
+  "description": "業者オークション（JDS・JWA・アプレ・プライム・エコオク・エコトレ）の出品リストを入力して、各雛形のExcelを作るアプリ",
+  "lang": "ja",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#111214",
+  "theme_color": "#111214",
+  "icons": [
+    {"src": "icon-192.png", "sizes": "192x192", "type": "image/png"},
+    {"src": "icon-512.png", "sizes": "512x512", "type": "image/png"},
+    {"src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+  ]
+}

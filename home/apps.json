@@ -73,6 +73,13 @@
      "badge": "okurijo"
     },
     {
+     "id": "shuppin",
+     "name": "出品データ",
+     "url": "../shuppin/",
+     "icon": "../shuppin/icon-180.png",
+     "badge": "shuppin"
+    },
+    {
      "id": "henpin",
      "name": "出品・返品・外注",
      "url": "../henpin/",
