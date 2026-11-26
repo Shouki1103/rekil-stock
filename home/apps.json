@@ -197,6 +197,13 @@
      "url": "../daicho/",
      "icon": "../daicho/icon-180.png",
      "owner": true
+    },
+    {
+     "id": "nittou",
+     "name": "出張日当",
+     "url": "../nittou/",
+     "icon": "../nittou/icon-180.png",
+     "owner": true
     }
    ]
   },
@@ -220,6 +227,18 @@
      "name": "更新履歴",
      "url": "../koushin/",
      "icon": "../koushin/icon-180.png"
+    },
+    {
+     "id": "kitei",
+     "name": "社内規程",
+     "url": "../kitei/",
+     "icon": "../kitei/icon-180.png"
+    },
+    {
+     "id": "kantei",
+     "name": "真贋・査定",
+     "url": "../kantei/",
+     "icon": "../kantei/icon-180.png"
     }
    ]
   }

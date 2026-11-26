@@ -1,0 +1,54 @@
+{
+ "items": [
+  {
+   "name": "出張旅費規程",
+   "now": "2026-11-25 版",
+   "sekou": "令和7年4月15日（会社設立日）",
+   "point": [
+    "日当は1人1日4,000円",
+    "出張＝島田市外（島田市内は日当なし）",
+    "表紙＋本文1枚の形"
+   ],
+   "file": "https://drive.google.com/file/d/1qvp3nC2iWJ7JQJ3oPYWdsUzJnKt3pYfI/view",
+   "hist": [
+    {
+     "d": "2026-11-25",
+     "t": "番号の振り直し・「代表社員」表記・附則（施行日）を追加。出張の範囲を島田市外と定義"
+    },
+    {
+     "d": "2025-04-26",
+     "t": "出張旅費規程（案）を作成"
+    }
+   ]
+  },
+  {
+   "name": "役員社宅規程（同意書兼決定書）",
+   "now": "2026-11-12 版",
+   "sekou": "",
+   "point": [
+    "代表の自宅を法人名義で借り上げ",
+    "賃貸料相当額を役員報酬から天引き"
+   ],
+   "file": "https://drive.google.com/file/d/1KoViPjwCoAx5-g80DjYYNMRqoLGpqKH4/view",
+   "hist": [
+    {
+     "d": "2026-11-12",
+     "t": "社宅規程と同意書兼決定書を作成"
+    }
+   ]
+  },
+  {
+   "name": "車両賃貸契約に関する覚書",
+   "now": "2026-11 作成",
+   "sekou": "",
+   "point": [],
+   "file": "https://claude.ai/artifact/CkFDSPVi5adAGDBQ9kjozx",
+   "hist": [
+    {
+     "d": "2026-11",
+     "t": "作成"
+    }
+   ]
+  }
+ ]
+}
