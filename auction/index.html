@@ -37,7 +37,7 @@ input,select,textarea{font:inherit;font-size:16px;width:100%;min-height:42px;bor
 textarea{min-height:90px}
 label.f{display:block;font-size:12px;color:var(--muted);margin:8px 0 4px}
 .chips{display:flex;gap:6px;flex-wrap:wrap;margin:4px 0 8px}.chips button{font:inherit;font-size:13px;min-height:32px;border-radius:16px;border:1px solid var(--line);background:var(--surface);color:var(--muted);padding:0 12px}.chips button.on{background:var(--accent);color:#14181d;border-color:var(--accent)}
-.mcal{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin:0 0 10px}.mcal .wh{font-size:11px;color:var(--muted);text-align:center}.mcal button{font:inherit;min-height:44px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--fg);padding:2px 0;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:2px;font-size:13px}.mcal button:disabled{opacity:.35;background:transparent}.mcal button.td{border-color:var(--accent);color:var(--accent);font-weight:800}.mcal .dots{display:flex;gap:2px;flex-wrap:wrap;justify-content:center;max-width:90%}.mcal .dots i{width:6px;height:6px;border-radius:3px;background:var(--accent)}.mcal .dots i.p{background:transparent;border:1px solid var(--muted)}.mcal .mo{grid-column:1/-1;font-size:12px;font-weight:700;color:var(--muted);margin-top:4px}.card.flash{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent) inset;transition:box-shadow .3s}.fsel{margin:4px 0 8px}.ymbar{display:flex;gap:6px;align-items:center;margin:0 0 8px}.ymbar select{flex:1}.ymbar .btn{min-width:44px;padding:0 10px}.ymbar .btn[hidden]{display:none}.mcal button.past{opacity:.6}.card.pastc{opacity:.75}
+.mcal{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin:0 0 10px}.mcal .wh{font-size:11px;color:var(--muted);text-align:center}.mcal button{font:inherit;min-height:44px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--fg);padding:2px 0;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:2px;font-size:13px}.mcal button:disabled{opacity:.35;background:transparent}.mcal button.td{border-color:var(--accent);color:var(--accent);font-weight:800}.mcal .dots{display:flex;gap:2px;flex-wrap:wrap;justify-content:center;max-width:90%}.mcal .dots i{width:6px;height:6px;border-radius:3px;background:var(--accent)}.mcal .dots i.p{background:transparent;border:1px solid var(--muted)}.mcal .mo{grid-column:1/-1;font-size:12px;font-weight:700;color:var(--muted);margin-top:4px}.card.flash{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent) inset;transition:box-shadow .3s}.fsel{margin:4px 0 8px}#toTop{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));z-index:65;min-height:44px;border-radius:22px;border:0;background:var(--accent);color:#14181d;font:inherit;font-weight:800;font-size:14px;padding:0 18px;box-shadow:0 4px 16px #0008}#toTop[hidden]{display:none}.ymbar{display:flex;gap:6px;align-items:center;margin:0 0 8px}.ymbar select{flex:1}.ymbar .btn{min-width:44px;padding:0 10px}.ymbar .btn[hidden]{display:none}.mcal button.past{opacity:.6}.card.pastc{opacity:.75}
 .muted{color:var(--muted);font-size:12px}.num{font-variant-numeric:tabular-nums}
 .empty{color:var(--muted);text-align:center;padding:24px 0;font-size:14px}
 .sheet{position:fixed;inset:0;z-index:60;background:#000a;display:flex;align-items:flex-end;justify-content:center}.sheet[hidden]{display:none}
@@ -71,8 +71,9 @@ a{color:var(--accent)}
 <div class="sheet" id="set" hidden><div class="box"><h3 style="margin-top:0">表示するオークション</h3><div id="setList"></div><p><button class="btn p" id="setOk" type="button">閉じる</button></p></div></div>
 
 </main>
+<button type="button" id="toTop" hidden>▲ カレンダーに戻る</button>
 <script>
-const APP_VERSION = "2026-11-27-12";
+const APP_VERSION = "2026-11-27-13";
 
 const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -159,6 +160,7 @@ function renderSoba(){
 }
 function renderSet(){ const names = [...new Set(S.rules.map(r=>r.a))]; $("#setList").innerHTML = names.map(a=>`<label class="row"><input type="checkbox" style="width:22px;min-height:22px" data-h="${esc(a)}" ${hide.includes(a)?"":"checked"}><span class="t"><b>${esc(a)}</b></span></label>`).join(""); }
 document.addEventListener("click", e=>{
+  if(e.target.id==="toTop"){ const m = document.querySelector("main"); m.scrollTo({top:0, behavior:"smooth"}); return; }
   if(e.target.id==="ymPrev"){ calYM = ymAdd(calYM,-1); renderCal(); return; }
   if(e.target.id==="ymNext"){ calYM = ymAdd(calYM,1); renderCal(); return; }
   if(e.target.id==="ymNow"){ calYM = today().slice(0,7); renderCal(); return; }
@@ -172,6 +174,9 @@ document.addEventListener("change", e=>{
   const h = e.target.closest("[data-h]"); if(h){ hide = h.checked ? hide.filter(x=>x!==h.dataset.h) : [...hide, h.dataset.h]; ls.set("auc-hide", hide); if(fil===h.dataset.h){ fil=""; ls.set("auc-fil",""); } }
   const s = e.target.closest("[data-sk]"); if(s){ if(s.checked) sdone[s.dataset.sk]=1; else delete sdone[s.dataset.sk]; ls.set("auc-soba", sdone); renderSoba(); }
 });
+/* カレンダーより下までスクロールしたら「カレンダーに戻る」を出す */
+{ const m = document.querySelector("main"); const upd = () => { const cal = document.querySelector('[data-view="cal"]'), mc = $("#mcal"); $("#toTop").hidden = !cal || cal.hidden || !mc || m.scrollTop < mc.offsetTop + mc.offsetHeight; };
+  m.addEventListener("scroll", upd, {passive:true}); document.addEventListener("click", ()=>setTimeout(upd, 50)); }
 function all(){ renderCal(); renderSoon(); renderSoba(); }
 tabs("auc-tab", "cal", v=>{ if(v==="shitami") loadShitami(); });
 all();
