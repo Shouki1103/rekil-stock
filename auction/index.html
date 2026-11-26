@@ -37,6 +37,7 @@ input,select,textarea{font:inherit;font-size:16px;width:100%;min-height:42px;bor
 textarea{min-height:90px}
 label.f{display:block;font-size:12px;color:var(--muted);margin:8px 0 4px}
 .chips{display:flex;gap:6px;flex-wrap:wrap;margin:4px 0 8px}.chips button{font:inherit;font-size:13px;min-height:32px;border-radius:16px;border:1px solid var(--line);background:var(--surface);color:var(--muted);padding:0 12px}.chips button.on{background:var(--accent);color:#14181d;border-color:var(--accent)}
+.mcal{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin:0 0 10px}.mcal .wh{font-size:11px;color:var(--muted);text-align:center}.mcal button{font:inherit;min-height:44px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--fg);padding:2px 0;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:2px;font-size:13px}.mcal button:disabled{opacity:.35;background:transparent}.mcal button.td{border-color:var(--accent);color:var(--accent);font-weight:800}.mcal .dots{display:flex;gap:2px;flex-wrap:wrap;justify-content:center;max-width:90%}.mcal .dots i{width:6px;height:6px;border-radius:3px;background:var(--accent)}.mcal .dots i.p{background:transparent;border:1px solid var(--muted)}.mcal .mo{grid-column:1/-1;font-size:12px;font-weight:700;color:var(--muted);margin-top:4px}.card.flash{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent) inset;transition:box-shadow .3s}.fsel{margin:4px 0 8px}
 .muted{color:var(--muted);font-size:12px}.num{font-variant-numeric:tabular-nums}
 .empty{color:var(--muted);text-align:center;padding:24px 0;font-size:14px}
 .sheet{position:fixed;inset:0;z-index:60;background:#000a;display:flex;align-items:flex-end;justify-content:center}.sheet[hidden]{display:none}
@@ -52,7 +53,8 @@ a{color:var(--accent)}
 <main>
 
 <section data-view="cal">
-  <div class="chips" id="fil"></div>
+  <select class="fsel" id="fil" aria-label="業者で絞り込み"></select>
+  <div class="mcal" id="mcal"></div>
   <div id="cal"></div>
   <p class="muted" id="note"></p>
 </section>
@@ -69,7 +71,7 @@ a{color:var(--accent)}
 
 </main>
 <script>
-const APP_VERSION = "2026-11-26-1";
+const APP_VERSION = "2026-11-27-1";
 
 const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -108,11 +110,19 @@ function events(){
 }
 function renderCal(){
   const names = [...new Set(S.rules.map(r=>r.a))].filter(a=>!hide.includes(a));
-  $("#fil").innerHTML = [`<button data-f="" class="${!fil?"on":""}">すべて</button>`, ...names.map(a=>`<button data-f="${esc(a)}" class="${fil===a?"on":""}">${esc(a)}</button>`)].join("");
+  if(fil && !names.includes(fil)) fil = "";
+  $("#fil").innerHTML = [`<option value="">すべての業者</option>`, ...names.map(a=>`<option value="${esc(a)}">${esc(a)}</option>`)].join(""); $("#fil").value = fil;
   const ev = events().filter(e=>!fil || e.r.a===fil), by = {};
   ev.forEach(e=>(by[e.d]=by[e.d]||[]).push(e));
   const t = today();
-  $("#cal").innerHTML = Object.keys(by).map(d=>`<div class="card"><h2>${md(d)}${d===t?" 今日":""}</h2>${by[d].map(e=>`<div class="row"><span class="tag ${e.k==="開催"?"a":""}">${e.k}</span><span class="t"><b>${esc(e.r.a)}</b><small>${esc(e.r.g)}${e.of?`（${md(e.of)}開催分）`:""}${e.k==="開催"&&e.r.memo?" ・"+esc(e.r.memo):""}</small></span></div>`).join("")}</div>`).join("") || '<div class="empty">予定はありません</div>';
+  /* 上の小さなカレンダー：日付を押すとその日の詳細へ移動 */
+  const start = shift(t, -new Date(t+"T00:00:00Z").getUTCDay()), end = shift(t, DAYS); let mc = ["日","月","火","水","木","金","土"].map(w=>`<span class="wh">${w}</span>`).join("");
+  for(let d = start; d < end || new Date(d+"T00:00:00Z").getUTCDay()!==0; d = shift(d,1)){
+    const es = by[d]||[], day = +d.slice(8);
+    mc += `<button type="button" data-jump="${d}" class="${d===t?"td":""}" ${d<t||!es.length?"disabled":""}>${day===1||d===start?`${+d.slice(5,7)}/`:""}${day}<span class="dots">${es.slice(0,4).map(e=>`<i class="${e.k==="開催"?"":"p"}"></i>`).join("")}</span></button>`;
+  }
+  $("#mcal").innerHTML = mc;
+  $("#cal").innerHTML = Object.keys(by).map(d=>`<div class="card" id="d-${d}"><h2>${md(d)}${d===t?" 今日":""}</h2>${by[d].map(e=>`<div class="row"><span class="tag ${e.k==="開催"?"a":""}">${e.k}</span><span class="t"><b>${esc(e.r.a)}</b><small>${esc(e.r.g)}${e.of?`（${md(e.of)}開催分）`:""}${e.k==="開催"&&e.r.memo?" ・"+esc(e.r.memo):""}</small></span></div>`).join("")}</div>`).join("") || '<div class="empty">予定はありません</div>';
   const man = S.rules.filter(r=>r.manual && !hide.includes(r.a));
   $("#note").innerHTML = (man.length ? man.map(r=>`${esc(r.a)}：${esc(r.memo)}`).join("<br>")+"<br>" : "") + esc(S.note||"");
 }
@@ -138,11 +148,12 @@ function renderSoba(){
 }
 function renderSet(){ const names = [...new Set(S.rules.map(r=>r.a))]; $("#setList").innerHTML = names.map(a=>`<label class="row"><input type="checkbox" style="width:22px;min-height:22px" data-h="${esc(a)}" ${hide.includes(a)?"":"checked"}><span class="t"><b>${esc(a)}</b></span></label>`).join(""); }
 document.addEventListener("click", e=>{
-  const f = e.target.closest("[data-f]"); if(f){ fil = f.dataset.f; ls.set("auc-fil", fil); renderCal(); }
+  const j = e.target.closest("[data-jump]"); if(j){ const c = document.getElementById("d-"+j.dataset.jump); if(c){ c.scrollIntoView({behavior:"smooth", block:"start"}); c.classList.add("flash"); setTimeout(()=>c.classList.remove("flash"), 1500); } return; }
   if(e.target.id==="setBtn"){ renderSet(); $("#set").hidden = false; }
   if(e.target.id==="setOk" || e.target.id==="set"){ $("#set").hidden = true; all(); }
 });
 document.addEventListener("change", e=>{
+  if(e.target.id==="fil"){ fil = e.target.value; ls.set("auc-fil", fil); renderCal(); return; }
   const h = e.target.closest("[data-h]"); if(h){ hide = h.checked ? hide.filter(x=>x!==h.dataset.h) : [...hide, h.dataset.h]; ls.set("auc-hide", hide); if(fil===h.dataset.h){ fil=""; ls.set("auc-fil",""); } }
   const s = e.target.closest("[data-sk]"); if(s){ if(s.checked) sdone[s.dataset.sk]=1; else delete sdone[s.dataset.sk]; ls.set("auc-soba", sdone); renderSoba(); }
 });
