@@ -189,13 +189,14 @@ const $ = (s, r = document) => r.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 /* ▼ Apps Script をデプロイしたときの「ウェブアプリのURL」 */
 const API_URL = "https://script.google.com/macros/s/AKfycby_jyb7iNU30-66PBZz1tePhqZDMFmtik2SY48w2lqBxRPTJ38Xiwyxn1i9DQPTvILs/exec";
-const APP_VERSION = "2026-11-23-3o";
+const APP_VERSION = "2026-11-26-2";
 const CACHE = "uriage-data";
 const ST = {todo:"俊輔の入力待ち", ask:"祥貴の確認待ち", done:"済み"};
 let tasks = [];
 let pass = ""; try{ pass = localStorage.getItem("rekil-uriage-pass") || localStorage.getItem("rekil-pass") || ""; }catch(_){}
 let who = "俊輔"; try{ who = localStorage.getItem("uriage-who") || "俊輔"; }catch(_){}
 try{ const c = JSON.parse(localStorage.getItem(CACHE)||"null"); if(c) tasks = c.tasks||[]; }catch(_){}
+setTimeout(()=>{ try{ tasks = addMonthly(tasks); draw(); }catch(_){} }, 0);
 let busy = 0, online = false;
 /* ---------- 出品リスト：出品・返品・外注アプリ（業者出品）に登録した写真・PDFを読む／追加する ---------- */
 const HP_URL = "https://script.google.com/macros/s/AKfycbzuakHA841y3KMQTn32E6L6UOebKO9LZGEqX1IHAAQ3Xkb5Y2tvp4ZlIOVnr1u9T5KD/exec";
@@ -269,7 +270,7 @@ async function api(action, params={}){
     catch(_){ throw new ApiError("network"); }
     let j; try{ j = await res.json(); }catch(_){ throw new ApiError("bad_response"); }
     if(!j.ok){ if(j.error==="passcode") showLock(); throw new ApiError(j.error||"error"); }
-    if(j.data){ tasks = j.data.tasks||[]; keep(); draw(); }
+    if(j.data){ tasks = addMonthly(j.data.tasks||[]); keep(); draw(); }
     online = true; return j.result;
   }finally{ busy--; sync(); }
 }
@@ -280,12 +281,36 @@ const today = () => new Date(Date.now()+9*3600e3).toISOString().slice(0,10);
 const WD = "日月火水木金土";
 const md = d => d ? `${+d.slice(5,7)}/${+d.slice(8,10)}(${WD[new Date(d+"T12:00:00Z").getUTCDay()]})` : "";
 const ago = d => Math.round((Date.parse(today()+"T00:00:00Z") - Date.parse(d+"T00:00:00Z"))/864e5);
-const title = t => `${md(t.date)} ${t.site} 開催分`;
+const MONTHLY = "月次";
+const title = t => t.kind===MONTHLY ? `${+t.date.slice(5,7)}月分 ${t.site}（1か月分）` : `${md(t.date)} ${t.site} 開催分`;
 const yen = n => (n<0?"-":"")+"¥"+Math.abs(Number(n)||0).toLocaleString("ja-JP");
 const num = v => { const s=String(v??"").replace(/[^\d-]/g,""); return s===""||s==="-" ? "" : Number(s); };
 const addD = (d,n) => new Date(Date.parse(d+"T00:00:00Z")+n*864e5).toISOString().slice(0,10);
-/* メルカリは出さない。オークションは開催日の3日後から（データ側が古いままでも同じになるように） */
-const visible = t => t.kind!=="メルカリ" && (t.status!==ST.todo || addD(t.date,3) <= today());
+/* オークションは開催日の3日後から。メルカリ・ヤフオクは毎月最終日に1か月分を1件ずつ（2026/11〜） */
+/* eBayは翌月14日に前月分を1件 */
+const MONTHLY_SITES = [["mercari","メルカリ",0],["yahoo","ヤフオク",0],["ebay","eBay",14]], MONTHLY_FROM = "2026-11";
+const lastDay = ym => { const [y,m] = ym.split("-").map(Number); return new Date(Date.UTC(y, m, 0)).toISOString().slice(0,10); };
+const nextYm = ym => new Date(Date.UTC(+ym.slice(0,4), +ym.slice(5,7), 1)).toISOString().slice(0,7);
+const dueOf = t => { if(t.kind!==MONTHLY) return t.date; const s = MONTHLY_SITES.find(x=>x[1]===t.site); return s && s[2] ? `${nextYm(t.date.slice(0,7))}-${String(s[2]).padStart(2,"0")}` : t.date; };
+const visible = t => t.kind!=="メルカリ" && (t.kind===MONTHLY ? dueOf(t) <= today() : (t.status!==ST.todo || addD(t.date,3) <= today()));
+/* データ側にまだ無い月の分は、こちらで「俊輔の入力待ち」として出す（保存した時点でデータ側に記録される） */
+function addMonthly(list){
+  const out = list.slice(), have = new Set(list.map(x=>x.id)), t0 = today();
+  for(let ym = MONTHLY_FROM; lastDay(ym) <= t0; ym = nextYm(ym))
+    MONTHLY_SITES.forEach(([k,n])=>{ const id = `mon-${k}-${ym}`; if(!have.has(id) && dueOf({kind:MONTHLY, site:n, date:lastDay(ym)}) <= t0) out.push({id, kind:MONTHLY, date:lastDay(ym), site:n, status:ST.todo, unknown:"", reply:"", doneByS:0, askedAt:0, doneAt:0, by:"", updatedAt:0}); });
+  return out;
+}
+/* メルカリ・ヤフオクの照合：在庫/売上管理シートで、その月に売却済み・販売先が同じ行を数える */
+const ZK_API = "https://script.google.com/macros/s/AKfycbzOhUEYHb8aw2YofUdx1o9v19HzFqHBSP0cN4nfcHpvaBJX51z36H4HavxHMD37NZVcLQ/exec";
+async function checkMonthly(t, slipCount, slipAmount){
+  let zp = ""; try{ zp = localStorage.getItem("rekil-zaiko-pass") || localStorage.getItem("rekil-pass") || ""; }catch(_){}
+  let res; try{ res = await fetch(ZK_API, {method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"}, body: JSON.stringify({action:"list", pass:zp})}); }catch(_){ throw new ApiError("network"); }
+  const j = await res.json(); if(!j.ok) throw new ApiError(j.error||"error");
+  const ym = t.date.slice(0,7), rows = (j.result||[]).filter(r=>r[6]==="売却済み" && String(r[7]||"").slice(0,7)===ym && String(r[9]||"").includes(t.site))
+    .map(r=>({date:String(r[7]).slice(0,10), no:r[0], name:r[1], price:+r[8]||0}));
+  const sheetCount = rows.length, sheetAmount = rows.reduce((s,r)=>s+r.price,0);
+  return {ok: sheetCount===slipCount && sheetAmount===slipAmount, slipCount, slipAmount, sheetCount, sheetAmount, diffCount: sheetCount-slipCount, diffAmount: sheetAmount-slipAmount, rows, from: ym+"-01", until: t.date};
+}
 let fMonth="", fSite="", view="month"; try{ view = localStorage.getItem("uriage-view") || "month"; }catch(_){}
 /* 法人の期：4月始まり（第1期＝2025/4〜2026/3） */
 const kiOf = d => { const y=+d.slice(0,4), m=+d.slice(5,7); return (m>=4?y:y-1)-2024; };
@@ -300,7 +325,7 @@ const when = ms => ms ? new Date(ms).toLocaleString("ja-JP",{month:"numeric",day
 function card(t){
   const tags = [];
   if(t.checkResult) tags.push(`<span class="tag ${t.checkResult==="一致"?"ok":"ng"}">照合${esc(t.checkResult)}${t.slipCount!==""&&t.slipCount!=null?` ${t.slipCount}点 ${yen(t.slipAmount)}`:""}</span>`);
-  if(t.status!==ST.done){ const a = t.status===ST.ask ? Math.round((Date.now()-(t.askedAt||Date.now()))/864e5) : ago(t.date)-3;
+  if(t.status!==ST.done){ const a = t.status===ST.ask ? Math.round((Date.now()-(t.askedAt||Date.now()))/864e5) : ago(dueOf(t))-(t.kind===MONTHLY?0:3);
     if(a>=3) tags.push(`<span class="tag late">${a}日経過</span>`); }
   if(t.seisanResult) tags.push(`<span class="tag ${t.seisanResult==="一致"?"ok":t.seisanResult==="差異あり"?"ng":""}">${t.seisanResult==="差異あり"?"⚠ 精算書と差異":t.seisanResult==="一致"?"精算書一致":"精算書 "+esc(t.seisanResult)}</span>`);
   { const n = listOf(t).length; if(n) tags.push(`<span class="tag">出品リスト ${n}枚</span>`); }
@@ -386,13 +411,13 @@ function chkBox(r){
 function openTask(t, lastCheck){
   const isTodo=t.status===ST.todo, isAsk=t.status===ST.ask, isDone=t.status===ST.done;
   let html = `<h2><span>${esc(title(t))}</span><button class="btn sm" id="close">閉じる</button></h2>
-    <dl class="info"><dt>状態</dt><dd>${esc(t.status)}</dd><dt>開催日</dt><dd>${esc(md(t.date))}</dd><dt>オークション</dt><dd>${esc(t.site)}</dd>
+    <dl class="info"><dt>状態</dt><dd>${esc(t.status)}</dd>${t.kind===MONTHLY?`<dt>対象</dt><dd>${+t.date.slice(5,7)}月1日〜${esc(md(t.date))}に売れた分</dd><dt>販売先</dt><dd>${esc(t.site)}</dd>`:`<dt>開催日</dt><dd>${esc(md(t.date))}</dd><dt>オークション</dt><dd>${esc(t.site)}</dd>`}
       ${t.checkResult?`<dt>照合</dt><dd>${esc(t.checkResult)}（伝票 ${esc(t.slipCount)}点 ${esc(yen(t.slipAmount))}／シート ${esc(t.sheetCount)}点 ${esc(yen(t.sheetAmount))}）${t.checkedAt?" "+esc(when(t.checkedAt)):""}</dd>`:""}
       ${t.seisanResult?`<dt>精算書照合</dt><dd${t.seisanResult==="差異あり"?' style="color:#ff9b8f"':""}>${esc(t.seisanResult)}${t.seisanCount!==""&&t.seisanCount!=null?`（精算書 ${esc(t.seisanCount)}点 ${esc(yen(t.seisanAmount))}）`:""}${t.seisanMemo?"<br>"+esc(t.seisanMemo):""}</dd>`:""}
       ${t.note?`<dt>出品メモ</dt><dd>${esc(t.note)}</dd>`:""}
       ${t.askedAt?`<dt>祥貴へ渡した</dt><dd>${esc(when(t.askedAt))}</dd>`:""}
       ${t.doneAt?`<dt>済み</dt><dd>${esc(when(t.doneAt))}${t.by?"（"+esc(t.by)+"）":""}</dd>`:""}</dl>
-    ${lstHtml(t)}
+    ${t.kind===MONTHLY?"":lstHtml(t)}
     ${chkBox(lastCheck)}
     ${isDone?"":`<div class="field"><label>売上伝票の点数と金額（落札分の合計・税込。管理シートの「売上」と同じ基準で）</label>
       <div class="two"><input id="sc" inputmode="numeric" placeholder="点数" value="${esc(t.slipCount??"")}"><input id="sa" inputmode="numeric" placeholder="金額（円）" value="${t.slipAmount!==""&&t.slipAmount!=null?esc(Number(t.slipAmount).toLocaleString("ja-JP")):""}"></div></div>`}
@@ -409,8 +434,8 @@ function openTask(t, lastCheck){
   $("#sheet-root").innerHTML = `<div class="scrim" id="scrim"><div class="sheet" role="dialog" aria-modal="true">${html}</div></div>`;
   $("#close").onclick=closeSheet;
   lstTask = t; drawLst(); loadLists();
-  $("#lstAdd").onclick = ()=>$("#lstIn").click();
-  $("#lstIn").onchange = e=>{ const f=[...e.target.files]; e.target.value=""; addLst(f); };
+  if($("#lstAdd")) $("#lstAdd").onclick = ()=>$("#lstIn").click();
+  if($("#lstIn")) $("#lstIn").onchange = e=>{ const f=[...e.target.files]; e.target.value=""; addLst(f); };
   $("#scrim").addEventListener("click", e=>{ if(e.target.id==="scrim") closeSheet(); });
   $(".btns").addEventListener("click", async e=>{
     const to=e.target.dataset.to; if(!to) return;
@@ -427,11 +452,11 @@ function openTask(t, lastCheck){
     try{
       if(to==="check"||to==="done"){
         let r;
-        try{ r = await api("check", {task:Object.assign({}, base, {slipCount, slipAmount})}); }
+        try{ r = t.kind===MONTHLY ? await checkMonthly(t, slipCount, slipAmount) : await api("check", {task:Object.assign({}, base, {slipCount, slipAmount})}); }
         catch(err){ if(err.code==="unknown_action") throw new ApiError("old_backend"); throw err; }
         if(!r.ok || to==="check"){ openTask(tasks.find(x=>x.id===t.id)||keepT, r); toast(r.ok?"一致しました":"合っていません"); return; }
       }
-      await api("save", {task:Object.assign({}, base, {status})});
+      await api("save", {task:Object.assign({}, base, {status}, t.kind===MONTHLY && slipCount!=="" ? {slipCount, slipAmount} : {})});
       closeSheet();
       toast(to==="ask" ? "祥貴へ渡しました（メールでお知らせしました）" : to==="done" ? "一致したので済みにしました" : to==="todo" ? "入力待ちに戻しました" : to==="back" ? "俊輔に戻しました（メールでお知らせしました）" : "保存しました");
     }catch(err){ openTask(keepT, lastCheck);
