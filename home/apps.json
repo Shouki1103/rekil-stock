@@ -217,6 +217,12 @@
      "url": "../yushi/",
      "icon": "../yushi/icon-180.png",
      "owner": true
+    },
+    {
+     "id": "shime",
+     "name": "締めチェック",
+     "url": "../shime/",
+     "icon": "../shime/icon-180.png"
     }
    ]
   },
@@ -258,6 +264,12 @@
      "name": "定期作業",
      "url": "../teiki/",
      "icon": "../teiki/icon-180.png"
+    },
+    {
+     "id": "check",
+     "name": "動作チェック",
+     "url": "../check/",
+     "icon": "../check/icon-180.png"
     }
    ]
   }

@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="締めチェック">
+<meta name="theme-color" content="#0d1014">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<title>月末の締めチェック</title>
+<style>:root{--bg:#14181d;--surface:#1d232a;--line:#2f3740;--fg:#e8ebee;--muted:#9aa4af;--accent:#f2a541;--steel:#0d1014;--danger:#ff5d4d;--ok:#5fcf7a;color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+html,body{background:var(--bg);color:var(--fg);margin:0}
+html{height:100%;overflow:hidden;overscroll-behavior:none}
+body{font-family:"Hiragino Sans","Yu Gothic",system-ui,sans-serif;font-size:15px;line-height:1.55;position:fixed;inset:0;overflow:hidden;display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px)}
+header{flex:0 0 auto;background:var(--steel);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:900;font-size:18px;white-space:nowrap}
+.brand i{display:inline-block;width:12px;height:22px;background:repeating-linear-gradient(-45deg,var(--accent) 0 5px,#1d2228 5px 10px);border-radius:2px}
+.hb{font:inherit;font-size:12px;color:var(--muted);background:none;border:1px solid var(--line);border-radius:8px;padding:4px 10px;cursor:pointer;white-space:nowrap}
+.tabs{flex:0 0 auto;display:flex;gap:6px;padding:8px max(14px,calc((100% - 640px)/2)) 0;overflow-x:auto}
+.tabs button{flex:1 0 auto;font:inherit;font-size:14px;font-weight:700;min-height:38px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--muted);padding:0 12px}
+.tabs button.on{background:var(--accent);color:#14181d;border-color:var(--accent)}
+main{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:10px max(14px,calc((100% - 640px)/2)) calc(90px + env(safe-area-inset-bottom,0px))}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:8px}
+.card h2{font-size:13px;color:var(--muted);margin:0 0 6px;font-weight:700}
+h3{font-size:13px;color:var(--muted);margin:16px 2px 8px}
+.row{display:flex;align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--line)}.row:first-of-type{border-top:0}
+.row .t{flex:1;min-width:0}.row .t b{display:block;font-size:14px;font-weight:600}.row .t small{display:block;color:var(--muted);font-size:12px}
+.tag{font-size:11px;border:1px solid var(--line);border-radius:6px;padding:1px 6px;color:var(--muted);flex:0 0 auto;white-space:nowrap}
+.tag.a{color:#14181d;background:var(--accent);border-color:var(--accent)}.tag.r{color:#fff;background:var(--danger);border-color:var(--danger)}.tag.g{color:#14181d;background:var(--ok);border-color:var(--ok)}
+.btn{font:inherit;font-size:14px;min-height:40px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--fg);padding:0 14px;cursor:pointer}
+.btn.p{background:var(--accent);color:#14181d;border-color:var(--accent);font-weight:700}
+input,select,textarea{font:inherit;font-size:16px;width:100%;min-height:42px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--fg);padding:8px 12px}
+textarea{min-height:90px}
+label.f{display:block;font-size:12px;color:var(--muted);margin:8px 0 4px}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin:4px 0 8px}.chips button{font:inherit;font-size:13px;min-height:32px;border-radius:16px;border:1px solid var(--line);background:var(--surface);color:var(--muted);padding:0 12px}.chips button.on{background:var(--accent);color:#14181d;border-color:var(--accent)}
+.muted{color:var(--muted);font-size:12px}.num{font-variant-numeric:tabular-nums}
+.empty{color:var(--muted);text-align:center;padding:24px 0;font-size:14px}
+.sheet{position:fixed;inset:0;z-index:60;background:#000a;display:flex;align-items:flex-end;justify-content:center}.sheet[hidden]{display:none}
+.sheet .box{background:var(--surface);border-top:1px solid var(--line);border-radius:18px 18px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom,0px));width:min(640px,100%);max-height:90%;overflow:auto}
+.toast{position:fixed;left:50%;bottom:calc(30px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:#000d;color:#fff;padding:8px 16px;border-radius:20px;font-size:14px;opacity:0;transition:.2s;pointer-events:none;z-index:90}.toast.show{opacity:1}
+a{color:var(--accent)}
+</style>
+</head>
+<body>
+<script src="../lib/offline.js"></script>
+<script>/* rekil-common */</script>
+<header><div class="brand"><i></i>月末の締めチェック</div><div></div></header>
+
+<main>
+
+<div style="display:flex;gap:8px;align-items:center;margin-bottom:8px"><select id="mon" style="flex:1"></select><button class="hb" id="re" type="button">↻</button></div>
+<div class="card"><div style="display:flex;justify-content:space-between;align-items:center"><b id="ttl"></b><b id="pct" class="num"></b></div>
+<div style="height:10px;border-radius:5px;background:var(--line);margin-top:8px;overflow:hidden"><div id="bar" style="height:100%;width:0;background:var(--accent)"></div></div></div>
+<div id="out"></div>
+<p class="muted">自動：アプリやClaudeの記録から自動で判定（✓は済み）。手動：自分でチェック（この端末に保存）。</p>
+
+</main>
+<script>
+const APP_VERSION = "2026-11-26-1";
+
+const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const ls = { get(k,d){ try{ const v = localStorage.getItem(k); return v==null ? d : JSON.parse(v); }catch(_){ return d; } }, set(k,v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(_){} } };
+const today = () => new Date(Date.now()+9*3600e3).toISOString().slice(0,10);
+const W = "日月火水木金土";
+const md = d => { const x = new Date(d+"T00:00:00Z"); return `${x.getUTCMonth()+1}/${x.getUTCDate()}(${W[x.getUTCDay()]})`; };
+const yen = n => (Math.round(+n||0)).toLocaleString("ja-JP") + "円";
+function toast(t){ let el = $("#toast"); if(!el){ el = document.createElement("div"); el.id="toast"; el.className="toast"; document.body.appendChild(el); } el.textContent=t; el.classList.add("show"); clearTimeout(toast.t); toast.t=setTimeout(()=>el.classList.remove("show"),1800); }
+const getPass = (...keys) => { try{ for(const k of [...keys,"rekil-pass"]){ const v = localStorage.getItem(k); if(v) return v; } }catch(_){} return ""; };
+async function gas(url, body){ const r = await fetch(url, {method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"}, body: JSON.stringify(body)}); const j = await r.json(); if(!j.ok) throw new Error(j.error||"error"); return j; }
+async function getJSON(path){ const r = await fetch(path+"?v="+Date.now(), {cache:"no-store"}); return r.json(); }
+function tabs(key, def, onChange){ let cur = ls.get(key, def); const set = () => { $$("[data-tab]").forEach(b=>b.classList.toggle("on", b.dataset.tab===cur)); $$("[data-view]").forEach(v=>v.hidden = v.dataset.view!==cur); onChange && onChange(cur); };
+  document.addEventListener("click", e=>{ const b = e.target.closest("[data-tab]"); if(!b) return; cur = b.dataset.tab; ls.set(key, cur); set(); }); set(); return () => cur; }
+async function checkUpdate(){ try{ const r=await fetch(location.pathname+"?v="+Date.now(),{cache:"no-store"}); const t=await r.text(); const m=t.match(/const APP_VERSION = "([^"]+)"/); if(m && m[1]!==APP_VERSION) location.replace(location.pathname+"?v="+encodeURIComponent(m[1])); }catch(_){} }
+if(location.protocol.startsWith("http")){ checkUpdate(); document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="visible") checkUpdate(); }); }
+
+
+const G = id => `https://script.google.com/macros/s/${id}/exec`;
+const UR = G("AKfycby_jyb7iNU30-66PBZz1tePhqZDMFmtik2SY48w2lqBxRPTJ38Xiwyxn1i9DQPTvILs");
+let U = ls.get("uriage-data", null), SH = ls.get("shorui", null), TK = ls.get("rekil-home-tasks", []), DN = ls.get("rekil-home-sdone", {}), man = ls.get("shime-man", {});
+const addM = (m,n) => new Date(Date.UTC(+m.slice(0,4), +m.slice(5,7)-1+n, 1)).toISOString().slice(0,7);
+const lastDay = m => new Date(Date.UTC(+m.slice(0,4), +m.slice(5,7), 0)).toISOString().slice(0,10);
+/* 手でチェックする項目（3月は決算の棚卸しも） */
+const MANUAL = m => [["私物の購入・販売の処理（シートの処理済みチェック）"],["在庫/売上管理シートの月末在庫（出品中商品の在庫金額・点数）"],["TKCの仕訳を税理士報告と照らして確認"],...(m.endsWith("-03") ? [["決算の棚卸し（ラックごとに実物を確認）"],["決算の在庫評価・未払・前払の確認"]] : [])];
+function sections(m){
+  const nx = addM(m,1), t = today(), S = [];
+  /* 売上入力 */
+  if(U && U.tasks){ const ts = U.tasks.filter(x=>x.kind!=="メルカリ" && String(x.date).slice(0,7)===m);
+    const ids = new Set(ts.map(x=>x.id)); [["mercari","メルカリ"],["yahoo","ヤフオク"],["ebay","eBay"]].forEach(([k,n])=>{ const id = `mon-${k}-${m}`; if(m>="2026-11" && !ids.has(id)) ts.push({id, site:n, date:lastDay(m), kind:"月次", status:"俊輔の入力待ち"}); });
+    S.push({h:"売上入力", items: ts.sort((a,b)=>String(a.date).localeCompare(b.date)).map(x=>({t: x.kind==="月次" ? `${x.site}（1か月分）` : `${md(String(x.date).slice(0,10))} ${x.site}`, ok: x.status==="済み", s: x.status==="済み" ? "" : x.status, u:"../uriage/"}))}); }
+  else S.push({h:"売上入力", items:[{t:"売上入力のデータが読めません（暗証番号を入れてください）", ok:false, u:"../uriage/"}]});
+  /* 書類保存（前月分を翌月に保存） */
+  if(SH && SH.sites){ const SAME = /SAISON|JCB/; const due = s => { const base = (SAME.test(s.name)||s.day==="end") ? m : nx; return s.day==="end" ? lastDay(base) : `${base}-${String(s.day).padStart(2,"0")}`; };
+    const items = SH.sites.filter(s=>!/TKC仕訳/.test(s.name) && !(s.from && due(s) < s.from)).map(s=>{ const r = (SH.done[s.name]||{})[m]; return {t:s.name, ok:!!r, s: r ? (/なし/.test(r)?"明細なし":"") : (due(s) < t ? `未保存（期日 ${md(due(s))}）` : `期日 ${md(due(s))}`), wait: !r && due(s) >= t, u:"../shorui/"}; });
+    S.push({h:"書類保存", items});
+    const tkc = SH.sites.filter(s=>/TKC仕訳/.test(s.name)).map(s=>{ const r = (SH.done[s.name]||{})[m]; return {t:s.name.replace("（TKC仕訳）","")+"の仕訳", ok:!!r, s: r ? "" : "未登録", u:"../shorui/"}; });
+    const k = id => DN[`${id}@${nx}`];
+    tkc.push({t:"PayPayクレジットの仕訳データ", ok:!!k("paypay"), s: k("paypay")||"", u:"../teiki/"}, {t:"役員立替レシートの仕訳データ", ok:!!k("tatekae"), s: k("tatekae")||"", u:"../keihi/"});
+    S.push({h:"仕訳", items:tkc}); }
+  /* 翌月にやる毎月の定期作業（前月分の処理） */
+  const mt = TK.filter(x=>x.day!=null && x.day!=="end");
+  S.push({h:`${+nx.slice(5)}月にやる${+m.slice(5)}月分の定期作業`, items: mt.map(x=>{ const d = `${nx}-${String(x.day).padStart(2,"0")}`, v = DN[`${x.id}@${nx}`]; return {t:`${+x.day}日 ${x.t}`, ok:!!v, s: v || (d < t ? "未完了" : ""), wait: !v && d >= t, u:"../teiki/"}; })});
+  S.push({h:"手動チェック", manual:true, items: MANUAL(m).map(([x])=>({t:x, ok:!!man[`${m}|${x}`], key:`${m}|${x}`}))});
+  return S;
+}
+function render(){
+  const m = $("#mon").value; const S = sections(m); let all = 0, ok = 0;
+  S.forEach(s=>s.items.forEach(i=>{ if(i.wait) return; all++; if(i.ok) ok++; }));
+  $("#ttl").textContent = `${+m.slice(0,4)}年${+m.slice(5)}月の締め`; const p = all ? Math.round(ok/all*100) : 0;
+  $("#pct").textContent = `${ok}/${all}（${p}%）`; $("#bar").style.width = p+"%";
+  $("#out").innerHTML = S.map(s=>{ const n = s.items.filter(i=>!i.ok && !i.wait).length; return `<details class="card" ${n?"open":""}><summary style="cursor:pointer;display:flex;justify-content:space-between;gap:8px"><b>${esc(s.h)}</b><span class="tag ${n?"r":"g"}">${n?`残り${n}`:"✓ 完了"}</span></summary>
+    ${s.items.map(i=> s.manual ? `<label class="row" style="cursor:pointer"><input type="checkbox" data-k="${esc(i.key)}" ${i.ok?"checked":""} style="width:22px;min-height:22px;accent-color:var(--accent)"><span class="t"><b>${esc(i.t)}</b></span></label>`
+      : `<a class="row" style="text-decoration:none;color:inherit" href="${i.u}"><span style="width:22px;text-align:center;font-weight:800;color:${i.ok?"var(--ok)":i.wait?"var(--muted)":"var(--danger)"}">${i.ok?"✓":i.wait?"…":"✕"}</span><span class="t"><b style="${i.ok?"opacity:.6":""}">${esc(i.t)}</b>${i.s?`<small>${esc(i.s)}</small>`:""}</span></a>`).join("") || '<p class="muted">対象なし</p>'}</details>`; }).join("");
+}
+document.addEventListener("change", e=>{ const c = e.target.closest("[data-k]"); if(c){ if(c.checked) man[c.dataset.k] = today(); else delete man[c.dataset.k]; ls.set("shime-man", man); render(); } });
+function months(){ const cur = today().slice(0,7), ms = [addM(cur,-1), addM(cur,-2), cur, addM(cur,-3)]; $("#mon").innerHTML = ms.map(x=>`<option value="${x}">${+x.slice(0,4)}年${+x.slice(5)}月分${x===addM(cur,-1)?"（前月）":x===cur?"（今月）":""}</option>`).join(""); }
+$("#mon").onchange = render;
+async function load(){
+  const p = getPass("rekil-uriage-pass");
+  await Promise.all([
+    gas(UR, {action:"list", pass:p}).then(j=>{ if(j.data){ U = j.data; ls.set("uriage-data", {tasks:U.tasks}); } }).catch(()=>{}),
+    getJSON("../shorui/status.json").then(j=>{ if(j && j.sites){ SH = j; ls.set("shorui", j); } }).catch(()=>{}),
+    getJSON("../home/tasks.json").then(j=>{ if(j && j.tasks){ TK = j.tasks; ls.set("rekil-home-tasks", TK); } }).catch(()=>{}),
+    getJSON("../home/done.json").then(j=>{ if(j && j.done){ DN = j.done; ls.set("rekil-home-sdone", DN); } }).catch(()=>{}),
+  ]); render(); }
+$("#re").onclick = load;
+months(); render(); load();
+
+</script>
+<script>/* 共通：電波がなくても開ける・ホームへ戻るボタン */if("serviceWorker" in navigator&&location.protocol.startsWith("http"))navigator.serviceWorker.register("../sw.js",{scope:"../"}).catch(()=>{});try{if(sessionStorage.getItem("rekil-from-home")&&!/\/home\/?$/.test(location.pathname)){const b=document.createElement("a");b.href="../home/";b.textContent="⌂";b.setAttribute("aria-label","ReKiLホームへ");b.style.cssText="position:fixed;right:12px;bottom:calc(84px + env(safe-area-inset-bottom,0px));z-index:70;width:44px;height:44px;border-radius:22px;background:#2a313a;color:#fff;font-size:22px;display:flex;align-items:center;justify-content:center;text-decoration:none;box-shadow:0 4px 16px #0008;opacity:.9";document.body.appendChild(b)}}catch(_){}</script>
+<script src="../lib/feedback.js"></script>
+</body>
+</html>
