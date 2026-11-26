@@ -1,0 +1,140 @@
+{
+ "updated": "2026-11-26",
+ "rows": [
+  {
+   "month": "26年10月分",
+   "carrier": "Economy",
+   "req": false,
+   "reqAt": "",
+   "got": false,
+   "gotAt": "",
+   "memo": "10月はEconomyの発送なし（申請不要）"
+  },
+  {
+   "month": "26年10月分",
+   "carrier": "FedEx",
+   "req": false,
+   "reqAt": "",
+   "got": false,
+   "gotAt": "",
+   "memo": "10月はFedExの発送なし（申請不要）"
+  },
+  {
+   "month": "26年10月分",
+   "carrier": "DHL",
+   "req": true,
+   "reqAt": "2026/11/05",
+   "got": true,
+   "gotAt": "2026/11/05",
+   "memo": "DHL輸出許可書11件を保存"
+  },
+  {
+   "month": "26年10月分",
+   "carrier": "eBay【真贋商品】",
+   "req": true,
+   "reqAt": "2026/11/05",
+   "got": true,
+   "gotAt": "2026/11/06",
+   "memo": "eBayから追跡番号一覧を受領"
+  },
+  {
+   "month": "26年10月分",
+   "carrier": "DHL【真贋商品】",
+   "req": true,
+   "reqAt": "2026/11/06",
+   "got": true,
+   "gotAt": "2026/11/13",
+   "memo": "28件の輸出許可書を保存"
+  },
+  {
+   "month": "26年11月分",
+   "carrier": "Economy",
+   "req": false,
+   "reqAt": "",
+   "got": false,
+   "gotAt": "",
+   "memo": ""
+  },
+  {
+   "month": "26年11月分",
+   "carrier": "FedEx",
+   "req": false,
+   "reqAt": "",
+   "got": false,
+   "gotAt": "",
+   "memo": ""
+  },
+  {
+   "month": "26年11月分",
+   "carrier": "DHL",
+   "req": false,
+   "reqAt": "",
+   "got": false,
+   "gotAt": "",
+   "memo": ""
+  },
+  {
+   "month": "26年11月分",
+   "carrier": "eBay【真贋商品】",
+   "req": false,
+   "reqAt": "",
+   "got": false,
+   "gotAt": "",
+   "memo": ""
+  },
+  {
+   "month": "26年11月分",
+   "carrier": "DHL【真贋商品】",
+   "req": false,
+   "reqAt": "",
+   "got": false,
+   "gotAt": "",
+   "memo": ""
+  },
+  {
+   "month": "26年12月分",
+   "carrier": "Economy",
+   "req": false,
+   "reqAt": "",
+   "got": false,
+   "gotAt": "",
+   "memo": ""
+  },
+  {
+   "month": "26年12月分",
+   "carrier": "FedEx",
+   "req": false,
+   "reqAt": "",
+   "got": false,
+   "gotAt": "",
+   "memo": ""
+  },
+  {
+   "month": "26年12月分",
+   "carrier": "DHL",
+   "req": false,
+   "reqAt": "",
+   "got": false,
+   "gotAt": "",
+   "memo": ""
+  },
+  {
+   "month": "26年12月分",
+   "carrier": "eBay【真贋商品】",
+   "req": false,
+   "reqAt": "",
+   "got": false,
+   "gotAt": "",
+   "memo": ""
+  },
+  {
+   "month": "26年12月分",
+   "carrier": "DHL【真贋商品】",
+   "req": false,
+   "reqAt": "",
+   "got": false,
+   "gotAt": "",
+   "memo": ""
+  }
+ ]
+}

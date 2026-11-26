@@ -126,6 +126,12 @@
      "name": "発送待ち",
      "url": "../hassou/",
      "icon": "../hassou/icon-180.png"
+    },
+    {
+     "id": "yushutsu",
+     "name": "輸出許可書",
+     "url": "../yushutsu/",
+     "icon": "../yushutsu/icon-180.png"
     }
    ]
   },
@@ -171,6 +177,12 @@
      "url": "../keihi/",
      "icon": "../keihi/icon-180.png",
      "owner": true
+    },
+    {
+     "id": "shorui",
+     "name": "書類チェック",
+     "url": "../shorui/",
+     "icon": "../shorui/icon-180.png"
     }
    ]
   },
