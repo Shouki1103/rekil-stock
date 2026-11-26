@@ -37,7 +37,7 @@ input,select,textarea{font:inherit;font-size:16px;width:100%;min-height:42px;bor
 textarea{min-height:90px}
 label.f{display:block;font-size:12px;color:var(--muted);margin:8px 0 4px}
 .chips{display:flex;gap:6px;flex-wrap:wrap;margin:4px 0 8px}.chips button{font:inherit;font-size:13px;min-height:32px;border-radius:16px;border:1px solid var(--line);background:var(--surface);color:var(--muted);padding:0 12px}.chips button.on{background:var(--accent);color:#14181d;border-color:var(--accent)}
-.mcal{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin:0 0 10px}.mcal .wh{font-size:11px;color:var(--muted);text-align:center}.mcal button{font:inherit;min-height:44px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--fg);padding:2px 0;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:2px;font-size:13px}.mcal button:disabled{opacity:.35;background:transparent}.mcal button.td{border-color:var(--accent);color:var(--accent);font-weight:800}.mcal .dots{display:flex;gap:2px;flex-wrap:wrap;justify-content:center;max-width:90%}.mcal .dots i{width:6px;height:6px;border-radius:3px;background:var(--accent)}.mcal .dots i.p{background:transparent;border:1px solid var(--muted)}.mcal .mo{grid-column:1/-1;font-size:12px;font-weight:700;color:var(--muted);margin-top:4px}.card.flash{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent) inset;transition:box-shadow .3s}.fsel{margin:4px 0 8px}#toTop{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));z-index:65;min-height:44px;border-radius:22px;border:0;background:var(--accent);color:#14181d;font:inherit;font-weight:800;font-size:14px;padding:0 18px;box-shadow:0 4px 16px #0008}#toTop[hidden]{display:none}.ymbar{display:flex;gap:6px;align-items:center;margin:0 0 8px}.ymbar select{flex:1}.ymbar .btn{min-width:44px;padding:0 10px}.ymbar .btn[hidden]{display:none}.mcal button.past{opacity:.6}.card.pastc{opacity:.75}
+.mcal{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin:0 0 10px}.mcal .wh{font-size:11px;color:var(--muted);text-align:center}.mcal button{font:inherit;min-height:44px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--fg);padding:2px 0;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:2px;font-size:13px}.mcal button:disabled{opacity:.35;background:transparent}.mcal button.td{border-color:var(--accent);color:var(--accent);font-weight:800}.mcal .dots{display:flex;gap:2px;flex-wrap:wrap;justify-content:center;max-width:90%}.mcal .dots i{width:6px;height:6px;border-radius:3px;background:var(--accent)}.mcal .dots i.p{background:transparent;border:1px solid var(--muted)}.mcal .mo{grid-column:1/-1;font-size:12px;font-weight:700;color:var(--muted);margin-top:4px}.card.flash{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent) inset;transition:box-shadow .3s}.fsel{margin:4px 0 8px}.mb{font:inherit;font-size:12px;min-height:32px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--muted);padding:0 8px;flex:0 0 auto}.mb.has{border-color:var(--accent);color:var(--accent)}.memo{display:block;margin-top:3px;font-size:12.5px;color:var(--fg);background:#f2a54118;border-left:3px solid var(--accent);border-radius:4px;padding:3px 7px;white-space:pre-wrap}#toTop{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));z-index:65;min-height:44px;border-radius:22px;border:0;background:var(--accent);color:#14181d;font:inherit;font-weight:800;font-size:14px;padding:0 18px;box-shadow:0 4px 16px #0008}#toTop[hidden]{display:none}.ymbar{display:flex;gap:6px;align-items:center;margin:0 0 8px}.ymbar select{flex:1}.ymbar .btn{min-width:44px;padding:0 10px}.ymbar .btn[hidden]{display:none}.mcal button.past{opacity:.6}.card.pastc{opacity:.75}
 .muted{color:var(--muted);font-size:12px}.num{font-variant-numeric:tabular-nums}
 .empty{color:var(--muted);text-align:center;padding:24px 0;font-size:14px}
 .sheet{position:fixed;inset:0;z-index:60;background:#000a;display:flex;align-items:flex-end;justify-content:center}.sheet[hidden]{display:none}
@@ -71,9 +71,10 @@ a{color:var(--accent)}
 <div class="sheet" id="set" hidden><div class="box"><h3 style="margin-top:0">表示するオークション</h3><div id="setList"></div><p><button class="btn p" id="setOk" type="button">閉じる</button></p></div></div>
 
 </main>
+<div class="sheet" id="memoS" hidden><div class="box"><h2 id="memoT" style="font-size:15px;margin:0 0 4px"></h2><p class="muted" id="memoSub" style="margin:0 0 8px"></p><textarea id="memoIn" placeholder="例：下見で○○を確認／出品締切に注意"></textarea><div style="display:flex;gap:8px;margin-top:10px"><button type="button" class="btn" id="memoDel">消す</button><span style="flex:1"></span><button type="button" class="btn" id="memoX">閉じる</button><button type="button" class="btn p" id="memoOk">保存</button></div><p class="muted" style="margin-top:8px">メモはこの端末に保存されます。</p></div></div>
 <button type="button" id="toTop" hidden>▲ カレンダーに戻る</button>
 <script>
-const APP_VERSION = "2026-11-27-13";
+const APP_VERSION = "2026-11-27-15";
 
 const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -112,6 +113,10 @@ function events(from, to){
     dates(r, shift(from,-7), n+60).forEach(d=>{ if(d>=from && d<to) ev.push({d, k:"開催", r}); if(r.pre!=null){ const p = shift(d,-r.pre); if(p>=from && p<to) ev.push({d:p, k:"下見開始", r, of:d}); } }); });
   return ev.sort((a,b)=>a.d.localeCompare(b.d) || (a.k==="開催"?-1:1));
 }
+/* 各日・各オークションのメモ（この端末に保存） */
+let memos = ls.get("auc-memo", {});
+const memoKey = e => [e.d, e.k, e.r.a, e.r.g].join("|");
+let memoCur = "", showPast = false;
 /* 表示する月（前後どの月でも見られる） */
 let calYM = today().slice(0,7);
 const ymAdd = (ym, n) => { const [y,m] = ym.split("-").map(Number), d = new Date(Date.UTC(y, m-1+n, 1)); return d.toISOString().slice(0,7); };
@@ -134,7 +139,8 @@ function renderCal(){
     mc += `<button type="button" data-jump="${d}" class="${d===t?"td":""}${d<t?" past":""}" ${!es.length?"disabled":""}>${+d.slice(8)}<span class="dots">${es.slice(0,4).map(e=>`<i class="${e.k==="開催"?"":"p"}"></i>`).join("")}</span></button>`;
   }
   $("#mcal").innerHTML = mc;
-  $("#cal").innerHTML = Object.keys(by).map(d=>`<div class="card${d<t?" pastc":""}" id="d-${d}"><h2>${md(d)}${d===t?" 今日":""}</h2>${by[d].map(e=>`<div class="row"><span class="tag ${e.k==="開催"?"a":""}">${e.k}</span><span class="t"><b>${esc(e.r.a)}</b><small>${esc(e.r.g)}${e.of?`（${md(e.of)}開催分）`:""}${e.k==="開催"&&e.r.memo?" ・"+esc(e.r.memo):""}</small></span></div>`).join("")}</div>`).join("") || '<div class="empty">この月の予定はありません</div>';
+  const pastN = Object.keys(by).filter(d=>d<t).length;
+  $("#cal").innerHTML = (calYM===thisYM && pastN ? `<button type="button" class="btn" id="showPast" style="width:100%;margin-bottom:10px">${showPast?"今日より前の日を隠す":`今日より前の日も表示（${pastN}日）`}</button>` : "") + Object.keys(by).filter(d=>calYM!==thisYM || showPast || d>=t).map(d=>`<div class="card${d<t?" pastc":""}" id="d-${d}"><h2>${md(d)}${d===t?" 今日":""}</h2>${by[d].map(e=>{ const mk = memoKey(e), mt = memos[mk]||""; return `<div class="row"><span class="tag ${e.k==="開催"?"a":""}">${e.k}</span><span class="t"><b>${esc(e.r.a)}</b><small>${esc(e.r.g)}${e.of?`（${md(e.of)}開催分）`:""}${e.k==="開催"&&e.r.memo?" ・"+esc(e.r.memo):""}</small>${mt?`<span class="memo">${esc(mt)}</span>`:""}</span><button type="button" class="mb${mt?" has":""}" data-memo="${esc(mk)}" data-mt="${esc(e.r.a+"　"+md(e.d)+" "+e.k)}" data-ms="${esc(e.r.g)}">${mt?"メモ✎":"＋メモ"}</button></div>`; }).join("")}</div>`).join("") || '<div class="empty">この月の予定はありません</div>';
   const man = S.rules.filter(r=>r.manual && !hide.includes(r.a));
   $("#note").innerHTML = (calYM!==thisYM ? "今月以外は、今の開催ルール（曜日・日にち）から計算した予定です。臨時休みや日程変更は反映されません。<br>" : "") + (man.length ? man.map(r=>`${esc(r.a)}：${esc(r.memo)}`).join("<br>")+"<br>" : "") + esc(S.note||"");
 }
@@ -160,11 +166,15 @@ function renderSoba(){
 }
 function renderSet(){ const names = [...new Set(S.rules.map(r=>r.a))]; $("#setList").innerHTML = names.map(a=>`<label class="row"><input type="checkbox" style="width:22px;min-height:22px" data-h="${esc(a)}" ${hide.includes(a)?"":"checked"}><span class="t"><b>${esc(a)}</b></span></label>`).join(""); }
 document.addEventListener("click", e=>{
+  const mb = e.target.closest("[data-memo]"); if(mb){ memoCur = mb.dataset.memo; $("#memoT").textContent = mb.dataset.mt; $("#memoSub").textContent = mb.dataset.ms; $("#memoIn").value = memos[memoCur]||""; $("#memoS").hidden = false; setTimeout(()=>$("#memoIn").focus(), 50); return; }
+  if(e.target.id==="memoOk" || e.target.id==="memoDel"){ const v = e.target.id==="memoDel" ? "" : $("#memoIn").value.trim(); if(v) memos[memoCur] = v; else delete memos[memoCur]; ls.set("auc-memo", memos); $("#memoS").hidden = true; const y = document.querySelector("main").scrollTop; renderCal(); document.querySelector("main").scrollTop = y; return; }
+  if(e.target.id==="memoX" || e.target.id==="memoS"){ $("#memoS").hidden = true; return; }
   if(e.target.id==="toTop"){ const m = document.querySelector("main"); m.scrollTo({top:0, behavior:"smooth"}); return; }
   if(e.target.id==="ymPrev"){ calYM = ymAdd(calYM,-1); renderCal(); return; }
   if(e.target.id==="ymNext"){ calYM = ymAdd(calYM,1); renderCal(); return; }
   if(e.target.id==="ymNow"){ calYM = today().slice(0,7); renderCal(); return; }
-  const j = e.target.closest("[data-jump]"); if(j){ const c = document.getElementById("d-"+j.dataset.jump); if(c){ c.scrollIntoView({behavior:"smooth", block:"start"}); c.classList.add("flash"); setTimeout(()=>c.classList.remove("flash"), 1500); } return; }
+  if(e.target.id==="showPast"){ showPast = !showPast; renderCal(); return; }
+  const j = e.target.closest("[data-jump]"); if(j){ if(j.dataset.jump < today() && !showPast){ showPast = true; renderCal(); } const c = document.getElementById("d-"+j.dataset.jump); if(c){ c.scrollIntoView({behavior:"smooth", block:"start"}); c.classList.add("flash"); setTimeout(()=>c.classList.remove("flash"), 1500); } return; }
   if(e.target.id==="setBtn"){ renderSet(); $("#set").hidden = false; }
   if(e.target.id==="setOk" || e.target.id==="set"){ $("#set").hidden = true; all(); }
 });
