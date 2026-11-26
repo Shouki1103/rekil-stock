@@ -140,6 +140,12 @@
      "name": "ラウンジ",
      "url": "../lounge/",
      "icon": "../lounge/icon-180.png"
+    },
+    {
+     "id": "search",
+     "name": "横断検索",
+     "url": "../search/",
+     "icon": "../search/icon-180.png"
     }
    ]
   },
@@ -157,6 +163,12 @@
      "name": "説明書",
      "url": "../manual/",
      "icon": "../manual/icon-180.png"
+    },
+    {
+     "id": "koushin",
+     "name": "更新履歴",
+     "url": "../koushin/",
+     "icon": "../koushin/icon-180.png"
     }
    ]
   }

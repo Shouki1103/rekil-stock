@@ -48,6 +48,9 @@ header{gap:8px}.brand{white-space:nowrap;flex:0 0 auto}.hctl{display:flex;align-
 .fold{display:grid;grid-template-columns:1fr 1fr;gap:3px;padding:6px;width:58px;height:58px;border-radius:14px;background:var(--surface);border:1px solid var(--line)}.fold img,.fold span{width:100%;height:100%;border-radius:4px;object-fit:cover;background:var(--line)}
 #fsheet{position:fixed;inset:0;z-index:60;background:#000a;display:flex;align-items:center;justify-content:center;padding:20px}#fsheet[hidden]{display:none}#fsheet .box{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:16px;width:min(360px,100%)}#fsheet h4{margin:0 0 12px;font-size:15px}
 .tk .who{color:var(--muted);font-size:11px;margin-left:6px}
+.kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-bottom:6px}.kpis a{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:6px 8px;text-decoration:none;color:var(--fg)}.kpis span{display:block;font-size:10.5px;color:var(--muted);white-space:nowrap}.kpis b{display:block;font-size:14px;font-variant-numeric:tabular-nums;white-space:nowrap}.kpis b.neg{color:var(--danger)}
+.qbox{display:flex;gap:6px;margin-bottom:6px}.qbox input{flex:1;font:inherit;font-size:16px;min-height:40px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--fg);padding:0 12px}
+.news{display:block;font-size:12px;color:var(--muted);text-decoration:none;padding:2px 2px 8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.news b{color:var(--accent);font-weight:700;margin-right:6px}
 .warnline{font-size:12px;color:var(--muted);padding:6px 0 0;border-top:1px solid var(--line);margin-top:4px}
 </style>
 </head>
@@ -58,6 +61,9 @@ header{gap:8px}.brand{white-space:nowrap;flex:0 0 auto}.hctl{display:flex;align-
 <nav class="tabs"><button type="button" data-tab="apps">アプリ</button><button type="button" data-tab="links">リンク集</button></nav>
 <main>
  <div id="vApps">
+  <form class="qbox" id="qf" action="../search/"><input name="q" type="search" placeholder="全アプリから探す（管理番号・ブランド）" autocomplete="off"></form>
+  <div class="kpis" id="kpis" hidden></div>
+  <a class="news" id="news" href="../koushin/" hidden></a>
   <details class="todo" id="today"><summary><h2 id="todayTitle">今日やること</h2></summary><div id="todayList"><span class="ok">読み込み中…</span></div></details>
   <section class="todo" id="todo"><h2>未対応</h2><div id="todoList"><span class="ok">確認中…</span></div></section>
   <div id="groups"></div>
@@ -69,7 +75,7 @@ header{gap:8px}.brand{white-space:nowrap;flex:0 0 auto}.hctl{display:flex;align-
 </main>
 <div id="fsheet" hidden><div class="box"><h4 id="fname"></h4><div class="grid" id="fgrid"></div></div></div>
 <script>
-const APP_VERSION = "2026-11-26-2";
+const APP_VERSION = "2026-11-26-3";
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const today = () => new Date(Date.now()+9*3600e3).toISOString().slice(0,10);
@@ -289,6 +295,23 @@ let REN = []; try{ REN = JSON.parse(localStorage.getItem("renraku-tasks")||"[]")
 const renMe = () => { try{ return JSON.parse(localStorage.getItem("renraku-me")||'""'); }catch(_){ return ""; } };
 const renList = () => { const t = today(), me = renMe(); return REN.filter(x=>!x.done && (!x.assignee || !me || x.assignee===me) && (!x.due || x.due <= t)); };
 async function loadRenraku(){ const p = getPass("rekil-renraku-pass"); if(!p) return; try{ const r = await fetch(REN_API, {method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"}, body: JSON.stringify({action:"list", pass:p})}); const j = await r.json(); if(j.ok){ REN = j.tasks||[]; try{ localStorage.setItem("renraku-tasks", JSON.stringify(REN)); }catch(_){} renderToday(); } }catch(_){} }
+/* 今月の数字（在庫/売上管理シートから）。在庫アプリの暗証番号がある端末だけ */
+const ZK_API = "https://script.google.com/macros/s/AKfycbzOhUEYHb8aw2YofUdx1o9v19HzFqHBSP0cN4nfcHpvaBJX51z36H4HavxHMD37NZVcLQ/exec";
+function renderKpi(){
+  let c = null; try{ c = JSON.parse(localStorage.getItem("rekil-zaiko-cache")||"null"); }catch(_){}
+  if(!c || !c.result){ $("#kpis").hidden = true; return; }
+  const ym = today().slice(0,7), rows = c.result, t0 = Date.now();
+  const sold = rows.filter(r=>r[6]==="売却済み" && String(r[7]||"").slice(0,7)===ym), inv = rows.filter(r=>r[6]==="出品中");
+  const sale = sold.reduce((s,r)=>s+(+r[8]||0),0), pf = sold.reduce((s,r)=>s+(+r[11]||0),0), buy = rows.filter(r=>String(r[4]||"").slice(0,7)===ym).reduce((s,r)=>s+(+r[2]||0),0);
+  const old = inv.filter(r=>{ const d = Date.parse(r[4]); return d && (t0-d)/864e5 >= 180; }).length;
+  const man = v => v>=1e6 ? (v/1e4).toFixed(0)+"万" : Math.round(v).toLocaleString();
+  $("#kpis").innerHTML = [["今月の売上", man(sale)+"円"],["今月の粗利", man(pf)+"円", pf<0],["今月の仕入", man(buy)+"円"],["今月の販売", sold.length+"点"],["在庫（出品中）", inv.length.toLocaleString()+"点"],["滞留180日超", old+"点", old>0]]
+    .map(([l,v,n])=>`<a href="../dash/"><span>${l}</span><b class="${n?"neg":""}">${v}</b></a>`).join("");
+  $("#kpis").hidden = false;
+}
+async function loadKpi(){ const p = getPass("rekil-zaiko-pass"); if(!p) return; try{ const r = await fetch(ZK_API, {method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"}, body: JSON.stringify({action:"list", pass:p})}); const j = await r.json(); if(j.ok){ localStorage.setItem("rekil-zaiko-cache", JSON.stringify({at:j.at, result:j.result})); renderKpi(); } }catch(_){} }
+/* アプリの更新履歴（最新1件をホームに表示） */
+async function loadNews(){ try{ const r = await fetch("../koushin/changelog.json?v="+Date.now(), {cache:"no-store"}); const j = await r.json(); const x = (j.items||[])[0]; if(x){ $("#news").innerHTML = `<b>更新 ${esc(x.date.slice(5).replace("-","/"))}</b>${esc(x.title)}`; $("#news").hidden = false; } }catch(_){} }
 async function refresh(){
   $("#sync").textContent = "確認中…";
   failed.length = 0;
@@ -301,7 +324,7 @@ async function refresh(){
 }
 try{ Object.assign(items, JSON.parse(localStorage.getItem("rekil-home-items")||"{}")); }catch(_){}
 try{ sessionStorage.setItem("rekil-from-home","1"); }catch(_){}
-render(); renderToday(); showTab(); loadCatalog(); loadTasks(); loadDone(); loadRenraku(); refresh(); if(tab==="links"){ loadLinks(); loadAccounts(); }
+render(); renderToday(); renderKpi(); showTab(); loadKpi(); loadNews(); loadCatalog(); loadTasks(); loadDone(); loadRenraku(); refresh(); if(tab==="links"){ loadLinks(); loadAccounts(); }
 $("#sync").onclick = refresh;
 document.addEventListener("click", e=>{ if(e.target.id!=="setPass") return; const v = prompt("社内の暗証番号（ReKiL Stockなどと同じ番号）。一度入れると、ホームから開くアプリで入力不要になります"); if(!v) return; try{ localStorage.setItem("rekil-pass", v.trim()); }catch(_){} refresh(); });
 $("#edit").onclick = ()=>{ if(!isOwner()){ ownerUnlock(); return; } editing = !editing; render(); };
