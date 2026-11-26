@@ -165,7 +165,7 @@ const $ = (s, r = document) => r.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 /* ▼ Apps Script をデプロイしたときの「ウェブアプリのURL」 */
 const API_URL = "https://script.google.com/macros/s/AKfycbxkxy7ZrqL9cnVaCq6ROX0OMRfYMeDVoYT7C_U-H1D2ENsS3nax-hfNFT7dDMOsItiHTQ/exec";
-const APP_VERSION = "2026-11-27-1";
+const APP_VERSION = "2026-11-27-9";
 const CACHE = "haiki-data";
 const REASONS = ["破損", "汚れ・シミ", "劣化（ベタつき・剥がれ）", "カビ・臭い", "偽物の疑い", "修理不可", "売れ残り"];
 let items = [], query = "";

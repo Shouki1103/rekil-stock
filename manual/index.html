@@ -44,7 +44,7 @@ h3{font-size:13px;color:var(--muted);margin:12px 0 4px}ol,ul{margin:0;padding-le
   <div id="guides"></div>
 </main>
 <script>
-const APP_VERSION = "2026-11-25-1";
+const APP_VERSION = "2026-11-27-9";
 const isOwner = () => { try{ return !!localStorage.getItem("rekil-kyuyo-pass"); }catch(_){ return false; } };
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));

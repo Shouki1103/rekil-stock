@@ -57,12 +57,23 @@ a{color:var(--accent)}
   <img id="prev" alt="" style="display:none;width:100%;max-height:240px;object-fit:contain;margin-top:8px;border-radius:8px">
   <p class="muted" id="st">撮った写真から、ブランド・金額・点数を読み取ります。</p>
 </div>
+<div id="kicho" class="card" hidden>
+  <h2>在庫/売上管理シートに仕入記帳</h2>
+  <p class="muted">読み取った内容が入っています。確認・修正してから「記帳する」を押してください（仕入記帳アプリと同じ商品リストに入ります）。</p>
+  <label class="f">仕入先</label><input id="kShop" list="kShops" placeholder="例：BOOKOFF相模原" autocomplete="off"><datalist id="kShops"></datalist>
+  <label class="f">商品名</label><input id="kName" placeholder="例：GUCCIショルダーバッグ">
+  <label class="f">仕入値（円）</label><input id="kPrice" inputmode="numeric" placeholder="0">
+  <label class="f">仕入日</label><input id="kDate" type="date">
+  <label class="f">備考（任意）</label><input id="kNote" placeholder="型番など">
+  <button class="btn p" id="kGo" type="button" style="width:100%;margin-top:10px">記帳する</button>
+  <p class="muted" id="kSt"></p>
+</div>
 <div id="out"></div>
 
 </main>
 <script src="../lib/ocr.js"></script>
 <script>
-const APP_VERSION = "2026-11-26-1";
+const APP_VERSION = "2026-11-27-9";
 
 const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -102,10 +113,53 @@ $("#ph").onchange = async e => {
     const codes = [...new Set((t.match(/\b[A-Z]{1,3}\d{3,}[-\d]*\b|\b\d{2,}-\d{3,}\b/g)||[]))].slice(0,6);
     if(codes.length) h += `<div class="card"><h2>型番・管理番号らしいもの</h2>${codes.map(x=>cp("番号", x)).join("")}</div>`;
     h += `<div class="card"><h2>読み取った文字（全部）</h2><textarea readonly style="min-height:160px">${esc(t)}</textarea><button class="btn" type="button" data-cp="${esc(t)}" style="margin-top:6px">全部コピー</button></div>`;
+    fillKicho(br, pr, codes, r);
     $("#out").innerHTML = h; $("#st").textContent = "読み取りました。間違いがないか確認してから使ってください。";
   }catch(_){ $("#st").textContent = "読み取れませんでした。明るい所で、文字が大きく写るように撮り直してください。"; }
 };
 setMode();
+/* ---------- 読み取り結果をそのまま仕入記帳（仕入記帳アプリと同じデータ側） ---------- */
+const SHIIRE_API = "https://script.google.com/macros/s/AKfycbwMrGyfC24OulRxZ5xkpKnA0rPlK1Fi0wWacCv17PgV7FsUF7CPBVEKj9O5TVpwHW6y/exec";
+const kPass = () => { try{ return localStorage.getItem("rekil-shiire-pass") || localStorage.getItem("rekil-pass") || ""; }catch(_){ return ""; } };
+const jpToday = () => new Date(Date.now()+9*3600e3).toISOString().slice(0,10);
+const fmtYen = v => { const n = String(v||"").replace(/[^\d]/g,"").replace(/^0+(?=\d)/,""); return n ? Number(n).toLocaleString("ja-JP") : ""; };
+function fillKicho(br, pr, codes, r){
+  const shops = ls.get("shiire-shops", []);
+  $("#kShops").innerHTML = shops.map(x=>`<option value="${esc(x)}">`).join("");
+  if(!$("#kShop").value) $("#kShop").value = ls.get("shiire-lastshop", "") || "";
+  $("#kName").value = br[0] ? br[0] : "";
+  const price = mode==="seisan" && r.total ? r.total : (pr.length ? Math.max(...pr) : "");
+  $("#kPrice").value = fmtYen(price);
+  const d = mode==="seisan" && r.date ? String(r.date).replace(/[年月\/.]/g,"-").replace(/日/,"").replace(/-(\d)(?=-|$)/g,"-0$1") : "";
+  $("#kDate").value = /^\d{4}-\d{2}-\d{2}$/.test(d) ? d : jpToday();
+  $("#kNote").value = codes[0] || "";
+  $("#kSt").textContent = ""; $("#kGo").disabled = false; $("#kGo").textContent = "記帳する";
+  $("#kicho").hidden = false;
+}
+$("#kPrice").addEventListener("input", ()=>{ $("#kPrice").value = fmtYen($("#kPrice").value); });
+$("#kGo").onclick = async ()=>{
+  const shop = $("#kShop").value.trim(), name = $("#kName").value.trim(), price = $("#kPrice").value.replace(/[^\d]/g,""), note = $("#kNote").value.trim();
+  const date = ($("#kDate").value || jpToday()).replace(/-/g,"/");
+  if(!shop){ toast("仕入先を入れてください"); $("#kShop").focus(); return; }
+  if(!name){ toast("商品名を入れてください"); $("#kName").focus(); return; }
+  if(price===""){ toast("仕入値を入れてください"); $("#kPrice").focus(); return; }
+  const pass = kPass(); if(!pass){ toast("暗証番号が未設定です。ReKiLホームか仕入記帳アプリで一度入れてください"); return; }
+  const cid = Date.now().toString(36) + Math.random().toString(36).slice(2,8);
+  const item = {cid, shop, name, price:Number(price), note, date};
+  const b = $("#kGo"); b.disabled = true; b.textContent = "記帳中…";
+  try{
+    const res = await fetch(SHIIRE_API, {method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"}, body: JSON.stringify({action:"addMany", pass, date, items:[item]})});
+    const j = await res.json(); const r0 = j.result && j.result[0];
+    if(!j.ok || (r0 && !r0.ok)) throw new Error((r0 && r0.error) || j.error || "error");
+    ls.set("shiire-lastshop", shop);
+    const mine = ls.get("shiire-mine", []); mine.push({cid, name, price:Number(price), shop, date}); ls.set("shiire-mine", mine.slice(-300));
+    b.textContent = "記帳しました"; $("#kSt").textContent = `${date} ／ ${shop} ／ ${name} ／ ¥${Number(price).toLocaleString("ja-JP")} を記帳しました（取消は仕入記帳アプリから）。`; toast("記帳しました");
+  }catch(err){
+    b.disabled = false; b.textContent = "記帳する";
+    const m = String(err.message||"");
+    toast(m==="passcode" ? "暗証番号が違います" : /Failed to fetch|NetworkError|Load failed/.test(m) ? "通信できませんでした。電波を確認してもう一度押してください" : `記帳できませんでした（${m}）`);
+  }
+};
 
 </script>
 <script>/* 共通：電波がなくても開ける・ホームへ戻るボタン */if("serviceWorker" in navigator&&location.protocol.startsWith("http"))navigator.serviceWorker.register("../sw.js",{scope:"../"}).catch(()=>{});try{if(sessionStorage.getItem("rekil-from-home")&&!/\/home\/?$/.test(location.pathname)){const b=document.createElement("a");b.href="../home/";b.textContent="⌂";b.setAttribute("aria-label","ReKiLホームへ");b.style.cssText="position:fixed;right:12px;bottom:calc(84px + env(safe-area-inset-bottom,0px));z-index:70;width:44px;height:44px;border-radius:22px;background:#2a313a;color:#fff;font-size:22px;display:flex;align-items:center;justify-content:center;text-decoration:none;box-shadow:0 4px 16px #0008;opacity:.9";document.body.appendChild(b)}}catch(_){}</script>
