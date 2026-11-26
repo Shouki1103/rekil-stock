@@ -183,6 +183,20 @@
      "name": "書類チェック",
      "url": "../shorui/",
      "icon": "../shorui/icon-180.png"
+    },
+    {
+     "id": "shohizei",
+     "name": "消費税",
+     "url": "../shohizei/",
+     "icon": "../shohizei/icon-180.png",
+     "owner": true
+    },
+    {
+     "id": "daicho",
+     "name": "検索台帳",
+     "url": "../daicho/",
+     "icon": "../daicho/icon-180.png",
+     "owner": true
     }
    ]
   },
