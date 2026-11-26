@@ -42,6 +42,12 @@ h3{font-size:13px;color:var(--muted);margin:16px 2px 8px;font-weight:700}
 .tk{display:flex;align-items:center;gap:10px;padding:7px 0;border-top:1px solid var(--line);font-size:14px}.tk:first-of-type{border-top:0}.tk input{width:20px;height:20px;accent-color:var(--accent);flex:0 0 auto}.tk.done span{opacity:.45;text-decoration:line-through}.tk small{color:var(--danger);font-size:11px;margin-left:auto;flex:0 0 auto}.tk small.cdone{color:var(--accent)}
 #today summary{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between}#today summary::-webkit-details-marker{display:none}#today summary::after{content:"▾ 開く";font-size:12px;color:var(--muted)}#today[open] summary::after{content:"▴ 閉じる"}#today summary h2{margin:0}#today[open] summary{margin-bottom:6px}
 header{gap:8px}.brand{white-space:nowrap;flex:0 0 auto}.hctl{display:flex;align-items:center;gap:6px;min-width:0}.hctl .sync{white-space:nowrap}
+.tabs{flex:0 0 auto;display:flex;gap:6px;padding:8px max(14px,calc((100% - 612px)/2)) 0;background:var(--bg)}.tabs button{flex:1;font:inherit;font-size:14px;font-weight:700;min-height:38px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--muted)}.tabs button.on{background:var(--accent);color:#14181d;border-color:var(--accent)}
+.lk{display:flex;align-items:center;gap:8px;padding:9px 0;border-top:1px solid var(--line);color:var(--fg);text-decoration:none}.lk:first-of-type{border-top:0}.lk .t{flex:1;min-width:0}.lk .t b{color:var(--fg);display:block;font-size:14px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.lk .t small{display:block;color:var(--muted);font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.lk em{font-style:normal;font-size:10.5px;border:1px solid var(--line);border-radius:6px;padding:1px 6px;color:var(--muted);flex:0 0 auto}.lk em.claude{color:#c9a7ff}.lk em.sheet{color:#7fd38a}.lk .cp{font:inherit;font-size:12px;min-height:30px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--fg);padding:0 8px;flex:0 0 auto}
+.search{width:100%;font:inherit;font-size:16px;min-height:42px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--fg);padding:0 12px;margin-bottom:6px}
+.fold{display:grid;grid-template-columns:1fr 1fr;gap:3px;padding:6px;width:58px;height:58px;border-radius:14px;background:var(--surface);border:1px solid var(--line)}.fold img,.fold span{width:100%;height:100%;border-radius:4px;object-fit:cover;background:var(--line)}
+#fsheet{position:fixed;inset:0;z-index:60;background:#000a;display:flex;align-items:center;justify-content:center;padding:20px}#fsheet[hidden]{display:none}#fsheet .box{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:16px;width:min(360px,100%)}#fsheet h4{margin:0 0 12px;font-size:15px}
+.tk .who{color:var(--muted);font-size:11px;margin-left:6px}
 .warnline{font-size:12px;color:var(--muted);padding:6px 0 0;border-top:1px solid var(--line);margin-top:4px}
 </style>
 </head>
@@ -49,13 +55,21 @@ header{gap:8px}.brand{white-space:nowrap;flex:0 0 auto}.hctl{display:flex;align-
 <script>/* rekil-common */</script>
 
 <header><div class="brand"><i></i>ReKiL ホーム</div><div class="hctl"><button class="sync" id="sync" type="button">確認中…</button><button class="sync" id="edit" type="button">並べ替え</button></div></header>
+<nav class="tabs"><button type="button" data-tab="apps">アプリ</button><button type="button" data-tab="links">リンク集</button></nav>
 <main>
+ <div id="vApps">
   <details class="todo" id="today"><summary><h2 id="todayTitle">今日やること</h2></summary><div id="todayList"><span class="ok">読み込み中…</span></div></details>
   <section class="todo" id="todo"><h2>未対応</h2><div id="todoList"><span class="ok">確認中…</span></div></section>
   <div id="groups"></div>
+ </div>
+ <div id="vLinks" hidden>
+  <input class="search" id="lq" type="search" placeholder="リンクを探す（例：送り状、オークネット）" autocomplete="off">
+  <div id="links"><span class="ok">読み込み中…</span></div>
+ </div>
 </main>
+<div id="fsheet" hidden><div class="box"><h4 id="fname"></h4><div class="grid" id="fgrid"></div></div></div>
 <script>
-const APP_VERSION = "2026-11-26-1";
+const APP_VERSION = "2026-11-26-2";
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const today = () => new Date(Date.now()+9*3600e3).toISOString().slice(0,10);
@@ -69,6 +83,9 @@ let editing = false;
 const isOwner = () => { try{ return !!localStorage.getItem("rekil-kyuyo-pass"); }catch(_){ return false; } };
 const HIDDEN = "使わない";
 const allApps = () => { const m = {}, own = isOwner(); CATALOG.groups.forEach(g=>g.apps.forEach(a=>{ if(a.owner && !own) return; m[a.id]={...a, g:g.name}; })); return m; };
+const subApps = () => { const m = {}; (CATALOG.folderApps||[]).forEach(a=>m[a.id]=a); return m; };
+const tileBadge = a => a.folder ? a.folder.reduce((s,id)=>{ const c = subApps()[id]; return s + (c && c.badge && +badges[c.badge] || 0); },0) || "" : (a.badge && badges[a.badge] ? badges[a.badge] : "");
+const tileImg = a => a.folder ? `<span class="fold">${a.folder.slice(0,4).map(id=>{ const c = subApps()[id]; return c ? `<img src="${esc(c.icon)}" alt="" onerror="this.outerHTML='<span></span>'">` : "<span></span>"; }).join("")}</span>` : `<img src="${esc(a.icon||"x")}" alt="" onerror="this.outerHTML='<span class=ph>${esc(a.name.slice(0,1))}</span>'">`;
 /* 自分で並べ替えた配置に、新しく増えたアプリを元のグループの最後に足す */
 function groupsView(){
   const A = allApps(); const base = layout && layout.groups ? JSON.parse(JSON.stringify(layout.groups)) : CATALOG.groups.map(g=>({name:g.name, ids:g.apps.map(a=>a.id)}));
@@ -88,7 +105,7 @@ function render(){
   const A = allApps(), gs = groupsView();
   if(!editing){
     $("#groups").innerHTML = gs.filter(g=>g.ids.length && g.name!==HIDDEN).map(g=>`<h3>${esc(g.name)}</h3><div class="grid">${g.ids.map(id=>{ const a = A[id];
-      return `<a class="app" href="${esc(a.url)}"${/^https?:/.test(a.url)?' target="_blank" rel="noopener"':''}><img src="${esc(a.icon||"x")}" alt="" onerror="this.outerHTML='<span class=ph>${esc(a.name.slice(0,1))}</span>'"><span class="badge">${a.badge && badges[a.badge] ? badges[a.badge] : ""}</span><span class="n"${[...a.name].length>6?` style="font-size:${[...a.name].length>7?9.5:10}px"`:""}>${esc(a.name)}</span></a>`; }).join("")}</div>`).join("");
+      return `<a class="app" href="${a.folder?"#":esc(a.url)}"${a.folder?` data-folder="${esc(a.id)}"`:""}${/^https?:/.test(a.url||"")?' target="_blank" rel="noopener"':''}>${tileImg(a)}<span class="badge">${tileBadge(a)}</span><span class="n"${[...a.name].length>6?` style="font-size:${[...a.name].length>7?9.5:10}px"`:""}>${esc(a.name)}</span></a>`; }).join("")}</div>`).join("");
   }else{
     const names = gs.map(g=>g.name);
     $("#groups").innerHTML = `<p class="hint">↑↓で順番、右のプルダウンでグループを変えられます。「使わない」にしたアプリはホームに出なくなります（ここから戻せます）。この端末に保存されます。</p>` + gs.map((g,gi)=>`<h3>${esc(g.name)}</h3>${g.ids.map((id,i)=>`<div class="erow"><span class="en">${esc(A[id].name)}</span>
@@ -138,10 +155,15 @@ function dueKeys(){
 function renderToday(){
   const list = dueKeys().filter(x=>!isDone(x.key));
   const left = list.filter(x=>!isDone(x.key)).length;
-  $("#todayTitle").textContent = `今日やること（残り${left}件）`;
-  $("#todayList").innerHTML = list.length ? list.sort((a,b)=>isDone(a.key)-isDone(b.key) || (b.late-a.late)).map(x=>`<label class="tk ${isDone(x.key)?"done":""}"${SDONE[x.key]?` title="${esc(SDONE[x.key])}"`:""}><input type="checkbox" data-tk="${esc(x.key)}" ${isDone(x.key)?"checked":""} ${SDONE[x.key]?"disabled":""}><span>${esc(x.k.t)}</span>${x.late&&!isDone(x.key)?"<small>未対応</small>":""}${SDONE[x.key]?'<small class="cdone">Claude済</small>':""}</label>`).join("") : `<span class="ok">${dueKeys().length?"今日の作業はすべて完了しました":"今日の定期作業はありません"}</span>`;
+  const rl = renList();
+  $("#todayTitle").textContent = `今日やること（残り${left + rl.length}件）`;
+  $("#todayList").innerHTML = list.length ? list.sort((a,b)=>isDone(a.key)-isDone(b.key) || (b.late-a.late)).map(x=>`<label class="tk ${isDone(x.key)?"done":""}"${SDONE[x.key]?` title="${esc(SDONE[x.key])}"`:""}><input type="checkbox" data-tk="${esc(x.key)}" ${isDone(x.key)?"checked":""} ${SDONE[x.key]?"disabled":""}><span>${esc(x.k.t)}</span>${x.late&&!isDone(x.key)?"<small>未対応</small>":""}${SDONE[x.key]?'<small class="cdone">Claude済</small>':""}</label>`).join("") : (rl.length ? "" : `<span class="ok">${dueKeys().length?"今日の作業はすべて完了しました":"今日の定期作業はありません"}</span>`);
+  $("#todayList").insertAdjacentHTML("beforeend", rl.map(x=>`<label class="tk"><input type="checkbox" data-ren="${esc(x.id)}"><span>${esc(x.title)}<span class="who">連絡・${esc(x.assignee||"誰でも")}</span></span>${x.due && x.due < today() ? "<small>期限超過</small>" : ""}</label>`).join(""));
 }
-$("#todayList").addEventListener("change", e=>{ const c = e.target.closest("[data-tk]"); if(!c) return; if(c.checked) tdone[c.dataset.tk] = 1; else delete tdone[c.dataset.tk];
+$("#todayList").addEventListener("change", e=>{ const r = e.target.closest("[data-ren]");
+  if(r){ const x = REN.find(y=>y.id===r.dataset.ren); if(!x) return; x.done = "1"; x.doneAt = new Date().toISOString(); try{ localStorage.setItem("renraku-tasks", JSON.stringify(REN)); }catch(_){} renderToday();
+    fetch(REN_API, {method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"}, body: JSON.stringify({action:"doneTask", pass:getPass("rekil-renraku-pass"), id:x.id, done:true, by:renMe()||"ホーム"})}).catch(()=>{ x.done=""; renderToday(); alert("連絡アプリに保存できませんでした"); }); return; }
+  const c = e.target.closest("[data-tk]"); if(!c) return; if(c.checked) tdone[c.dataset.tk] = 1; else delete tdone[c.dataset.tk];
   try{ localStorage.setItem("rekil-home-tdone", JSON.stringify(tdone)); }catch(_){} renderToday(); });
 const needPass = k => { const v = getPass(k); if(!v) throw new Error("nopass"); return v; };
 
@@ -227,6 +249,46 @@ const SRC = {
     return {n: ls.length, items: ls.length ? [{t:"出品データのExcel未作成（"+ls.map(l=>{const d=l.date?l.date.slice(5).replace("-","/").replace(/^0/,""):"日付なし";return d+" "+({jds:"JDS",jwa:"JWA",apre:"アプレ",prime:"プライム",ecooku:"エコオク",ecotre:"エコトレ"}[l.auction]||l.auction)}).join("・")+"）", v:`${ls.length}件`, u:"../shuppin/"}] : []};
   },
 };
+/* フォルダ（eBayなど）：タップで中のアプリを表示 */
+document.addEventListener("click", e=>{
+  const f = e.target.closest("[data-folder]"); if(f){ e.preventDefault(); const a = allApps()[f.dataset.folder]; if(!a) return; const S = subApps();
+    $("#fname").textContent = a.name; $("#fgrid").innerHTML = a.folder.map(id=>S[id]).filter(Boolean).map(c=>`<a class="app" href="${esc(c.url)}"><img src="${esc(c.icon)}" alt="" onerror="this.outerHTML='<span class=ph>${esc(c.name.slice(0,1))}</span>'"><span class="badge">${c.badge && badges[c.badge] ? badges[c.badge] : ""}</span><span class="n">${esc(c.name)}</span></a>`).join("");
+    $("#fsheet").hidden = false; return; }
+  if(e.target.id==="fsheet") $("#fsheet").hidden = true;
+});
+/* タブ：アプリ／リンク集（ポータルとアカウント一覧をここに統合） */
+let tab = "apps"; try{ tab = localStorage.getItem("rekil-home-tab") || "apps"; }catch(_){}
+function showTab(){ document.querySelectorAll("[data-tab]").forEach(b=>b.classList.toggle("on", b.dataset.tab===tab)); $("#vApps").hidden = tab!=="apps"; $("#vLinks").hidden = tab!=="links"; if(tab==="links") renderLinks(); }
+document.querySelector(".tabs").onclick = e => { const b = e.target.closest("[data-tab]"); if(!b) return; tab = b.dataset.tab; try{ localStorage.setItem("rekil-home-tab", tab); }catch(_){} showTab(); if(tab==="links"){ loadLinks(); loadAccounts(); } };
+let LINKS = {groups:[]}; try{ LINKS = JSON.parse(localStorage.getItem("rekil-home-links")||'{"groups":[]}'); }catch(_){}
+let ACC = []; try{ ACC = JSON.parse(localStorage.getItem("rekil-account-cache")||"[]"); }catch(_){}
+async function loadLinks(){ try{ const r = await fetch("links.json?v="+Date.now(), {cache:"no-store"}); const j = await r.json(); if(j && j.groups){ LINKS = j; localStorage.setItem("rekil-home-links", JSON.stringify(j)); renderLinks(); } }catch(_){} }
+const ACC_API = "https://script.google.com/macros/s/AKfycbxq9RSHVDsyDiHoez1KoahKkNq0VXZrAIZeRdjxSE0qxBLs86nlVV3X8Z5RpBxSd4nCpA/exec";
+async function loadAccounts(){ if(!isOwner()) return; let p = ""; try{ p = localStorage.getItem("rekil-account-pass")||""; }catch(_){} if(!p) return;
+  try{ const r = await fetch(ACC_API, {method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"}, body: JSON.stringify({action:"list", pass:p})}); const j = await r.json(); if(j.ok){ ACC = j.items||[]; localStorage.setItem("rekil-account-cache", JSON.stringify(ACC)); renderLinks(); } }catch(_){} }
+const KIND = {app:"アプリ", claude:"Claude", sheet:"シート"};
+function renderLinks(){
+  const q = ($("#lq").value||"").trim().toLowerCase(), hit = s => !q || s.toLowerCase().includes(q);
+  let h = LINKS.groups.map(g=>{ const ls = g.links.filter(l=>hit(l.name+" "+(l.desc||""))); return ls.length ? `<section class="todo"><h2>${esc(g.name)}</h2>${ls.map(l=>`<a class="lk" href="${esc(l.url)}"${/^https?:/.test(l.url)?' target="_blank" rel="noopener"':''}><span class="t"><b>${esc(l.name)}</b>${l.desc?`<small>${esc(l.desc)}</small>`:""}</span><em class="${esc(l.kind)}">${KIND[l.kind]||""}</em></a>`).join("")}</section>` : ""; }).join("");
+  if(isOwner()){
+    let p = ""; try{ p = localStorage.getItem("rekil-account-pass")||""; }catch(_){}
+    const by = {}; ACC.filter(i=>hit([i.cat,i.name,i.member,i.person,i.memo].join(" "))).forEach(i=>{ (by[i.cat||"その他"] = by[i.cat||"その他"]||[]).push(i); });
+    h += `<h3>アカウント一覧（代表専用） <a href="../account/" style="color:var(--accent);font-weight:400">編集はこちら ›</a></h3>` + (!p ? `<section class="todo"><button type="button" class="sync" id="accPass" style="border:1px solid var(--line);border-radius:8px;padding:6px 10px">アカウント一覧の暗証番号を入れる</button></section>` :
+      Object.keys(by).map(c=>`<section class="todo"><h2>${esc(c)}</h2>${by[c].map(i=>`<div class="lk"><a class="t" style="color:var(--fg);text-decoration:none" href="${esc(i.url||"../account/")}" target="_blank" rel="noopener"><b>${esc(i.name)}</b>${i.member||i.person?`<small>${esc([i.member&&"会員 "+i.member, i.person].filter(Boolean).join("・"))}</small>`:""}</a>${i.member?`<button class="cp" type="button" data-cpv="${esc(i.member)}">番号コピー</button>`:""}</div>`).join("")}</section>`).join("") || '<p class="hint">見つかりませんでした</p>');
+  }
+  $("#links").innerHTML = h || '<p class="hint">見つかりませんでした</p>';
+}
+$("#lq").oninput = renderLinks;
+$("#links").addEventListener("click", async e=>{
+  const c = e.target.closest("[data-cpv]"); if(c){ try{ await navigator.clipboard.writeText(c.dataset.cpv); c.textContent = "コピー済"; }catch(_){} return; }
+  if(e.target.id==="accPass"){ const v = prompt("アカウント一覧の暗証番号"); if(!v) return; try{ localStorage.setItem("rekil-account-pass", v.trim()); }catch(_){} loadAccounts(); renderLinks(); }
+});
+/* 連絡アプリの作業依頼も「今日やること」に出す（自分宛て・誰でも／期限が今日まで、または期限なし） */
+const REN_API = "https://script.google.com/macros/s/AKfycbxGqX3SpjyG9EOeR-JoCY5vGO3zIRFtJe1PUDgZB956ux8e3UlxX4cesXzXdWY7qahBpw/exec";
+let REN = []; try{ REN = JSON.parse(localStorage.getItem("renraku-tasks")||"[]"); }catch(_){}
+const renMe = () => { try{ return JSON.parse(localStorage.getItem("renraku-me")||'""'); }catch(_){ return ""; } };
+const renList = () => { const t = today(), me = renMe(); return REN.filter(x=>!x.done && (!x.assignee || !me || x.assignee===me) && (!x.due || x.due <= t)); };
+async function loadRenraku(){ const p = getPass("rekil-renraku-pass"); if(!p) return; try{ const r = await fetch(REN_API, {method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"}, body: JSON.stringify({action:"list", pass:p})}); const j = await r.json(); if(j.ok){ REN = j.tasks||[]; try{ localStorage.setItem("renraku-tasks", JSON.stringify(REN)); }catch(_){} renderToday(); } }catch(_){} }
 async function refresh(){
   $("#sync").textContent = "確認中…";
   failed.length = 0;
@@ -239,13 +301,13 @@ async function refresh(){
 }
 try{ Object.assign(items, JSON.parse(localStorage.getItem("rekil-home-items")||"{}")); }catch(_){}
 try{ sessionStorage.setItem("rekil-from-home","1"); }catch(_){}
-render(); renderToday(); loadCatalog(); loadTasks(); loadDone(); refresh();
+render(); renderToday(); showTab(); loadCatalog(); loadTasks(); loadDone(); loadRenraku(); refresh(); if(tab==="links"){ loadLinks(); loadAccounts(); }
 $("#sync").onclick = refresh;
 document.addEventListener("click", e=>{ if(e.target.id!=="setPass") return; const v = prompt("社内の暗証番号（ReKiL Stockなどと同じ番号）。一度入れると、ホームから開くアプリで入力不要になります"); if(!v) return; try{ localStorage.setItem("rekil-pass", v.trim()); }catch(_){} refresh(); });
 $("#edit").onclick = ()=>{ if(!isOwner()){ ownerUnlock(); return; } editing = !editing; render(); };
 document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState==="visible"){ checkUpdate(); refresh(); } });
 async function checkUpdate(){ try{ const r=await fetch(location.pathname+"?v="+Date.now(),{cache:"no-store"}); const t=await r.text(); const m=t.match(/const APP_VERSION = "([^"]+)"/); if(m && m[1]!==APP_VERSION) location.replace(location.pathname+"?v="+encodeURIComponent(m[1])); }catch(_){} }
-document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState==="visible"){ loadCatalog(); loadTasks(); loadDone(); renderToday(); } });
+document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState==="visible"){ loadCatalog(); loadTasks(); loadDone(); loadRenraku(); renderToday(); } });
 if(location.protocol.startsWith("http")){ checkUpdate(); setInterval(()=>{ if(document.visibilityState==="visible") checkUpdate(); }, 60000); }
 /* ページ全体は動かさず、ヘッダーの下（main）だけをスクロールさせる作り＝上ズレしない。念のため表示のたびに一番上へ戻す（iPhoneの画面ずれ対策で数回やり直す。指で触ったら中止） */
 try{history.scrollRestoration="manual"}catch(_){}

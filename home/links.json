@@ -1,0 +1,234 @@
+{
+ "groups": [
+  {
+   "name": "仕入",
+   "links": [
+    {
+     "name": "仕入記帳",
+     "desc": "店舗・県外仕入をその場で商品リストへ",
+     "url": "../shiire/",
+     "kind": "app"
+    },
+    {
+     "name": "仕入ルート帳",
+     "desc": "県ごとのルート・店舗・ホテル",
+     "url": "../route/",
+     "kind": "app"
+    },
+    {
+     "name": "下見・指値 進捗",
+     "desc": "業者オークションの下見と指値登録",
+     "url": "../shitami/",
+     "kind": "app"
+    },
+    {
+     "name": "利益計算ツール",
+     "desc": "eBay・Catawiki・小売・業販の仕入判断",
+     "url": "https://claude.ai/artifact/FVEUcDBmPd8hpjBnBRVNDp",
+     "kind": "claude"
+    },
+    {
+     "name": "採寸帳",
+     "desc": "採寸一覧と定型文テンプレート",
+     "url": "../saisun/",
+     "kind": "app"
+    },
+    {
+     "name": "買取管理アプリ",
+     "desc": "買取の記録",
+     "url": "https://claude.ai/artifact/Wuhwo5ZHJaQBr6uhXfDpF7",
+     "kind": "claude"
+    },
+    {
+     "name": "ReKiL Stock",
+     "desc": "ラックのQRで収納場所を記録・検索",
+     "url": "../",
+     "kind": "app"
+    },
+    {
+     "name": "管理番号シール",
+     "desc": "管理番号ラベルを1枚ずつ発行",
+     "url": "../seal/",
+     "kind": "app"
+    },
+    {
+     "name": "在庫",
+     "desc": "仕入値・仕入日・売上をスマホで検索",
+     "url": "../zaiko/",
+     "kind": "app"
+    },
+    {
+     "name": "廃棄記録",
+     "desc": "廃棄した商品の写真と理由",
+     "url": "../haiki/",
+     "kind": "app"
+    },
+    {
+     "name": "在庫/売上管理シート",
+     "desc": "商品リスト（2604～）",
+     "url": "https://docs.google.com/spreadsheets/d/1Q7bbCB5SuTXzHFlastxGbBy0nHyGYcdyMAm2hmxRIyY/edit?gid=796590883",
+     "kind": "sheet"
+    }
+   ]
+  },
+  {
+   "name": "eBay・販売・発送",
+   "links": [
+    {
+     "name": "メルカリ再出品",
+     "desc": "業者に出したメルカリ商品の出品番号・戻りの再出品",
+     "url": "../mercari/",
+     "kind": "app"
+    },
+    {
+     "name": "ReKiL 翻訳",
+     "desc": "eBayメッセージの翻訳と返信",
+     "url": "../ebay/",
+     "kind": "app"
+    },
+    {
+     "name": "売上入力",
+     "desc": "オークション・メルカリの売上入力と引き継ぎ",
+     "url": "../uriage/",
+     "kind": "app"
+    },
+    {
+     "name": "eBay出品依頼",
+     "desc": "採寸・状態・登録商品の下書き依頼",
+     "url": "../irai/",
+     "kind": "app"
+    },
+    {
+     "name": "Shipping Label",
+     "desc": "eBay・ヤフオク・業販の送り状番号控え",
+     "url": "../okurijo/",
+     "kind": "app"
+    },
+    {
+     "name": "出品・返品・外注管理",
+     "desc": "業者出品の保留・返品・リペア外注",
+     "url": "../henpin/",
+     "kind": "app"
+    },
+    {
+     "name": "eBay販促管理",
+     "desc": "販促キャンペーンの参加・結果",
+     "url": "../campaign/",
+     "kind": "app"
+    }
+   ]
+  },
+  {
+   "name": "経理・書類",
+   "links": [
+    {
+     "name": "ReKiL ホーム",
+     "desc": "全アプリの入口と未対応の件数",
+     "url": "../home/",
+     "kind": "app"
+    },
+    {
+     "name": "月次ダッシュボード",
+     "desc": "今月の売上・粗利・仕入・販路別",
+     "url": "../dash/",
+     "kind": "app"
+    },
+    {
+     "name": "アカウント一覧",
+     "desc": "ログインページ・会員番号・担当者（パスワードなし）",
+     "url": "../account/",
+     "kind": "app"
+    },
+    {
+     "name": "ReKiL 連絡",
+     "desc": "作業依頼と申し送り",
+     "url": "../renraku/",
+     "kind": "app"
+    },
+    {
+     "name": "アプリ説明書",
+     "desc": "全アプリの使い方（PDF・共有）",
+     "url": "../manual/",
+     "kind": "app"
+    },
+    {
+     "name": "ReKiL 給与",
+     "desc": "給与・報酬・社保・税の集計（見るだけ）",
+     "url": "../kyuyo/",
+     "kind": "app"
+    },
+    {
+     "name": "月次損益",
+     "desc": "TKCの数字で毎月の損益",
+     "url": "https://claude.ai/artifact/4jwqUSSJaPoz4fPgX4w5Hx",
+     "kind": "claude"
+    },
+    {
+     "name": "月次業績分析",
+     "desc": "過去比較の業績分析",
+     "url": "https://claude.ai/artifact/SQ4d3p5W9hByjYENFiQfNz",
+     "kind": "claude"
+    },
+    {
+     "name": "旅行の立替精算",
+     "desc": "立替の精算",
+     "url": "https://claude.ai/artifact/6PtMaZqGLcdvgWv41ApJNy",
+     "kind": "claude"
+    },
+    {
+     "name": "電子書類 自動保存ルール",
+     "desc": "サイト一覧・完了記録・輸出許可書進捗",
+     "url": "https://docs.google.com/spreadsheets/d/1bAn7gPKHGI82Xw_4wHtn_xUg-CSrqDnC539elXVXXcU/edit",
+     "kind": "sheet"
+    },
+    {
+     "name": "古物台帳",
+     "desc": "メルカリ売却の毎月入力",
+     "url": "https://docs.google.com/spreadsheets/d/1rgeh2TDFZZTAx5RcfX4pEtzMjaU6u80SO3okiwd6IEY/edit",
+     "kind": "sheet"
+    },
+    {
+     "name": "ReKiL給与",
+     "desc": "シフト入力・給与集計",
+     "url": "https://docs.google.com/spreadsheets/d/19hQsSlaLzxQ19gGFTrju-hS4wFQ8l9cLEiJKxI_YIto/edit",
+     "kind": "sheet"
+    }
+   ]
+  },
+  {
+   "name": "会社・その他",
+   "links": [
+    {
+     "name": "ReKiL ラウンジ",
+     "desc": "プライオリティ・パスの空港ラウンジ・使い方",
+     "url": "../lounge/",
+     "kind": "app"
+    },
+    {
+     "name": "会社ホームページ",
+     "desc": "合同会社ReKiL",
+     "url": "https://claude.ai/artifact/227YFaGm7pZxEpDMH17nwB",
+     "kind": "claude"
+    },
+    {
+     "name": "車両賃貸契約に関する覚書",
+     "desc": "2026年11月作成",
+     "url": "https://claude.ai/artifact/CkFDSPVi5adAGDBQ9kjozx",
+     "kind": "claude"
+    },
+    {
+     "name": "ピックアップ ポイントカード",
+     "desc": "",
+     "url": "https://claude.ai/artifact/FtAVP5Spwdepzcn5HynBqE",
+     "kind": "claude"
+    },
+    {
+     "name": "秒まで大時計",
+     "desc": "",
+     "url": "https://claude.ai/artifact/5e6P4Yk66ccovJUyMTPfkX",
+     "kind": "claude"
+    }
+   ]
+  }
+ ]
+}

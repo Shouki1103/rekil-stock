@@ -52,6 +52,13 @@
      "url": "../haiki/",
      "icon": "../haiki/icon-180.png",
      "badge": "haiki"
+    },
+    {
+     "id": "auction",
+     "name": "業者オークション",
+     "url": "../auction/",
+     "icon": "../auction/icon-180.png",
+     "badge": "shitami"
     }
    ]
   },
@@ -59,11 +66,13 @@
    "name": "販売・発送",
    "apps": [
     {
-     "id": "irai",
-     "name": "eBay出品依頼",
-     "url": "../irai/",
-     "icon": "../irai/icon-180.png",
-     "badge": "irai"
+     "id": "ebayf",
+     "name": "eBay",
+     "folder": [
+      "irai",
+      "ebay",
+      "campaign"
+     ]
     },
     {
      "id": "okurijo",
@@ -92,18 +101,6 @@
      "url": "../mercari/",
      "icon": "../mercari/icon-180.png",
      "badge": "mercari"
-    },
-    {
-     "id": "ebay",
-     "name": "翻訳",
-     "url": "../ebay/",
-     "icon": "../ebay/icon-180.png"
-    },
-    {
-     "id": "campaign",
-     "name": "eBay販促",
-     "url": "../campaign/",
-     "icon": "../campaign/icon-180.png"
     },
     {
      "id": "uriage",
@@ -139,19 +136,6 @@
      "owner": true
     },
     {
-     "id": "portal",
-     "name": "ポータル",
-     "url": "../portal/",
-     "icon": "../portal/icon-180.png"
-    },
-    {
-     "id": "account",
-     "name": "アカウント一覧",
-     "url": "../account/",
-     "icon": "../account/icon-180.png",
-     "owner": true
-    },
-    {
      "id": "lounge",
      "name": "ラウンジ",
      "url": "../lounge/",
@@ -175,6 +159,27 @@
      "icon": "../manual/icon-180.png"
     }
    ]
+  }
+ ],
+ "folderApps": [
+  {
+   "id": "irai",
+   "name": "eBay出品依頼",
+   "url": "../irai/",
+   "icon": "../irai/icon-180.png",
+   "badge": "irai"
+  },
+  {
+   "id": "ebay",
+   "name": "翻訳",
+   "url": "../ebay/",
+   "icon": "../ebay/icon-180.png"
+  },
+  {
+   "id": "campaign",
+   "name": "eBay販促",
+   "url": "../campaign/",
+   "icon": "../campaign/icon-180.png"
   }
  ]
 }
