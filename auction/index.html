@@ -37,7 +37,7 @@ input,select,textarea{font:inherit;font-size:16px;width:100%;min-height:42px;bor
 textarea{min-height:90px}
 label.f{display:block;font-size:12px;color:var(--muted);margin:8px 0 4px}
 .chips{display:flex;gap:6px;flex-wrap:wrap;margin:4px 0 8px}.chips button{font:inherit;font-size:13px;min-height:32px;border-radius:16px;border:1px solid var(--line);background:var(--surface);color:var(--muted);padding:0 12px}.chips button.on{background:var(--accent);color:#14181d;border-color:var(--accent)}
-.mcal{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin:0 0 10px}.mcal .wh{font-size:11px;color:var(--muted);text-align:center}.mcal button{font:inherit;min-height:44px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--fg);padding:2px 0;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:2px;font-size:13px}.mcal button:disabled{opacity:.35;background:transparent}.mcal button.td{border-color:var(--accent);color:var(--accent);font-weight:800}.mcal .dots{display:flex;gap:2px;flex-wrap:wrap;justify-content:center;max-width:90%}.mcal .dots i{width:6px;height:6px;border-radius:3px;background:var(--accent)}.mcal .dots i.p{background:transparent;border:1px solid var(--muted)}.mcal .mo{grid-column:1/-1;font-size:12px;font-weight:700;color:var(--muted);margin-top:4px}.card.flash{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent) inset;transition:box-shadow .3s}.fsel{margin:4px 0 8px}
+.mcal{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin:0 0 10px}.mcal .wh{font-size:11px;color:var(--muted);text-align:center}.mcal button{font:inherit;min-height:44px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--fg);padding:2px 0;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:2px;font-size:13px}.mcal button:disabled{opacity:.35;background:transparent}.mcal button.td{border-color:var(--accent);color:var(--accent);font-weight:800}.mcal .dots{display:flex;gap:2px;flex-wrap:wrap;justify-content:center;max-width:90%}.mcal .dots i{width:6px;height:6px;border-radius:3px;background:var(--accent)}.mcal .dots i.p{background:transparent;border:1px solid var(--muted)}.mcal .mo{grid-column:1/-1;font-size:12px;font-weight:700;color:var(--muted);margin-top:4px}.card.flash{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent) inset;transition:box-shadow .3s}.fsel{margin:4px 0 8px}.ymbar{display:flex;gap:6px;align-items:center;margin:0 0 8px}.ymbar select{flex:1}.ymbar .btn{min-width:44px;padding:0 10px}.ymbar .btn[hidden]{display:none}.mcal button.past{opacity:.6}.card.pastc{opacity:.75}
 .muted{color:var(--muted);font-size:12px}.num{font-variant-numeric:tabular-nums}
 .empty{color:var(--muted);text-align:center;padding:24px 0;font-size:14px}
 .sheet{position:fixed;inset:0;z-index:60;background:#000a;display:flex;align-items:flex-end;justify-content:center}.sheet[hidden]{display:none}
@@ -54,6 +54,7 @@ a{color:var(--accent)}
 
 <section data-view="cal">
   <select class="fsel" id="fil" aria-label="業者で絞り込み"></select>
+  <div class="ymbar"><button type="button" class="btn" id="ymPrev" aria-label="前の月">‹</button><select id="ym" aria-label="表示する月"></select><button type="button" class="btn" id="ymNext" aria-label="次の月">›</button><button type="button" class="btn" id="ymNow">今月</button></div>
   <div class="mcal" id="mcal"></div>
   <div id="cal"></div>
   <p class="muted" id="note"></p>
@@ -71,7 +72,7 @@ a{color:var(--accent)}
 
 </main>
 <script>
-const APP_VERSION = "2026-11-27-9";
+const APP_VERSION = "2026-11-27-12";
 
 const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -102,29 +103,39 @@ function dates(r, from, n){
   return out;
 }
 const shift = (d, n) => new Date(Date.parse(d+"T00:00:00Z") + n*864e5).toISOString().slice(0,10);
-function events(){
-  const t = today(), ev = [];
+/* from〜to（toは含まない）の開催・下見開始。省略時は今日から35日 */
+function events(from, to){
+  const t = today(); from = from || t; to = to || shift(t,DAYS); const ev = [];
+  const n = Math.round((Date.parse(to)-Date.parse(from))/864e5);
   S.rules.forEach(r=>{ if(r.manual || hide.includes(r.a)) return;
-    dates(r, shift(t,-7), DAYS+14).forEach(d=>{ if(d>=t && d<shift(t,DAYS)) ev.push({d, k:"開催", r}); if(r.pre!=null){ const p = shift(d,-r.pre); if(p>=t && p<shift(t,DAYS)) ev.push({d:p, k:"下見開始", r, of:d}); } }); });
+    dates(r, shift(from,-7), n+60).forEach(d=>{ if(d>=from && d<to) ev.push({d, k:"開催", r}); if(r.pre!=null){ const p = shift(d,-r.pre); if(p>=from && p<to) ev.push({d:p, k:"下見開始", r, of:d}); } }); });
   return ev.sort((a,b)=>a.d.localeCompare(b.d) || (a.k==="開催"?-1:1));
 }
+/* 表示する月（前後どの月でも見られる） */
+let calYM = today().slice(0,7);
+const ymAdd = (ym, n) => { const [y,m] = ym.split("-").map(Number), d = new Date(Date.UTC(y, m-1+n, 1)); return d.toISOString().slice(0,7); };
 function renderCal(){
   const names = [...new Set(S.rules.map(r=>r.a))].filter(a=>!hide.includes(a));
   if(fil && !names.includes(fil)) fil = "";
   $("#fil").innerHTML = [`<option value="">すべての業者</option>`, ...names.map(a=>`<option value="${esc(a)}">${esc(a)}</option>`)].join(""); $("#fil").value = fil;
-  const ev = events().filter(e=>!fil || e.r.a===fil), by = {};
+  const t = today(), thisYM = t.slice(0,7);
+  const opts = []; for(let i=-24;i<=24;i++){ const ym = ymAdd(thisYM, i); opts.push(`<option value="${ym}">${ym.slice(0,4)}年${+ym.slice(5)}月${ym===thisYM?"（今月）":""}</option>`); }
+  $("#ym").innerHTML = opts.join(""); if(!opts.some(o=>o.includes(`"${calYM}"`))) calYM = thisYM; $("#ym").value = calYM;
+  $("#ymNow").hidden = calYM===thisYM;
+  const first = calYM+"-01", next = ymAdd(calYM,1)+"-01";
+  const ev = events(first, next).filter(e=>!fil || e.r.a===fil), by = {};
   ev.forEach(e=>(by[e.d]=by[e.d]||[]).push(e));
-  const t = today();
-  /* 上の小さなカレンダー：日付を押すとその日の詳細へ移動 */
-  const start = shift(t, -new Date(t+"T00:00:00Z").getUTCDay()), end = shift(t, DAYS); let mc = ["日","月","火","水","木","金","土"].map(w=>`<span class="wh">${w}</span>`).join("");
-  for(let d = start; d < end || new Date(d+"T00:00:00Z").getUTCDay()!==0; d = shift(d,1)){
-    const es = by[d]||[], day = +d.slice(8);
-    mc += `<button type="button" data-jump="${d}" class="${d===t?"td":""}" ${d<t||!es.length?"disabled":""}>${day===1||d===start?`${+d.slice(5,7)}/`:""}${day}<span class="dots">${es.slice(0,4).map(e=>`<i class="${e.k==="開催"?"":"p"}"></i>`).join("")}</span></button>`;
+  /* 小さなカレンダー：日付を押すとその日の詳細へ移動 */
+  let mc = ["日","月","火","水","木","金","土"].map(w=>`<span class="wh">${w}</span>`).join("");
+  mc += "<span></span>".repeat(new Date(first+"T00:00:00Z").getUTCDay());
+  for(let d = first; d < next; d = shift(d,1)){
+    const es = by[d]||[];
+    mc += `<button type="button" data-jump="${d}" class="${d===t?"td":""}${d<t?" past":""}" ${!es.length?"disabled":""}>${+d.slice(8)}<span class="dots">${es.slice(0,4).map(e=>`<i class="${e.k==="開催"?"":"p"}"></i>`).join("")}</span></button>`;
   }
   $("#mcal").innerHTML = mc;
-  $("#cal").innerHTML = Object.keys(by).map(d=>`<div class="card" id="d-${d}"><h2>${md(d)}${d===t?" 今日":""}</h2>${by[d].map(e=>`<div class="row"><span class="tag ${e.k==="開催"?"a":""}">${e.k}</span><span class="t"><b>${esc(e.r.a)}</b><small>${esc(e.r.g)}${e.of?`（${md(e.of)}開催分）`:""}${e.k==="開催"&&e.r.memo?" ・"+esc(e.r.memo):""}</small></span></div>`).join("")}</div>`).join("") || '<div class="empty">予定はありません</div>';
+  $("#cal").innerHTML = Object.keys(by).map(d=>`<div class="card${d<t?" pastc":""}" id="d-${d}"><h2>${md(d)}${d===t?" 今日":""}</h2>${by[d].map(e=>`<div class="row"><span class="tag ${e.k==="開催"?"a":""}">${e.k}</span><span class="t"><b>${esc(e.r.a)}</b><small>${esc(e.r.g)}${e.of?`（${md(e.of)}開催分）`:""}${e.k==="開催"&&e.r.memo?" ・"+esc(e.r.memo):""}</small></span></div>`).join("")}</div>`).join("") || '<div class="empty">この月の予定はありません</div>';
   const man = S.rules.filter(r=>r.manual && !hide.includes(r.a));
-  $("#note").innerHTML = (man.length ? man.map(r=>`${esc(r.a)}：${esc(r.memo)}`).join("<br>")+"<br>" : "") + esc(S.note||"");
+  $("#note").innerHTML = (calYM!==thisYM ? "今月以外は、今の開催ルール（曜日・日にち）から計算した予定です。臨時休みや日程変更は反映されません。<br>" : "") + (man.length ? man.map(r=>`${esc(r.a)}：${esc(r.memo)}`).join("<br>")+"<br>" : "") + esc(S.note||"");
 }
 function renderSoon(){
   const t = today(), e7 = events().filter(e=>e.k==="下見開始" || e.k==="開催").filter(e=>e.d<=shift(t,7));
@@ -148,12 +159,16 @@ function renderSoba(){
 }
 function renderSet(){ const names = [...new Set(S.rules.map(r=>r.a))]; $("#setList").innerHTML = names.map(a=>`<label class="row"><input type="checkbox" style="width:22px;min-height:22px" data-h="${esc(a)}" ${hide.includes(a)?"":"checked"}><span class="t"><b>${esc(a)}</b></span></label>`).join(""); }
 document.addEventListener("click", e=>{
+  if(e.target.id==="ymPrev"){ calYM = ymAdd(calYM,-1); renderCal(); return; }
+  if(e.target.id==="ymNext"){ calYM = ymAdd(calYM,1); renderCal(); return; }
+  if(e.target.id==="ymNow"){ calYM = today().slice(0,7); renderCal(); return; }
   const j = e.target.closest("[data-jump]"); if(j){ const c = document.getElementById("d-"+j.dataset.jump); if(c){ c.scrollIntoView({behavior:"smooth", block:"start"}); c.classList.add("flash"); setTimeout(()=>c.classList.remove("flash"), 1500); } return; }
   if(e.target.id==="setBtn"){ renderSet(); $("#set").hidden = false; }
   if(e.target.id==="setOk" || e.target.id==="set"){ $("#set").hidden = true; all(); }
 });
 document.addEventListener("change", e=>{
   if(e.target.id==="fil"){ fil = e.target.value; ls.set("auc-fil", fil); renderCal(); return; }
+  if(e.target.id==="ym"){ calYM = e.target.value; renderCal(); return; }
   const h = e.target.closest("[data-h]"); if(h){ hide = h.checked ? hide.filter(x=>x!==h.dataset.h) : [...hide, h.dataset.h]; ls.set("auc-hide", hide); if(fil===h.dataset.h){ fil=""; ls.set("auc-fil",""); } }
   const s = e.target.closest("[data-sk]"); if(s){ if(s.checked) sdone[s.dataset.sk]=1; else delete sdone[s.dataset.sk]; ls.set("auc-soba", sdone); renderSoba(); }
 });
