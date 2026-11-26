@@ -59,6 +59,18 @@
      "url": "../auction/",
      "icon": "../auction/icon-180.png",
      "badge": "shitami"
+    },
+    {
+     "id": "care",
+     "name": "お手入れ",
+     "url": "../care/",
+     "icon": "../care/icon-180.png"
+    },
+    {
+     "id": "yomitori",
+     "name": "写真読み取り",
+     "url": "../yomitori/",
+     "icon": "../yomitori/icon-180.png"
     }
    ]
   },
@@ -108,6 +120,12 @@
      "url": "../uriage/",
      "icon": "../uriage/icon-180.png",
      "badge": "uriage"
+    },
+    {
+     "id": "hassou",
+     "name": "発送待ち",
+     "url": "../hassou/",
+     "icon": "../hassou/icon-180.png"
     }
    ]
   },
@@ -146,6 +164,13 @@
      "name": "横断検索",
      "url": "../search/",
      "icon": "../search/icon-180.png"
+    },
+    {
+     "id": "keihi",
+     "name": "経費レシート",
+     "url": "../keihi/",
+     "icon": "../keihi/icon-180.png",
+     "owner": true
     }
    ]
   },

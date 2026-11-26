@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="経費レシート">
+<meta name="theme-color" content="#0d1014">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<title>経費レシート</title>
+<style>:root{--bg:#14181d;--surface:#1d232a;--line:#2f3740;--fg:#e8ebee;--muted:#9aa4af;--accent:#f2a541;--steel:#0d1014;--danger:#ff5d4d;--ok:#5fcf7a;color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+html,body{background:var(--bg);color:var(--fg);margin:0}
+html{height:100%;overflow:hidden;overscroll-behavior:none}
+body{font-family:"Hiragino Sans","Yu Gothic",system-ui,sans-serif;font-size:15px;line-height:1.55;position:fixed;inset:0;overflow:hidden;display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px)}
+header{flex:0 0 auto;background:var(--steel);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:900;font-size:18px;white-space:nowrap}
+.brand i{display:inline-block;width:12px;height:22px;background:repeating-linear-gradient(-45deg,var(--accent) 0 5px,#1d2228 5px 10px);border-radius:2px}
+.hb{font:inherit;font-size:12px;color:var(--muted);background:none;border:1px solid var(--line);border-radius:8px;padding:4px 10px;cursor:pointer;white-space:nowrap}
+.tabs{flex:0 0 auto;display:flex;gap:6px;padding:8px max(14px,calc((100% - 640px)/2)) 0;overflow-x:auto}
+.tabs button{flex:1 0 auto;font:inherit;font-size:14px;font-weight:700;min-height:38px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--muted);padding:0 12px}
+.tabs button.on{background:var(--accent);color:#14181d;border-color:var(--accent)}
+main{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:10px max(14px,calc((100% - 640px)/2)) calc(90px + env(safe-area-inset-bottom,0px))}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:8px}
+.card h2{font-size:13px;color:var(--muted);margin:0 0 6px;font-weight:700}
+h3{font-size:13px;color:var(--muted);margin:16px 2px 8px}
+.row{display:flex;align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--line)}.row:first-of-type{border-top:0}
+.row .t{flex:1;min-width:0}.row .t b{display:block;font-size:14px;font-weight:600}.row .t small{display:block;color:var(--muted);font-size:12px}
+.tag{font-size:11px;border:1px solid var(--line);border-radius:6px;padding:1px 6px;color:var(--muted);flex:0 0 auto;white-space:nowrap}
+.tag.a{color:#14181d;background:var(--accent);border-color:var(--accent)}.tag.r{color:#fff;background:var(--danger);border-color:var(--danger)}.tag.g{color:#14181d;background:var(--ok);border-color:var(--ok)}
+.btn{font:inherit;font-size:14px;min-height:40px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--fg);padding:0 14px;cursor:pointer}
+.btn.p{background:var(--accent);color:#14181d;border-color:var(--accent);font-weight:700}
+input,select,textarea{font:inherit;font-size:16px;width:100%;min-height:42px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--fg);padding:8px 12px}
+textarea{min-height:90px}
+label.f{display:block;font-size:12px;color:var(--muted);margin:8px 0 4px}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin:4px 0 8px}.chips button{font:inherit;font-size:13px;min-height:32px;border-radius:16px;border:1px solid var(--line);background:var(--surface);color:var(--muted);padding:0 12px}.chips button.on{background:var(--accent);color:#14181d;border-color:var(--accent)}
+.muted{color:var(--muted);font-size:12px}.num{font-variant-numeric:tabular-nums}
+.empty{color:var(--muted);text-align:center;padding:24px 0;font-size:14px}
+.sheet{position:fixed;inset:0;z-index:60;background:#000a;display:flex;align-items:flex-end;justify-content:center}.sheet[hidden]{display:none}
+.sheet .box{background:var(--surface);border-top:1px solid var(--line);border-radius:18px 18px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom,0px));width:min(640px,100%);max-height:90%;overflow:auto}
+.toast{position:fixed;left:50%;bottom:calc(30px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:#000d;color:#fff;padding:8px 16px;border-radius:20px;font-size:14px;opacity:0;transition:.2s;pointer-events:none;z-index:90}.toast.show{opacity:1}
+a{color:var(--accent)}
+</style>
+</head>
+<body>
+<script>/* rekil-common */</script>
+<header><div class="brand"><i></i>経費レシート</div><div></div></header>
+<nav class="tabs"><button type="button" data-tab="add">撮る</button><button type="button" data-tab="list">一覧・Excel</button><button type="button" data-tab="set">設定</button></nav>
+<main>
+
+<section data-view="add">
+  <div class="card">
+    <label class="btn p" style="display:flex;align-items:center;justify-content:center;gap:6px">📷 レシートを撮る・選ぶ<input id="ph" type="file" accept="image/*" capture="environment" hidden></label>
+    <img id="prev" alt="" style="display:none;width:100%;max-height:260px;object-fit:contain;margin-top:8px;border-radius:8px">
+    <p class="muted" id="ocrSt"></p>
+    <form id="f">
+      <label class="f">日付</label><input name="date" type="date" required>
+      <label class="f">店名（元帳摘要）</label><input name="store" required placeholder="例：ウエルシア島田大津通店">
+      <label class="f">金額（税込・丸を付けた商品の合計）</label><input name="amt" type="number" inputmode="numeric" required>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div><label class="f">税率</label><select name="rate"><option value="10">10%</option><option value="8">8%（軽減）</option><option value="0">非課税</option></select></div>
+        <div><label class="f">取引先コード</label><input name="tcode" inputmode="numeric" placeholder="自動"></div>
+      </div>
+      <label class="f">費目（借方科目）</label><select name="kamoku"></select>
+      <label class="f">メモ（データには入りません）</label><input name="memo" placeholder="例：私物は除外済み">
+      <p style="display:flex;gap:8px;margin:12px 0 0"><button class="btn p" type="submit" style="flex:1">追加する</button><button class="btn" type="button" id="clr">クリア</button></p>
+    </form>
+  </div>
+</section>
+<section data-view="list" hidden>
+  <div style="display:flex;gap:8px;align-items:center"><select id="mon" style="flex:1"></select><button class="btn p" id="xl" type="button">Excelを作る</button></div>
+  <p class="muted" id="sum"></p>
+  <div id="rows"></div>
+</section>
+<section data-view="set" hidden>
+  <div class="card"><h2>費目（勘定科目コード）</h2><div id="kList"></div>
+    <div style="display:grid;grid-template-columns:90px 1fr auto;gap:6px;margin-top:8px"><input id="kc" placeholder="コード" inputmode="numeric"><input id="kn" placeholder="科目名"><button class="btn" id="kAdd" type="button">追加</button></div></div>
+  <div class="card"><h2>取引先コード（店名に含まれる言葉 → コード）</h2><div id="tList"></div>
+    <div style="display:grid;grid-template-columns:1fr 100px auto;gap:6px;margin-top:8px"><input id="tn" placeholder="店名の一部"><input id="tc" placeholder="000000" inputmode="numeric"><button class="btn" id="tAdd" type="button">追加</button></div></div>
+</section>
+
+</main>
+<script src="../lib/jszip.min.js"></script>
+<script src="../lib/minixlsx.js"></script>
+<script src="../lib/ocr.js"></script>
+<script>
+const APP_VERSION = "2026-11-26-1";
+
+const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const ls = { get(k,d){ try{ const v = localStorage.getItem(k); return v==null ? d : JSON.parse(v); }catch(_){ return d; } }, set(k,v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(_){} } };
+const today = () => new Date(Date.now()+9*3600e3).toISOString().slice(0,10);
+const W = "日月火水木金土";
+const md = d => { const x = new Date(d+"T00:00:00Z"); return `${x.getUTCMonth()+1}/${x.getUTCDate()}(${W[x.getUTCDay()]})`; };
+const yen = n => (Math.round(+n||0)).toLocaleString("ja-JP") + "円";
+function toast(t){ let el = $("#toast"); if(!el){ el = document.createElement("div"); el.id="toast"; el.className="toast"; document.body.appendChild(el); } el.textContent=t; el.classList.add("show"); clearTimeout(toast.t); toast.t=setTimeout(()=>el.classList.remove("show"),1800); }
+const getPass = (...keys) => { try{ for(const k of [...keys,"rekil-pass"]){ const v = localStorage.getItem(k); if(v) return v; } }catch(_){} return ""; };
+async function gas(url, body){ const r = await fetch(url, {method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"}, body: JSON.stringify(body)}); const j = await r.json(); if(!j.ok) throw new Error(j.error||"error"); return j; }
+async function getJSON(path){ const r = await fetch(path+"?v="+Date.now(), {cache:"no-store"}); return r.json(); }
+function tabs(key, def, onChange){ let cur = ls.get(key, def); const set = () => { $$("[data-tab]").forEach(b=>b.classList.toggle("on", b.dataset.tab===cur)); $$("[data-view]").forEach(v=>v.hidden = v.dataset.view!==cur); onChange && onChange(cur); };
+  document.addEventListener("click", e=>{ const b = e.target.closest("[data-tab]"); if(!b) return; cur = b.dataset.tab; ls.set(key, cur); set(); }); set(); return () => cur; }
+async function checkUpdate(){ try{ const r=await fetch(location.pathname+"?v="+Date.now(),{cache:"no-store"}); const t=await r.text(); const m=t.match(/const APP_VERSION = "([^"]+)"/); if(m && m[1]!==APP_VERSION) location.replace(location.pathname+"?v="+encodeURIComponent(m[1])); }catch(_){} }
+if(location.protocol.startsWith("http")){ checkUpdate(); document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="visible") checkUpdate(); }); }
+
+
+const DEF_K = [{c:"6217", n:"事務用消耗品費"}];
+const DEF_T = [["あじまき","000308"],["パーキング泉町","000309"],["山形屋","000310"],["GOOD TIMING TEA","000311"],["ウエルシア","000053"],["welcia","000053"],["杏林堂","000064"],["ジョイプラザ","000076"],["LILA","000103"],["ABC運転代行","000224"],["鷹匠ガレージ","000276"],["日本郵便","000038"],["郵便局","000038"]];
+let K = ls.get("keihi-k", DEF_K), T = ls.get("keihi-t", DEF_T), R = ls.get("keihi-rows", []), thumb = "";
+const ym = d => String(d||"").slice(0,7);
+const tcodeOf = s => { const u = String(s).toUpperCase(); const h = T.find(([n])=>u.includes(n.toUpperCase())); return h ? h[1] : ""; };
+function fillK(){ $("#f").elements.kamoku.innerHTML = K.map(k=>`<option value="${esc(k.c)}">${esc(k.c)} ${esc(k.n)}</option>`).join(""); const last = ls.get("keihi-lastk", ""); if(last) $("#f").elements.kamoku.value = last; }
+$("#ph").onchange = async e => {
+  const file = e.target.files[0]; if(!file) return; e.target.value = "";
+  const c = await RekilOCR.shrink(file, 360); thumb = c.toDataURL("image/jpeg", .6); $("#prev").src = thumb; $("#prev").style.display = "block";
+  $("#ocrSt").textContent = "読み取り中…（初回は準備に少しかかります）";
+  try{ const t = await RekilOCR.read(file, p=>$("#ocrSt").textContent = `読み取り中… ${p}%`); const r = RekilOCR.receipt(t), f = $("#f").elements;
+    if(r.date) f.date.value = r.date; if(r.store && !f.store.value) f.store.value = r.store; if(r.total) f.amt.value = r.total; f.rate.value = r.rate;
+    const tc = tcodeOf(f.store.value); if(tc) f.tcode.value = tc;
+    $("#ocrSt").textContent = "読み取りました。丸を付けた商品だけの金額か、店名・日付が合っているか確認してください。" + (r.tno ? `（登録番号 ${r.tno}）` : "");
+  }catch(_){ $("#ocrSt").textContent = "自動で読み取れませんでした。手で入れてください。"; }
+};
+$("#f").elements.store.oninput = e => { const tc = tcodeOf(e.target.value); if(tc) $("#f").elements.tcode.value = tc; };
+$("#f").onsubmit = e => { e.preventDefault(); const f = e.target.elements;
+  R.push({id:Date.now().toString(36), date:f.date.value, store:f.store.value.trim(), amt:+f.amt.value, rate:+f.rate.value, tcode:f.tcode.value.trim(), k:f.kamoku.value, memo:f.memo.value.trim(), img:thumb});
+  ls.set("keihi-rows", R); ls.set("keihi-lastk", f.kamoku.value); toast("追加しました"); const k = f.kamoku.value, dt = f.date.value; e.target.reset(); f.kamoku.value = k; f.date.value = dt; thumb = ""; $("#prev").style.display = "none"; $("#ocrSt").textContent = ""; render(); };
+$("#clr").onclick = () => { $("#f").reset(); fillK(); thumb = ""; $("#prev").style.display = "none"; $("#ocrSt").textContent = ""; };
+function render(){
+  const ms = [...new Set([ym(today()), ...R.map(r=>ym(r.date))])].sort().reverse(), cur = $("#mon").value || ms[0];
+  $("#mon").innerHTML = ms.map(m=>`<option value="${m}" ${m===cur?"selected":""}>${m.replace("-","年")}月分（${R.filter(r=>ym(r.date)===m).length}件）</option>`).join("");
+  const v = R.filter(r=>ym(r.date)===cur).sort((a,b)=>a.date.localeCompare(b.date));
+  $("#sum").textContent = `合計 ${yen(v.reduce((s,r)=>s+r.amt,0))}・${v.length}件` + (v.some(r=>!r.tcode) ? "（取引先コードなしの行はExcelで黄色になります）" : "");
+  $("#rows").innerHTML = v.map(r=>`<div class="card" style="display:flex;gap:10px;align-items:center">${r.img?`<img src="${r.img}" alt="" style="width:46px;height:60px;object-fit:cover;border-radius:6px">`:""}<div style="flex:1"><b>${md(r.date)} ${esc(r.store)}</b><small class="muted" style="display:block">${yen(r.amt)}・${r.rate?r.rate+"%":"非課税"}・${esc(r.k)}・取引先 ${esc(r.tcode||"未設定")}${r.memo?"・"+esc(r.memo):""}</small></div><button class="btn" data-del="${r.id}" type="button">削除</button></div>`).join("") || '<div class="empty">この月のレシートはありません</div>';
+  $("#kList").innerHTML = K.map((k,i)=>`<div class="row"><span class="t"><b>${esc(k.c)} ${esc(k.n)}</b></span>${i?`<button class="btn" data-kd="${i}" type="button">削除</button>`:""}</div>`).join("");
+  $("#tList").innerHTML = T.map(([n,c],i)=>`<div class="row"><span class="t"><b>${esc(n)}</b></span><span class="tag">${esc(c)}</span><button class="btn" data-td="${i}" type="button">削除</button></div>`).join("");
+}
+$("#mon").onchange = render;
+document.addEventListener("click", e=>{
+  const d = e.target.closest("[data-del]"); if(d){ if(!confirm("削除しますか？")) return; R = R.filter(r=>r.id!==d.dataset.del); ls.set("keihi-rows", R); render(); }
+  const kd = e.target.closest("[data-kd]"); if(kd){ K.splice(+kd.dataset.kd,1); ls.set("keihi-k", K); fillK(); render(); }
+  const td = e.target.closest("[data-td]"); if(td){ T.splice(+td.dataset.td,1); ls.set("keihi-t", T); render(); }
+});
+$("#kAdd").onclick = () => { const c = $("#kc").value.trim(), n = $("#kn").value.trim(); if(!c||!n) return; K.push({c,n}); ls.set("keihi-k", K); $("#kc").value = $("#kn").value = ""; fillK(); render(); };
+$("#tAdd").onclick = () => { const n = $("#tn").value.trim(), c = $("#tc").value.trim().padStart(6,"0"); if(!n) return; T.unshift([n,c]); ls.set("keihi-t", T); $("#tn").value = $("#tc").value = ""; render(); };
+/* 役員借入金データリスト（全44列）を作る */
+$("#xl").onclick = async () => {
+  const cur = $("#mon").value, v = R.filter(r=>ym(r.date)===cur).sort((a,b)=>a.date.localeCompare(b.date)); if(!v.length){ toast("この月のレシートがありません"); return; }
+  const H = ["月日","伝票番号","証憑番号","借方科目コード","借方科目名","借方補助コード","借方口座名","借方部門コード","借方部門名","借方課税区分","借方事業区分","借方消費税額自動計算か否か","借方軽減税率か否か","借方税率","借方控除割合","借方取引金額","借方消費税等","借方税抜き金額","貸方科目コード","貸方科目名","貸方補助コード","貸方口座名","貸方部門コード","貸方部門名","貸方課税区分","貸方事業区分","貸方消費税額自動計算か否か","貸方軽減税率か否か","貸方税率","貸方控除割合","貸方取引金額","貸方消費税等","貸方税抜き金額","取引先コード","取引先名","取引先の事業者登録番号","元帳摘要","実際の仕入れ年月日表示区分","実際の仕入れ年月日１","実際の仕入れ年月日２","収支区分コード","収支区分名","内訳区分コード","内訳区分名"];
+  const rows = [H], d8 = d => d.replace(/-/g,"/");
+  v.forEach((r,i)=>{ const n = i+2, row = new Array(44).fill("");
+    row[0] = d8(r.date); row[1] = i; row[3] = r.k; row[9] = r.rate ? 5 : 0; row[13] = r.rate; row[15] = r.amt;
+    row[16] = r.rate===10 ? {f:`ROUND(P${n}*10/110,0)`} : r.rate===8 ? {f:`ROUND(P${n}*8/108,0)`} : 0;
+    row[18] = "2213"; row[20] = "C"; row[24] = 0; row[30] = r.amt; row[33] = r.tcode ? {v:String(r.tcode).padStart(6,"0")} : {v:"", yellow:true};
+    if(!r.tcode) row[33] = {v:" ", yellow:true};
+    row[36] = r.store; row[37] = 1; row[38] = d8(r.date); rows.push(row); });
+  const blob = await miniXlsx(rows, "Sheet1"), name = cur.slice(2,4)+cur.slice(5,7)+"_役員借入金データリスト.xlsx";
+  const file = new File([blob], name, {type: blob.type});
+  if(navigator.canShare && navigator.canShare({files:[file]})){ try{ await navigator.share({files:[file], title:name}); return; }catch(_){} }
+  const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = name; a.click(); toast("保存しました：" + name);
+};
+fillK(); tabs("keihi-tab", "add", render); render(); $("#f").elements.date.value = today();
+
+</script>
+<script>/* 共通：電波がなくても開ける・ホームへ戻るボタン */if("serviceWorker" in navigator&&location.protocol.startsWith("http"))navigator.serviceWorker.register("../sw.js",{scope:"../"}).catch(()=>{});try{if(sessionStorage.getItem("rekil-from-home")&&!/\/home\/?$/.test(location.pathname)){const b=document.createElement("a");b.href="../home/";b.textContent="⌂";b.setAttribute("aria-label","ReKiLホームへ");b.style.cssText="position:fixed;right:12px;bottom:calc(84px + env(safe-area-inset-bottom,0px));z-index:70;width:44px;height:44px;border-radius:22px;background:#2a313a;color:#fff;font-size:22px;display:flex;align-items:center;justify-content:center;text-decoration:none;box-shadow:0 4px 16px #0008;opacity:.9";document.body.appendChild(b)}}catch(_){}</script>
+</body>
+</html>
