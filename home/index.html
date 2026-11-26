@@ -44,6 +44,7 @@ h3{font-size:13px;color:var(--muted);margin:16px 2px 8px;font-weight:700}
 header{gap:8px}.brand{white-space:nowrap;flex:0 0 auto}.hctl{display:flex;align-items:center;gap:6px;min-width:0}.hctl .sync{white-space:nowrap}
 .tabs{flex:0 0 auto;display:flex;gap:6px;padding:8px max(14px,calc((100% - 612px)/2)) 0;background:var(--bg)}.tabs button{flex:1;font:inherit;font-size:14px;font-weight:700;min-height:38px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--muted)}.tabs button.on{background:var(--accent);color:#14181d;border-color:var(--accent)}
 .lk{display:flex;align-items:center;gap:8px;padding:9px 0;border-top:1px solid var(--line);color:var(--fg);text-decoration:none}.lk:first-of-type{border-top:0}.lk .t{flex:1;min-width:0}.lk .t b{color:var(--fg);display:block;font-size:14px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.lk .t small{display:block;color:var(--muted);font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.lk em{font-style:normal;font-size:10.5px;border:1px solid var(--line);border-radius:6px;padding:1px 6px;color:var(--muted);flex:0 0 auto}.lk em.claude{color:#c9a7ff}.lk em.sheet{color:#7fd38a}.lk .cp{font:inherit;font-size:12px;min-height:30px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--fg);padding:0 8px;flex:0 0 auto}
+.lbar{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin:0 0 8px}.lbar button{font:inherit;font-size:13px;min-height:36px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--fg);padding:0 10px}.lbar button.del{border-color:#e5483a;color:#e5483a}.lbar .n{font-size:13px;font-weight:700;margin-right:auto}.lk input[type=checkbox]{width:22px;height:22px;flex:0 0 auto;accent-color:var(--accent)}.lk .vis{font:inherit;font-size:11.5px;min-height:30px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--fg);padding:0 8px;flex:0 0 auto}.lk .vis.own{border-color:var(--accent);color:var(--accent)}.lk .lock{font-size:11px;color:var(--accent);flex:0 0 auto}
 .search{width:100%;font:inherit;font-size:16px;min-height:42px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--fg);padding:0 12px;margin-bottom:6px}
 .fold{display:grid;grid-template-columns:1fr 1fr;gap:3px;padding:6px;width:58px;height:58px;border-radius:14px;background:var(--surface);border:1px solid var(--line)}.fold img,.fold span{width:100%;height:100%;border-radius:4px;object-fit:cover;background:var(--line)}
 #fsheet{position:fixed;inset:0;z-index:60;background:#000a;display:flex;align-items:center;justify-content:center;padding:20px}#fsheet[hidden]{display:none}#fsheet .box{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:16px;width:min(360px,100%)}#fsheet h4{margin:0 0 12px;font-size:15px}
@@ -69,13 +70,14 @@ header{gap:8px}.brand{white-space:nowrap;flex:0 0 auto}.hctl{display:flex;align-
   <div id="groups"></div>
  </div>
  <div id="vLinks" hidden>
+  <div class="lbar" id="lbar" hidden></div>
   <input class="search" id="lq" type="search" placeholder="リンクを探す（例：送り状、オークネット）" autocomplete="off">
   <div id="links"><span class="ok">読み込み中…</span></div>
  </div>
 </main>
 <div id="fsheet" hidden><div class="box"><h4 id="fname"></h4><div class="grid" id="fgrid"></div></div></div>
 <script>
-const APP_VERSION = "2026-11-26-7";
+const APP_VERSION = "2026-11-27-1";
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const today = () => new Date(Date.now()+9*3600e3).toISOString().slice(0,10);
@@ -275,15 +277,18 @@ function showTab(){ document.querySelectorAll("[data-tab]").forEach(b=>b.classLi
 document.querySelector(".tabs").onclick = e => { const b = e.target.closest("[data-tab]"); if(!b) return; tab = b.dataset.tab; try{ localStorage.setItem("rekil-home-tab", tab); }catch(_){} showTab(); if(tab==="links"){ loadLinks(); loadAccounts(); } };
 let LINKS = {groups:[]}; try{ LINKS = JSON.parse(localStorage.getItem("rekil-home-links")||'{"groups":[]}'); }catch(_){}
 let ACC = []; try{ ACC = JSON.parse(localStorage.getItem("rekil-account-cache")||"[]"); }catch(_){}
-async function loadLinks(){ try{ const r = await fetch("links.json?v="+Date.now(), {cache:"no-store"}); const j = await r.json(); if(j && j.groups){ LINKS = j; localStorage.setItem("rekil-home-links", JSON.stringify(j)); renderLinks(); } }catch(_){} }
+async function loadLinks(){ try{ const r = await fetch("links.json?v="+Date.now(), {cache:"no-store"}); const j = await r.json(); if(Date.now() < lHold) return; if(j && j.groups){ LINKS = j; localStorage.setItem("rekil-home-links", JSON.stringify(j)); renderLinks(); } }catch(_){} }
 const ACC_API = "https://script.google.com/macros/s/AKfycbxq9RSHVDsyDiHoez1KoahKkNq0VXZrAIZeRdjxSE0qxBLs86nlVV3X8Z5RpBxSd4nCpA/exec";
 async function loadAccounts(){ if(!isOwner()) return; let p = ""; try{ p = localStorage.getItem("rekil-account-pass")||""; }catch(_){} if(!p) return;
   try{ const r = await fetch(ACC_API, {method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"}, body: JSON.stringify({action:"list", pass:p})}); const j = await r.json(); if(j.ok){ ACC = j.items||[]; localStorage.setItem("rekil-account-cache", JSON.stringify(ACC)); renderLinks(); } }catch(_){} }
 const KIND = {app:"アプリ", claude:"Claude", sheet:"シート"};
 function renderLinks(){
   const q = ($("#lq").value||"").trim().toLowerCase(), hit = s => !q || s.toLowerCase().includes(q);
-  let h = LINKS.groups.map(g=>{ const ls = g.links.filter(l=>hit(l.name+" "+(l.desc||""))); return ls.length ? `<section class="todo"><h2>${esc(g.name)}</h2>${ls.map(l=>`<a class="lk" href="${esc(l.url)}"${/^https?:/.test(l.url)?' target="_blank" rel="noopener"':''}><span class="t"><b>${esc(l.name)}</b>${l.desc?`<small>${esc(l.desc)}</small>`:""}</span><em class="${esc(l.kind)}">${KIND[l.kind]||""}</em></a>`).join("")}</section>` : ""; }).join("");
-  if(isOwner()){
+  const own = isOwner(); if(!own) lEdit = false; renderLbar();
+  let h = LINKS.groups.map((g,gi)=>{ const ls = g.links.map((l,li)=>[l,gi+"-"+li]).filter(([l])=>(own || !l.owner) && hit(l.name+" "+(l.desc||""))); return ls.length ? `<section class="todo"><h2>${esc(g.name)}</h2>${ls.map(([l,k])=> lEdit
+      ? `<label class="lk"><input type="checkbox" data-lsel="${k}" ${lSel.has(k)?"checked":""}><span class="t"><b>${esc(l.name)}</b>${l.desc?`<small>${esc(l.desc)}</small>`:""}</span><button type="button" class="vis${l.owner?" own":""}" data-lvis="${k}">${l.owner?"代表だけ":"全員"}</button></label>`
+      : `<a class="lk" href="${esc(l.url)}"${/^https?:/.test(l.url)?' target="_blank" rel="noopener"':''}><span class="t"><b>${esc(l.name)}</b>${l.desc?`<small>${esc(l.desc)}</small>`:""}</span>${l.owner?'<span class="lock">代表だけ</span>':""}<em class="${esc(l.kind)}">${KIND[l.kind]||""}</em></a>`).join("")}</section>` : ""; }).join("");
+  if(isOwner() && !lEdit){
     let p = ""; try{ p = localStorage.getItem("rekil-account-pass")||""; }catch(_){}
     const by = {}; ACC.filter(i=>hit([i.cat,i.name,i.member,i.person,i.memo].join(" "))).forEach(i=>{ (by[i.cat||"その他"] = by[i.cat||"その他"]||[]).push(i); });
     h += `<h3>アカウント一覧（代表専用） <a href="../account/" style="color:var(--accent);font-weight:400">編集はこちら ›</a></h3>` + (!p ? `<section class="todo"><button type="button" class="sync" id="accPass" style="border:1px solid var(--line);border-radius:8px;padding:6px 10px">アカウント一覧の暗証番号を入れる</button></section>` :
@@ -296,6 +301,45 @@ $("#links").addEventListener("click", async e=>{
   const c = e.target.closest("[data-cpv]"); if(c){ try{ await navigator.clipboard.writeText(c.dataset.cpv); c.textContent = "コピー済"; }catch(_){} return; }
   if(e.target.id==="accPass"){ const v = prompt("アカウント一覧の暗証番号"); if(!v) return; try{ localStorage.setItem("rekil-account-pass", v.trim()); }catch(_){} loadAccounts(); renderLinks(); }
 });
+/* リンク集の編集（代表だけ）：選んで一括削除、代表だけ／全員をワンタッチで切替。links.json をGitHubに直接保存するので全端末に反映（反映まで1分ほど） */
+let lEdit = false, lSel = new Set(), lHold = 0;
+function renderLbar(){ const b = $("#lbar"); if(!isOwner()){ b.hidden = true; return; } b.hidden = false;
+  b.innerHTML = !lEdit ? `<span class="n"></span><button type="button" id="lEditOn">選んで編集</button>`
+    : `<span class="n">${lSel.size}件 選択中</span><button type="button" id="lAll">${lSel.size?"選択を外す":"全部選ぶ"}</button><button type="button" id="lOwn">代表だけにする</button><button type="button" id="lPub">全員に見せる</button><button type="button" class="del" id="lDel">削除</button><button type="button" id="lEditOff">完了</button>`; }
+const GH_PATH = "https://api.github.com/repos/Shouki1103/rekil-stock/contents/home/links.json";
+function ghToken(ask){ let t = ""; try{ t = localStorage.getItem("rekil-gh-token")||""; }catch(_){} if(t || !ask) return t;
+  t = (prompt("リンク集を保存するためのGitHubの鍵（トークン）を貼り付けてください。最初の1回だけです（この端末に保存）")||"").trim(); if(t) try{ localStorage.setItem("rekil-gh-token", t); }catch(_){} return t; }
+async function saveLinks(before, msg){
+  try{ localStorage.setItem("rekil-home-links", JSON.stringify(LINKS)); }catch(_){}
+  lHold = Date.now() + 5*60e3; renderLinks();
+  const fail = why => { LINKS = before; try{ localStorage.setItem("rekil-home-links", JSON.stringify(LINKS)); }catch(_){} lHold = 0; renderLinks(); alert(why + "元に戻しました。"); };
+  const t = ghToken(true); if(!t){ fail("保存の鍵がないため保存できませんでした。"); return; }
+  const H = {Authorization:"Bearer "+t, Accept:"application/vnd.github+json"};
+  try{
+    const g = await fetch(GH_PATH+"?ref=main&t="+Date.now(), {headers:H, cache:"no-store"});
+    if(g.status===401 || g.status===403){ try{ localStorage.removeItem("rekil-gh-token"); }catch(_){} fail("保存の鍵が使えませんでした（期限切れなど）。"); return; }
+    const cur = await g.json();
+    const txt = JSON.stringify(LINKS, null, 1) + "\n";
+    const body = {message:"リンク集：" + msg, content: btoa(unescape(encodeURIComponent(txt))), sha: cur.sha, branch:"main"};
+    const r = await fetch(GH_PATH, {method:"PUT", headers:{...H, "Content-Type":"application/json"}, body: JSON.stringify(body)});
+    if(!r.ok){ fail("保存できませんでした（" + r.status + "）。"); return; }
+  }catch(_){ fail("通信できず保存できませんでした。"); }
+}
+const lFind = k => { const [gi,li] = k.split("-").map(Number); return LINKS.groups[gi] && LINKS.groups[gi].links[li]; };
+const lClone = () => JSON.parse(JSON.stringify(LINKS));
+function lSetOwner(keys, v){ const before = lClone(); keys.forEach(k=>{ const l = lFind(k); if(!l) return; if(v) l.owner = true; else delete l.owner; }); saveLinks(before, (v?"代表だけ":"全員に表示") + " " + keys.length + "件"); }
+$("#lbar").addEventListener("click", e=>{ const id = e.target.id;
+  if(id==="lEditOn"){ lEdit = true; lSel.clear(); renderLinks(); return; }
+  if(id==="lEditOff"){ lEdit = false; lSel.clear(); renderLinks(); return; }
+  if(id==="lAll"){ if(lSel.size) lSel.clear(); else document.querySelectorAll("[data-lsel]").forEach(c=>lSel.add(c.dataset.lsel)); renderLinks(); return; }
+  if(!lSel.size && /^(lOwn|lPub|lDel)$/.test(id)){ alert("先にリンクを選んでください"); return; }
+  if(id==="lOwn"){ lSetOwner([...lSel], true); lSel.clear(); return; }
+  if(id==="lPub"){ lSetOwner([...lSel], false); lSel.clear(); return; }
+  if(id==="lDel"){ if(!confirm(lSel.size + "件のリンクを削除します。よろしいですか？")) return; const before = lClone(), n = lSel.size;
+    LINKS.groups.forEach((g,gi)=>{ g.links = g.links.filter((_,li)=>!lSel.has(gi+"-"+li)); }); LINKS.groups = LINKS.groups.filter(g=>g.links.length); lSel.clear(); saveLinks(before, "削除 " + n + "件"); }
+});
+$("#links").addEventListener("change", e=>{ const c = e.target.closest("[data-lsel]"); if(!c) return; if(c.checked) lSel.add(c.dataset.lsel); else lSel.delete(c.dataset.lsel); renderLbar(); });
+$("#links").addEventListener("click", e=>{ const v = e.target.closest("[data-lvis]"); if(!v) return; e.preventDefault(); const l = lFind(v.dataset.lvis); if(l) lSetOwner([v.dataset.lvis], !l.owner); });
 /* 連絡アプリの作業依頼も「今日やること」に出す（自分宛て・誰でも／期限が今日まで、または期限なし） */
 const REN_API = "https://script.google.com/macros/s/AKfycbxGqX3SpjyG9EOeR-JoCY5vGO3zIRFtJe1PUDgZB956ux8e3UlxX4cesXzXdWY7qahBpw/exec";
 let REN = []; try{ REN = JSON.parse(localStorage.getItem("renraku-tasks")||"[]"); }catch(_){}
