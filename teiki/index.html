@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="定期作業">
+<meta name="theme-color" content="#0d1014">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<title>定期作業カレンダー</title>
+<style>:root{--bg:#14181d;--surface:#1d232a;--line:#2f3740;--fg:#e8ebee;--muted:#9aa4af;--accent:#f2a541;--steel:#0d1014;--danger:#ff5d4d;--ok:#5fcf7a;color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+html,body{background:var(--bg);color:var(--fg);margin:0}
+html{height:100%;overflow:hidden;overscroll-behavior:none}
+body{font-family:"Hiragino Sans","Yu Gothic",system-ui,sans-serif;font-size:15px;line-height:1.55;position:fixed;inset:0;overflow:hidden;display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px)}
+header{flex:0 0 auto;background:var(--steel);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:900;font-size:18px;white-space:nowrap}
+.brand i{display:inline-block;width:12px;height:22px;background:repeating-linear-gradient(-45deg,var(--accent) 0 5px,#1d2228 5px 10px);border-radius:2px}
+.hb{font:inherit;font-size:12px;color:var(--muted);background:none;border:1px solid var(--line);border-radius:8px;padding:4px 10px;cursor:pointer;white-space:nowrap}
+.tabs{flex:0 0 auto;display:flex;gap:6px;padding:8px max(14px,calc((100% - 640px)/2)) 0;overflow-x:auto}
+.tabs button{flex:1 0 auto;font:inherit;font-size:14px;font-weight:700;min-height:38px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--muted);padding:0 12px}
+.tabs button.on{background:var(--accent);color:#14181d;border-color:var(--accent)}
+main{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:10px max(14px,calc((100% - 640px)/2)) calc(90px + env(safe-area-inset-bottom,0px))}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:8px}
+.card h2{font-size:13px;color:var(--muted);margin:0 0 6px;font-weight:700}
+h3{font-size:13px;color:var(--muted);margin:16px 2px 8px}
+.row{display:flex;align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--line)}.row:first-of-type{border-top:0}
+.row .t{flex:1;min-width:0}.row .t b{display:block;font-size:14px;font-weight:600}.row .t small{display:block;color:var(--muted);font-size:12px}
+.tag{font-size:11px;border:1px solid var(--line);border-radius:6px;padding:1px 6px;color:var(--muted);flex:0 0 auto;white-space:nowrap}
+.tag.a{color:#14181d;background:var(--accent);border-color:var(--accent)}.tag.r{color:#fff;background:var(--danger);border-color:var(--danger)}.tag.g{color:#14181d;background:var(--ok);border-color:var(--ok)}
+.btn{font:inherit;font-size:14px;min-height:40px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--fg);padding:0 14px;cursor:pointer}
+.btn.p{background:var(--accent);color:#14181d;border-color:var(--accent);font-weight:700}
+input,select,textarea{font:inherit;font-size:16px;width:100%;min-height:42px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--fg);padding:8px 12px}
+textarea{min-height:90px}
+label.f{display:block;font-size:12px;color:var(--muted);margin:8px 0 4px}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin:4px 0 8px}.chips button{font:inherit;font-size:13px;min-height:32px;border-radius:16px;border:1px solid var(--line);background:var(--surface);color:var(--muted);padding:0 12px}.chips button.on{background:var(--accent);color:#14181d;border-color:var(--accent)}
+.muted{color:var(--muted);font-size:12px}.num{font-variant-numeric:tabular-nums}
+.empty{color:var(--muted);text-align:center;padding:24px 0;font-size:14px}
+.sheet{position:fixed;inset:0;z-index:60;background:#000a;display:flex;align-items:flex-end;justify-content:center}.sheet[hidden]{display:none}
+.sheet .box{background:var(--surface);border-top:1px solid var(--line);border-radius:18px 18px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom,0px));width:min(640px,100%);max-height:90%;overflow:auto}
+.toast{position:fixed;left:50%;bottom:calc(30px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:#000d;color:#fff;padding:8px 16px;border-radius:20px;font-size:14px;opacity:0;transition:.2s;pointer-events:none;z-index:90}.toast.show{opacity:1}
+a{color:var(--accent)}
+</style>
+</head>
+<body>
+<script>/* rekil-common */</script>
+<header><div class="brand"><i></i>定期作業カレンダー</div><div></div></header>
+
+<main>
+
+<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><button class="btn" id="pv" type="button">‹</button><b id="ttl" style="flex:1;text-align:center;font-size:16px"></b><button class="btn" id="nx" type="button">›</button></div>
+<div id="cal" style="display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px"></div>
+<div class="card" style="margin-top:10px"><h2 id="dayT"></h2><div id="dayL"></div></div>
+<div class="card"><h2>毎週</h2><div id="wk"></div></div>
+<div class="card"><h2>毎日</h2><div id="dl"></div></div>
+<p class="muted">Claudeに依頼している定期作業です（ReKiLホームの「今日やること」と同じ一覧）。済んだものは ✓ が付きます。</p>
+
+</main>
+<script>
+const APP_VERSION = "2026-11-26-1";
+
+const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const ls = { get(k,d){ try{ const v = localStorage.getItem(k); return v==null ? d : JSON.parse(v); }catch(_){ return d; } }, set(k,v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(_){} } };
+const today = () => new Date(Date.now()+9*3600e3).toISOString().slice(0,10);
+const W = "日月火水木金土";
+const md = d => { const x = new Date(d+"T00:00:00Z"); return `${x.getUTCMonth()+1}/${x.getUTCDate()}(${W[x.getUTCDay()]})`; };
+const yen = n => (Math.round(+n||0)).toLocaleString("ja-JP") + "円";
+function toast(t){ let el = $("#toast"); if(!el){ el = document.createElement("div"); el.id="toast"; el.className="toast"; document.body.appendChild(el); } el.textContent=t; el.classList.add("show"); clearTimeout(toast.t); toast.t=setTimeout(()=>el.classList.remove("show"),1800); }
+const getPass = (...keys) => { try{ for(const k of [...keys,"rekil-pass"]){ const v = localStorage.getItem(k); if(v) return v; } }catch(_){} return ""; };
+async function gas(url, body){ const r = await fetch(url, {method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"}, body: JSON.stringify(body)}); const j = await r.json(); if(!j.ok) throw new Error(j.error||"error"); return j; }
+async function getJSON(path){ const r = await fetch(path+"?v="+Date.now(), {cache:"no-store"}); return r.json(); }
+function tabs(key, def, onChange){ let cur = ls.get(key, def); const set = () => { $$("[data-tab]").forEach(b=>b.classList.toggle("on", b.dataset.tab===cur)); $$("[data-view]").forEach(v=>v.hidden = v.dataset.view!==cur); onChange && onChange(cur); };
+  document.addEventListener("click", e=>{ const b = e.target.closest("[data-tab]"); if(!b) return; cur = b.dataset.tab; ls.set(key, cur); set(); }); set(); return () => cur; }
+async function checkUpdate(){ try{ const r=await fetch(location.pathname+"?v="+Date.now(),{cache:"no-store"}); const t=await r.text(); const m=t.match(/const APP_VERSION = "([^"]+)"/); if(m && m[1]!==APP_VERSION) location.replace(location.pathname+"?v="+encodeURIComponent(m[1])); }catch(_){} }
+if(location.protocol.startsWith("http")){ checkUpdate(); document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="visible") checkUpdate(); }); }
+
+
+let T = ls.get("rekil-home-tasks", []), DONE = ls.get("rekil-home-sdone", {}), cur = today().slice(0,7), sel = today();
+const last = m => { const [y,mm] = m.split("-").map(Number); return new Date(Date.UTC(y, mm, 0)).getUTCDate(); };
+function on(d){ const x = new Date(d+"T00:00:00Z"), dd = x.getUTCDate(), dow = x.getUTCDay(), m = d.slice(0,7);
+  return T.filter(k=>k.daily ? false : k.dow!=null ? k.dow===dow : (k.day==="end" ? dd===last(m) : +k.day===dd)).map(k=>({k, key: k.dow!=null ? `${k.id}@${d}` : `${k.id}@${m}`})); }
+function render(){
+  const [y,m] = cur.split("-").map(Number), first = new Date(Date.UTC(y, m-1, 1)).getUTCDay(), n = last(cur), t = today();
+  $("#ttl").textContent = `${y}年${m}月`;
+  let h = [..."日月火水木金土"].map((w,i)=>`<div style="text-align:center;font-size:11px;color:${i===0?"var(--danger)":i===6?"#6aa7ff":"var(--muted)"}">${w}</div>`).join("") + "<div></div>".repeat(first);
+  for(let d=1; d<=n; d++){ const ds = `${cur}-${String(d).padStart(2,"0")}`, L = on(ds), monthly = L.filter(x=>x.k.dow==null), left = monthly.filter(x=>!DONE[x.key]).length;
+    h += `<button type="button" data-d="${ds}" style="font:inherit;min-height:52px;border-radius:8px;border:1px solid ${ds===sel?"var(--accent)":"var(--line)"};background:${ds===t?"#2a2216":"var(--surface)"};color:var(--fg);padding:3px;display:flex;flex-direction:column;align-items:center;gap:2px"><span style="font-size:13px">${d}</span>${monthly.length?`<span class="tag ${left?(ds<t?"r":"a"):"g"}" style="font-size:10px;padding:0 5px">${left?left:"✓"}</span>`:""}</button>`; }
+  $("#cal").innerHTML = h;
+  const L = on(sel);
+  $("#dayT").textContent = `${md(sel)} の作業`;
+  $("#dayL").innerHTML = L.map(x=>`<div class="row"><span class="t"><b style="${DONE[x.key]?"opacity:.5;text-decoration:line-through":""}">${esc(x.k.t)}</b>${DONE[x.key]?`<small>${esc(DONE[x.key])}</small>`:""}</span>${DONE[x.key]?'<span class="tag g">済</span>':""}</div>`).join("") || '<span class="muted">この日の定期作業はありません</span>';
+  $("#wk").innerHTML = T.filter(k=>k.dow!=null).map(k=>`<div class="row"><span class="tag">${"日月火水木金土"[k.dow]}曜</span><span class="t"><b>${esc(k.t)}</b></span></div>`).join("") || '<span class="muted">なし</span>';
+  $("#dl").innerHTML = T.filter(k=>k.daily).map(k=>`<div class="row"><span class="t"><b>${esc(k.t)}</b></span>${DONE[`${k.id}@${t}`]?'<span class="tag g">今日済</span>':""}</div>`).join("") || '<span class="muted">なし</span>';
+}
+const addM = n => { const [y,m] = cur.split("-").map(Number); cur = new Date(Date.UTC(y, m-1+n, 1)).toISOString().slice(0,7); sel = cur===today().slice(0,7) ? today() : cur+"-01"; render(); };
+$("#pv").onclick = () => addM(-1); $("#nx").onclick = () => addM(1);
+document.addEventListener("click", e=>{ const b = e.target.closest("[data-d]"); if(b){ sel = b.dataset.d; render(); } });
+render();
+Promise.all([getJSON("../home/tasks.json"), getJSON("../home/done.json")]).then(([a,b])=>{ if(a && a.tasks){ T = a.tasks; ls.set("rekil-home-tasks", T); } if(b && b.done){ DONE = b.done; ls.set("rekil-home-sdone", DONE); } render(); }).catch(()=>{});
+
+</script>
+<script>/* 共通：電波がなくても開ける・ホームへ戻るボタン */if("serviceWorker" in navigator&&location.protocol.startsWith("http"))navigator.serviceWorker.register("../sw.js",{scope:"../"}).catch(()=>{});try{if(sessionStorage.getItem("rekil-from-home")&&!/\/home\/?$/.test(location.pathname)){const b=document.createElement("a");b.href="../home/";b.textContent="⌂";b.setAttribute("aria-label","ReKiLホームへ");b.style.cssText="position:fixed;right:12px;bottom:calc(84px + env(safe-area-inset-bottom,0px));z-index:70;width:44px;height:44px;border-radius:22px;background:#2a313a;color:#fff;font-size:22px;display:flex;align-items:center;justify-content:center;text-decoration:none;box-shadow:0 4px 16px #0008;opacity:.9";document.body.appendChild(b)}}catch(_){}</script>
+</body>
+</html>

@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="融資・補助金">
+<meta name="theme-color" content="#0d1014">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<title>融資・補助金メモ</title>
+<style>:root{--bg:#14181d;--surface:#1d232a;--line:#2f3740;--fg:#e8ebee;--muted:#9aa4af;--accent:#f2a541;--steel:#0d1014;--danger:#ff5d4d;--ok:#5fcf7a;color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+html,body{background:var(--bg);color:var(--fg);margin:0}
+html{height:100%;overflow:hidden;overscroll-behavior:none}
+body{font-family:"Hiragino Sans","Yu Gothic",system-ui,sans-serif;font-size:15px;line-height:1.55;position:fixed;inset:0;overflow:hidden;display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px)}
+header{flex:0 0 auto;background:var(--steel);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:900;font-size:18px;white-space:nowrap}
+.brand i{display:inline-block;width:12px;height:22px;background:repeating-linear-gradient(-45deg,var(--accent) 0 5px,#1d2228 5px 10px);border-radius:2px}
+.hb{font:inherit;font-size:12px;color:var(--muted);background:none;border:1px solid var(--line);border-radius:8px;padding:4px 10px;cursor:pointer;white-space:nowrap}
+.tabs{flex:0 0 auto;display:flex;gap:6px;padding:8px max(14px,calc((100% - 640px)/2)) 0;overflow-x:auto}
+.tabs button{flex:1 0 auto;font:inherit;font-size:14px;font-weight:700;min-height:38px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--muted);padding:0 12px}
+.tabs button.on{background:var(--accent);color:#14181d;border-color:var(--accent)}
+main{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:10px max(14px,calc((100% - 640px)/2)) calc(90px + env(safe-area-inset-bottom,0px))}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:8px}
+.card h2{font-size:13px;color:var(--muted);margin:0 0 6px;font-weight:700}
+h3{font-size:13px;color:var(--muted);margin:16px 2px 8px}
+.row{display:flex;align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--line)}.row:first-of-type{border-top:0}
+.row .t{flex:1;min-width:0}.row .t b{display:block;font-size:14px;font-weight:600}.row .t small{display:block;color:var(--muted);font-size:12px}
+.tag{font-size:11px;border:1px solid var(--line);border-radius:6px;padding:1px 6px;color:var(--muted);flex:0 0 auto;white-space:nowrap}
+.tag.a{color:#14181d;background:var(--accent);border-color:var(--accent)}.tag.r{color:#fff;background:var(--danger);border-color:var(--danger)}.tag.g{color:#14181d;background:var(--ok);border-color:var(--ok)}
+.btn{font:inherit;font-size:14px;min-height:40px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--fg);padding:0 14px;cursor:pointer}
+.btn.p{background:var(--accent);color:#14181d;border-color:var(--accent);font-weight:700}
+input,select,textarea{font:inherit;font-size:16px;width:100%;min-height:42px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--fg);padding:8px 12px}
+textarea{min-height:90px}
+label.f{display:block;font-size:12px;color:var(--muted);margin:8px 0 4px}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin:4px 0 8px}.chips button{font:inherit;font-size:13px;min-height:32px;border-radius:16px;border:1px solid var(--line);background:var(--surface);color:var(--muted);padding:0 12px}.chips button.on{background:var(--accent);color:#14181d;border-color:var(--accent)}
+.muted{color:var(--muted);font-size:12px}.num{font-variant-numeric:tabular-nums}
+.empty{color:var(--muted);text-align:center;padding:24px 0;font-size:14px}
+.sheet{position:fixed;inset:0;z-index:60;background:#000a;display:flex;align-items:flex-end;justify-content:center}.sheet[hidden]{display:none}
+.sheet .box{background:var(--surface);border-top:1px solid var(--line);border-radius:18px 18px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom,0px));width:min(640px,100%);max-height:90%;overflow:auto}
+.toast{position:fixed;left:50%;bottom:calc(30px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:#000d;color:#fff;padding:8px 16px;border-radius:20px;font-size:14px;opacity:0;transition:.2s;pointer-events:none;z-index:90}.toast.show{opacity:1}
+a{color:var(--accent)}
+</style>
+</head>
+<body>
+<script>/* rekil-common */</script>
+<header><div class="brand"><i></i>融資・補助金メモ</div><div></div></header>
+<nav class="tabs"><button type="button" data-tab="loan">融資・返済表</button><button type="button" data-tab="hojo">補助金の締切</button></nav>
+<main>
+
+<section data-view="loan">
+ <div id="loans"></div>
+ <details class="card"><summary style="cursor:pointer"><b>＋ 借入を追加</b></summary>
+  <form id="lf"><label class="f">借入先・名前</label><input name="name" required placeholder="例：静岡信金 運転資金">
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><div><label class="f">借入額（円）</label><input name="amt" type="number" inputmode="numeric" required></div><div><label class="f">年利（%）</label><input name="rate" type="number" step="0.001" inputmode="decimal" required></div>
+  <div><label class="f">初回返済月</label><input name="start" type="month" required></div><div><label class="f">返済回数（月）</label><input name="n" type="number" inputmode="numeric" required></div>
+  <div><label class="f">据置（月）</label><input name="grace" type="number" inputmode="numeric" value="0"></div><div><label class="f">返済方式</label><select name="way"><option value="gankin">元金均等</option><option value="ganri">元利均等</option></select></div></div>
+  <label class="f">返済日・口座など</label><input name="memo" placeholder="例：毎月25日 スルガ銀行">
+  <p><button class="btn p" type="submit">追加する</button></p></form></details>
+</section>
+<section data-view="hojo" hidden>
+ <div id="hojo"></div>
+ <details class="card"><summary style="cursor:pointer"><b>＋ 補助金・助成金を追加</b></summary>
+  <form id="hf"><label class="f">名前</label><input name="name" required placeholder="例：小規模事業者持続化補助金">
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><div><label class="f">締切</label><input name="due" type="date"></div><div><label class="f">状況</label><select name="st"><option>検討中</option><option>申請準備中</option><option>申請済み</option><option>採択</option><option>不採択</option><option>見送り</option></select></div></div>
+  <label class="f">金額・メモ</label><input name="memo"><label class="f">URL</label><input name="url" type="url">
+  <p><button class="btn p" type="submit">追加する</button></p></form></details>
+</section>
+
+</main>
+<script>
+const APP_VERSION = "2026-11-26-1";
+
+const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const ls = { get(k,d){ try{ const v = localStorage.getItem(k); return v==null ? d : JSON.parse(v); }catch(_){ return d; } }, set(k,v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(_){} } };
+const today = () => new Date(Date.now()+9*3600e3).toISOString().slice(0,10);
+const W = "日月火水木金土";
+const md = d => { const x = new Date(d+"T00:00:00Z"); return `${x.getUTCMonth()+1}/${x.getUTCDate()}(${W[x.getUTCDay()]})`; };
+const yen = n => (Math.round(+n||0)).toLocaleString("ja-JP") + "円";
+function toast(t){ let el = $("#toast"); if(!el){ el = document.createElement("div"); el.id="toast"; el.className="toast"; document.body.appendChild(el); } el.textContent=t; el.classList.add("show"); clearTimeout(toast.t); toast.t=setTimeout(()=>el.classList.remove("show"),1800); }
+const getPass = (...keys) => { try{ for(const k of [...keys,"rekil-pass"]){ const v = localStorage.getItem(k); if(v) return v; } }catch(_){} return ""; };
+async function gas(url, body){ const r = await fetch(url, {method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"}, body: JSON.stringify(body)}); const j = await r.json(); if(!j.ok) throw new Error(j.error||"error"); return j; }
+async function getJSON(path){ const r = await fetch(path+"?v="+Date.now(), {cache:"no-store"}); return r.json(); }
+function tabs(key, def, onChange){ let cur = ls.get(key, def); const set = () => { $$("[data-tab]").forEach(b=>b.classList.toggle("on", b.dataset.tab===cur)); $$("[data-view]").forEach(v=>v.hidden = v.dataset.view!==cur); onChange && onChange(cur); };
+  document.addEventListener("click", e=>{ const b = e.target.closest("[data-tab]"); if(!b) return; cur = b.dataset.tab; ls.set(key, cur); set(); }); set(); return () => cur; }
+async function checkUpdate(){ try{ const r=await fetch(location.pathname+"?v="+Date.now(),{cache:"no-store"}); const t=await r.text(); const m=t.match(/const APP_VERSION = "([^"]+)"/); if(m && m[1]!==APP_VERSION) location.replace(location.pathname+"?v="+encodeURIComponent(m[1])); }catch(_){} }
+if(location.protocol.startsWith("http")){ checkUpdate(); document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="visible") checkUpdate(); }); }
+
+
+let L = ls.get("yushi-loans", []), H = ls.get("yushi-hojo", []);
+/* 返済表：月ごとの元金・利息・残高 */
+function sched(l){ const r = l.rate/100/12, out = []; let bal = +l.amt; const [y,m] = l.start.split("-").map(Number), N = +l.n, G = +l.grace||0;
+  const pay = l.way==="ganri" ? (r ? bal*r/(1-Math.pow(1+r,-(N-G))) : bal/(N-G)) : 0;
+  for(let i=0;i<N;i++){ const d = new Date(Date.UTC(y, m-1+i, 1)).toISOString().slice(0,7), int = Math.round(bal*r);
+    let pr = i<G ? 0 : l.way==="gankin" ? Math.round(+l.amt/(N-G)) : Math.round(pay-int); if(i===N-1) pr = bal; bal = Math.max(0, bal-pr); out.push({d, pr, int, bal}); }
+  return out; }
+function render(){
+  const cm = today().slice(0,7);
+  $("#loans").innerHTML = L.length ? (()=>{ let tot = 0, mon = 0; const cards = L.map((l,i)=>{ const s = sched(l), now = s.find(x=>x.d===cm), done = s.filter(x=>x.d<cm), left = s.filter(x=>x.d>=cm).length; const bal = done.length ? done[done.length-1].bal : +l.amt; tot += bal; if(now) mon += now.pr+now.int;
+     return `<details class="card"><summary style="cursor:pointer;list-style:none"><div style="display:flex;justify-content:space-between;gap:8px"><b>${esc(l.name)}</b><b class="num">${yen(bal)}</b></div><small class="muted">年${l.rate}%・${l.way==="gankin"?"元金均等":"元利均等"}・残り${left}回${now?`・今月 ${yen(now.pr+now.int)}（元金${yen(now.pr)}＋利息${yen(now.int)}）`:""}${l.memo?"・"+esc(l.memo):""}</small></summary>
+     <div style="max-height:260px;overflow:auto;margin-top:8px"><table style="width:100%;font-size:12px;border-collapse:collapse">${s.map(x=>`<tr style="${x.d===cm?"color:var(--accent);font-weight:700":x.d<cm?"opacity:.5":""}"><td>${x.d}</td><td class="num" style="text-align:right">${x.pr.toLocaleString()}</td><td class="num" style="text-align:right">${x.int.toLocaleString()}</td><td class="num" style="text-align:right">${x.bal.toLocaleString()}</td></tr>`).join("")}</table></div>
+     <p><button class="btn" data-dl="${i}" type="button">削除</button></p></details>`; }).join("");
+     return `<div class="card"><div class="row"><span class="t"><b>借入残高の合計</b></span><b class="num">${yen(tot)}</b></div><div class="row"><span class="t"><b>今月の返済合計</b></span><b class="num">${yen(mon)}</b></div></div>` + cards; })() : '<div class="empty">借入はまだ登録されていません</div>';
+  const t = today();
+  $("#hojo").innerHTML = H.slice().sort((a,b)=>(a.due||"9").localeCompare(b.due||"9")).map(h=>{ const i = H.indexOf(h), left = h.due ? Math.round((Date.parse(h.due)-Date.parse(t))/864e5) : null;
+    return `<div class="card"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center"><b>${h.url?`<a href="${esc(h.url)}" target="_blank" rel="noopener">${esc(h.name)}</a>`:esc(h.name)}</b><select data-hs="${i}" style="width:auto;min-height:32px;font-size:13px">${["検討中","申請準備中","申請済み","採択","不採択","見送り"].map(s=>`<option ${s===h.st?"selected":""}>${s}</option>`).join("")}</select></div>
+    <small class="muted">${h.due?`締切 ${md(h.due)}${left!=null&&left>=0&&!/済|採択|見送/.test(h.st)?`（あと${left}日）`:""}`:"締切なし"}${h.memo?"・"+esc(h.memo):""}</small><p style="margin:6px 0 0"><button class="btn" data-dh="${i}" type="button">削除</button></p></div>`; }).join("") || '<div class="empty">まだ登録されていません</div>';
+}
+$("#lf").onsubmit = e => { e.preventDefault(); const f = e.target.elements; L.push({name:f.name.value, amt:+f.amt.value, rate:+f.rate.value, start:f.start.value, n:+f.n.value, grace:+f.grace.value||0, way:f.way.value, memo:f.memo.value}); ls.set("yushi-loans", L); e.target.reset(); render(); toast("追加しました"); };
+$("#hf").onsubmit = e => { e.preventDefault(); const f = e.target.elements; H.push({name:f.name.value, due:f.due.value, st:f.st.value, memo:f.memo.value, url:f.url.value}); ls.set("yushi-hojo", H); e.target.reset(); render(); toast("追加しました"); };
+document.addEventListener("click", e=>{ const a = e.target.closest("[data-dl]"); if(a && confirm("削除しますか？")){ L.splice(+a.dataset.dl,1); ls.set("yushi-loans", L); render(); } const b = e.target.closest("[data-dh]"); if(b && confirm("削除しますか？")){ H.splice(+b.dataset.dh,1); ls.set("yushi-hojo", H); render(); } });
+document.addEventListener("change", e=>{ const s = e.target.closest("[data-hs]"); if(s){ H[+s.dataset.hs].st = s.value; ls.set("yushi-hojo", H); render(); } });
+tabs("yushi-tab", "loan"); render();
+
+</script>
+<script>/* 共通：電波がなくても開ける・ホームへ戻るボタン */if("serviceWorker" in navigator&&location.protocol.startsWith("http"))navigator.serviceWorker.register("../sw.js",{scope:"../"}).catch(()=>{});try{if(sessionStorage.getItem("rekil-from-home")&&!/\/home\/?$/.test(location.pathname)){const b=document.createElement("a");b.href="../home/";b.textContent="⌂";b.setAttribute("aria-label","ReKiLホームへ");b.style.cssText="position:fixed;right:12px;bottom:calc(84px + env(safe-area-inset-bottom,0px));z-index:70;width:44px;height:44px;border-radius:22px;background:#2a313a;color:#fff;font-size:22px;display:flex;align-items:center;justify-content:center;text-decoration:none;box-shadow:0 4px 16px #0008;opacity:.9";document.body.appendChild(b)}}catch(_){}</script>
+</body>
+</html>

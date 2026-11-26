@@ -204,6 +204,13 @@
      "url": "../nittou/",
      "icon": "../nittou/icon-180.png",
      "owner": true
+    },
+    {
+     "id": "yushi",
+     "name": "融資・補助金",
+     "url": "../yushi/",
+     "icon": "../yushi/icon-180.png",
+     "owner": true
     }
    ]
   },
@@ -239,6 +246,12 @@
      "name": "真贋・査定",
      "url": "../kantei/",
      "icon": "../kantei/icon-180.png"
+    },
+    {
+     "id": "teiki",
+     "name": "定期作業",
+     "url": "../teiki/",
+     "icon": "../teiki/icon-180.png"
     }
    ]
   }
