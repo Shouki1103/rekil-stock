@@ -79,6 +79,7 @@ body{padding-top:env(safe-area-inset-top,0px)!important}
 </style>
 </head>
 <body>
+<script src="../lib/offline.js"></script>
 <script>/* rekil-common */try{const K="rekil-zaiko-pass",P=localStorage.getItem("rekil-pass");if(P&&!localStorage.getItem(K))localStorage.setItem(K,P)}catch(_){}</script>
 
 <header>
@@ -135,7 +136,7 @@ body{padding-top:env(safe-area-inset-top,0px)!important}
 <script>
 /* ▼ Apps Script をデプロイしたときの「ウェブアプリのURL」（未設定なら空） */
 const API_URL = "https://script.google.com/macros/s/AKfycbzOhUEYHb8aw2YofUdx1o9v19HzFqHBSP0cN4nfcHpvaBJX51z36H4HavxHMD37NZVcLQ/exec";
-const APP_VERSION = "2026-11-18-3";
+const APP_VERSION = "2026-11-18-3o";
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const yen = v => v==null || v==="" ? "—" : "¥" + Math.round(v).toLocaleString("ja-JP");

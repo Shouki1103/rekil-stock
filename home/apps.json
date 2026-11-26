@@ -71,6 +71,12 @@
      "name": "写真読み取り",
      "url": "../yomitori/",
      "icon": "../yomitori/icon-180.png"
+    },
+    {
+     "id": "tenki",
+     "name": "天気・交通",
+     "url": "../tenki/",
+     "icon": "../tenki/icon-180.png"
     }
    ]
   },

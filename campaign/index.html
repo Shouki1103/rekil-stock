@@ -92,6 +92,7 @@ body{padding-top:env(safe-area-inset-top,0px)!important}
 </style>
 </head>
 <body>
+<script src="../lib/offline.js"></script>
 <script>/* rekil-common */try{const K="rekil-campaign-pass",P=localStorage.getItem("rekil-pass");if(P&&!localStorage.getItem(K))localStorage.setItem(K,P)}catch(_){}</script>
 
 <header>
@@ -164,7 +165,7 @@ body{padding-top:env(safe-area-inset-top,0px)!important}
 <script>
 /* ▼ Apps Script をデプロイしたときの「ウェブアプリのURL」 */
 const API_URL = "https://script.google.com/macros/s/AKfycby3F-MYmPDbMyj3CC4sR2WC2KwtC73femnvFT4XG67PgCpaQjw9Z5Dp6qRk_KgknGrc/exec";
-const APP_VERSION = "2026-11-18-3";
+const APP_VERSION = "2026-11-18-3o";
 
 const $=id=>document.getElementById(id);
 const C_FIELDS=["id","name","status","apply_deadline","start_jst","end_jst","coupon_code","offer","cashback_rate","cashback_cap_usd","budget_usd","min_price_usd","target_items","excluded_items","conditions","cashback_due","inquiry_tag","orders","sales_usd","discount_usd","fees_usd","cashback_expected_usd","cashback_received_usd","cashback_received_date","note","result_pdf"];
