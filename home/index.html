@@ -40,7 +40,7 @@ h3{font-size:13px;color:var(--muted);margin:16px 2px 8px;font-weight:700}
 .badge:empty{display:none}
 .hint{font-size:12px;color:var(--muted)}.erow{display:flex;align-items:center;gap:6px;padding:6px 0;border-bottom:1px solid var(--line)}.erow .en{flex:1;min-width:0}.erow button,.erow select,.ebar button{font:inherit;font-size:14px;min-height:36px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--fg);padding:0 10px}.erow select{max-width:130px}.ebar{margin-top:14px}#edit{border:1px solid var(--line);border-radius:8px;padding:4px 10px}
 .tk{display:flex;align-items:center;gap:10px;padding:7px 0;border-top:1px solid var(--line);font-size:14px}.tk:first-of-type{border-top:0}.tk input{width:20px;height:20px;accent-color:var(--accent);flex:0 0 auto}.tk.done span{opacity:.45;text-decoration:line-through}.tk small{color:var(--danger);font-size:11px;margin-left:auto;flex:0 0 auto}.tk small.cdone{color:var(--accent)}
-#today summary{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between}#today summary::-webkit-details-marker{display:none}#today summary::after{content:"▾ 開く";font-size:12px;color:var(--muted)}#today[open] summary::after{content:"▴ 閉じる"}#today summary h2{margin:0}#today[open] summary{margin-bottom:6px}
+#today summary,#todo summary{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between}#today summary::-webkit-details-marker,#todo summary::-webkit-details-marker{display:none}#today summary::after,#todo summary::after{content:"▾ 開く";font-size:12px;color:var(--muted)}#today[open] summary::after,#todo[open] summary::after{content:"▴ 閉じる"}#today summary h2,#todo summary h2{margin:0}#today[open] summary,#todo[open] summary{margin-bottom:6px}
 header{gap:8px}.brand{white-space:nowrap;flex:0 0 auto}.hctl{display:flex;align-items:center;gap:6px;min-width:0}.hctl .sync{white-space:nowrap}
 .tabs{flex:0 0 auto;display:flex;gap:6px;padding:8px max(14px,calc((100% - 612px)/2)) 0;background:var(--bg)}.tabs button{flex:1;font:inherit;font-size:14px;font-weight:700;min-height:38px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--muted)}.tabs button.on{background:var(--accent);color:#14181d;border-color:var(--accent)}
 .lk{display:flex;align-items:center;gap:8px;padding:9px 0;border-top:1px solid var(--line);color:var(--fg);text-decoration:none}.lk:first-of-type{border-top:0}.lk .t{flex:1;min-width:0}.lk .t b{color:var(--fg);display:block;font-size:14px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.lk .t small{display:block;color:var(--muted);font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.lk em{font-style:normal;font-size:10.5px;border:1px solid var(--line);border-radius:6px;padding:1px 6px;color:var(--muted);flex:0 0 auto}.lk em.claude{color:#c9a7ff}.lk em.sheet{color:#7fd38a}.lk .cp{font:inherit;font-size:12px;min-height:30px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--fg);padding:0 8px;flex:0 0 auto}
@@ -65,7 +65,7 @@ header{gap:8px}.brand{white-space:nowrap;flex:0 0 auto}.hctl{display:flex;align-
   <div class="kpis" id="kpis" hidden></div>
   <a class="news" id="news" href="../koushin/" hidden></a>
   <details class="todo" id="today"><summary><h2 id="todayTitle">今日やること</h2></summary><div id="todayList"><span class="ok">読み込み中…</span></div></details>
-  <section class="todo" id="todo"><h2>未対応</h2><div id="todoList"><span class="ok">確認中…</span></div></section>
+  <details class="todo" id="todo"><summary><h2 id="todoTitle">未対応</h2></summary><div id="todoList"><span class="ok">確認中…</span></div></details>
   <div id="groups"></div>
  </div>
  <div id="vLinks" hidden>
@@ -75,7 +75,7 @@ header{gap:8px}.brand{white-space:nowrap;flex:0 0 auto}.hctl{display:flex;align-
 </main>
 <div id="fsheet" hidden><div class="box"><h4 id="fname"></h4><div class="grid" id="fgrid"></div></div></div>
 <script>
-const APP_VERSION = "2026-11-26-4";
+const APP_VERSION = "2026-11-26-5";
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const today = () => new Date(Date.now()+9*3600e3).toISOString().slice(0,10);
@@ -123,6 +123,7 @@ function render(){
   $("#edit").textContent = !isOwner() ? "🔒" : editing ? "完了" : "並べ替え";
   $("#edit").setAttribute("aria-label", isOwner() ? "並べ替え" : "代表ログイン");
   const list = Object.values(items).flat();
+  { const n = list.reduce((s,x)=>s+(parseInt(x.v)||1),0); $("#todoTitle").innerHTML = list.length ? `未対応（${n}件）` : "未対応（なし）"; }
   $("#todoList").innerHTML = (list.length ? list.map(x=>`<a href="${esc(x.u)}"><span>${esc(x.t)}</span><b>${esc(x.v)}</b></a>`).join("") : '<span class="ok">未対応はありません</span>')
     + (typeof failed!=="undefined" && failed.length ? `<div class="warnline">確認できなかったアプリ：${failed.map(esc).join("、")}<br><button type="button" class="sync" id="setPass" style="border:1px solid var(--line);border-radius:8px;padding:4px 10px;margin-top:6px">社内の暗証番号を入れる</button></div>` : "");
 }
