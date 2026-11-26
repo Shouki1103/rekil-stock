@@ -75,7 +75,7 @@ header{gap:8px}.brand{white-space:nowrap;flex:0 0 auto}.hctl{display:flex;align-
 </main>
 <div id="fsheet" hidden><div class="box"><h4 id="fname"></h4><div class="grid" id="fgrid"></div></div></div>
 <script>
-const APP_VERSION = "2026-11-26-3";
+const APP_VERSION = "2026-11-26-4";
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const today = () => new Date(Date.now()+9*3600e3).toISOString().slice(0,10);
@@ -307,6 +307,8 @@ function renderKpi(){
   const man = v => v>=1e6 ? (v/1e4).toFixed(0)+"万" : Math.round(v).toLocaleString();
   $("#kpis").innerHTML = [["今月の売上", man(sale)+"円"],["今月の粗利", man(pf)+"円", pf<0],["今月の仕入", man(buy)+"円"],["今月の販売", sold.length+"点"],["在庫（出品中）", inv.length.toLocaleString()+"点"],["滞留180日超", old+"点", old>0]]
     .map(([l,v,n])=>`<a href="../dash/"><span>${l}</span><b class="${n?"neg":""}">${v}</b></a>`).join("");
+  const at = c.at ? new Date(c.at) : null;
+  $("#kpis").insertAdjacentHTML("beforeend", `<div style="grid-column:1/-1;font-size:11px;color:var(--muted);text-align:right">${at ? `在庫/売上管理シートの ${at.getMonth()+1}/${at.getDate()} ${at.getHours()}:${String(at.getMinutes()).padStart(2,"0")} 時点の数字` : "前回読み込んだ数字"}（↻で更新）</div>`);
   $("#kpis").hidden = false;
 }
 async function loadKpi(){ const p = getPass("rekil-zaiko-pass"); if(!p) return; try{ const r = await fetch(ZK_API, {method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"}, body: JSON.stringify({action:"list", pass:p})}); const j = await r.json(); if(j.ok){ localStorage.setItem("rekil-zaiko-cache", JSON.stringify({at:j.at, result:j.result})); renderKpi(); } }catch(_){} }
@@ -325,7 +327,7 @@ async function refresh(){
 try{ Object.assign(items, JSON.parse(localStorage.getItem("rekil-home-items")||"{}")); }catch(_){}
 try{ sessionStorage.setItem("rekil-from-home","1"); }catch(_){}
 render(); renderToday(); renderKpi(); showTab(); loadKpi(); loadNews(); loadCatalog(); loadTasks(); loadDone(); loadRenraku(); refresh(); if(tab==="links"){ loadLinks(); loadAccounts(); }
-$("#sync").onclick = refresh;
+$("#sync").onclick = () => { refresh(); loadKpi(); };
 document.addEventListener("click", e=>{ if(e.target.id!=="setPass") return; const v = prompt("社内の暗証番号（ReKiL Stockなどと同じ番号）。一度入れると、ホームから開くアプリで入力不要になります"); if(!v) return; try{ localStorage.setItem("rekil-pass", v.trim()); }catch(_){} refresh(); });
 $("#edit").onclick = ()=>{ if(!isOwner()){ ownerUnlock(); return; } editing = !editing; render(); };
 document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState==="visible"){ checkUpdate(); refresh(); } });
