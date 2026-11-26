@@ -108,6 +108,7 @@ label{display:block;font-size:12px;color:var(--sub);margin:12px 0 4px}
 #zoom{position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:60;display:none;align-items:center;justify-content:center}#zoom.open{display:flex}#zoom img{max-width:94vw;max-height:90vh;border-radius:10px}
 .kchips{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}.kchip{border:1px solid var(--line);background:var(--field);color:var(--ink);border-radius:99px;padding:6px 10px;font-size:13px;cursor:pointer}.kchip.on{background:var(--shup);color:#111;border-color:var(--shup);font-weight:700}
 .toast{position:fixed;left:50%;bottom:96px;transform:translateX(-50%);background:#f2f2f3;color:#111;padding:8px 14px;border-radius:8px;font-size:13px;display:none;z-index:50;max-width:90vw;text-align:center}
+input[type=date]{-webkit-appearance:none;appearance:none;display:block;width:100%;max-width:100%;min-width:0;box-sizing:border-box;text-align:left}input[type=date]::-webkit-date-and-time-value{text-align:left}
 </style>
 </head>
 <body>
@@ -208,7 +209,7 @@ label{display:block;font-size:12px;color:var(--sub);margin:12px 0 4px}
 <script>
 /* ▼ Apps Script をデプロイしたときの「ウェブアプリのURL」 */
 const API_URL = "https://script.google.com/macros/s/AKfycbzc7ND5p6X7nAyZ5AImSXScpj59BJQUo9Ht1SlBvO5Km6wNUIW7eG3iQfpghGJJq3Mk/exec";
-const APP_VERSION = "2026-11-27-9";
+const APP_VERSION = "2026-11-27-11";
 const DEF_AUC=["オークネット","エコオク","エコトレ[関東]","エコトレ[関西]","JDS","JBA","コメ兵","モノバンク","プライム","浜屋","大吉","JWA","トレファク","ペンギン","アプレ","リバオク"];
 const ST={hikae:"業者未登録",shuppin:"出品中",sold:"落札",return:"戻り・再出品待ち",relisted:"再出品済"};
 const ACTIVE=["hikae","shuppin","return"];

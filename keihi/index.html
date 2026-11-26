@@ -43,6 +43,7 @@ label.f{display:block;font-size:12px;color:var(--muted);margin:8px 0 4px}
 .sheet .box{background:var(--surface);border-top:1px solid var(--line);border-radius:18px 18px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom,0px));width:min(640px,100%);max-height:90%;overflow:auto}
 .toast{position:fixed;left:50%;bottom:calc(30px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:#000d;color:#fff;padding:8px 16px;border-radius:20px;font-size:14px;opacity:0;transition:.2s;pointer-events:none;z-index:90}.toast.show{opacity:1}
 a{color:var(--accent)}
+input[type=date]{-webkit-appearance:none;appearance:none;display:block;width:100%;max-width:100%;min-width:0;box-sizing:border-box;text-align:left}input[type=date]::-webkit-date-and-time-value{text-align:left}
 </style>
 </head>
 <body>
@@ -87,7 +88,7 @@ a{color:var(--accent)}
 <script src="../lib/minixlsx.js"></script>
 <script src="../lib/ocr.js"></script>
 <script>
-const APP_VERSION = "2026-11-27-10";
+const APP_VERSION = "2026-11-27-11";
 
 const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));

@@ -66,6 +66,7 @@ main{max-width:640px;margin:0 auto;padding:10px 14px}
 #lock button{font:inherit;font-weight:800;padding:12px;border-radius:10px;border:0;background:var(--accent);color:#111}
 .toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:#f2f4f6;color:#111;padding:10px 16px;border-radius:8px;font-weight:700;opacity:0;transition:opacity .2s;pointer-events:none;z-index:60}
 .toast.show{opacity:1}
+input[type=date]{-webkit-appearance:none;appearance:none;display:block;width:100%;max-width:100%;min-width:0;box-sizing:border-box;text-align:left}input[type=date]::-webkit-date-and-time-value{text-align:left}
 </style>
 </head>
 <body>
@@ -102,7 +103,7 @@ main{max-width:640px;margin:0 auto;padding:10px 14px}
 <script>
 /* ▼ Apps Script をデプロイしたときの「ウェブアプリのURL」（apps-script.gs を参照） */
 const API_URL = "https://script.google.com/macros/s/AKfycbxGqX3SpjyG9EOeR-JoCY5vGO3zIRFtJe1PUDgZB956ux8e3UlxX4cesXzXdWY7qahBpw/exec";
-const APP_VERSION = "2026-11-27-9";
+const APP_VERSION = "2026-11-27-11";
 const MEMBERS = ["祥貴","俊輔","真由美"];
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));

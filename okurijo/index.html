@@ -114,6 +114,7 @@ details summary{cursor:pointer;color:var(--muted);font-size:13px;font-weight:700
 #lock h2{margin:0;font-size:20px}
 .bulkdone{width:100%;min-height:44px;border-radius:10px;border:1px solid var(--accent);background:transparent;color:var(--accent);font:inherit;font-weight:700;cursor:pointer}.bulkdone.arm{background:var(--accent);color:var(--accent-ink)}
 .csvbtn{width:100%;min-height:40px;border-radius:10px;border:1px dashed var(--line);background:transparent;color:var(--muted);font:inherit;font-size:13px;cursor:pointer}
+input[type=date]{-webkit-appearance:none;appearance:none;display:block;width:100%;max-width:100%;min-width:0;box-sizing:border-box;text-align:left}input[type=date]::-webkit-date-and-time-value{text-align:left}
 </style>
 </head>
 <body>
@@ -213,7 +214,7 @@ details summary{cursor:pointer;color:var(--muted);font-size:13px;font-weight:700
 <script>
 /* ▼ Apps Script をデプロイしたときの「ウェブアプリのURL」 */
 const API_URL = "https://script.google.com/macros/s/AKfycbwa-V3TqAAmz3S1-zreAI3Jkp0d4f0aGikswIQnTdmxsgFpggUxE0bjl1-sR0DZumSwsQ/exec";
-const APP_VERSION = "2026-11-27-9";
+const APP_VERSION = "2026-11-27-11";
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));

@@ -43,7 +43,8 @@ label.f{display:block;font-size:12px;color:var(--muted);margin:8px 0 4px}
 .sheet .box{background:var(--surface);border-top:1px solid var(--line);border-radius:18px 18px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom,0px));width:min(640px,100%);max-height:90%;overflow:auto}
 .toast{position:fixed;left:50%;bottom:calc(30px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:#000d;color:#fff;padding:8px 16px;border-radius:20px;font-size:14px;opacity:0;transition:.2s;pointer-events:none;z-index:90}.toast.show{opacity:1}
 a{color:var(--accent)}
-@media print{body{position:static;overflow:visible;background:#fff;color:#000}header,nav,main,.toast,a[aria-label]{display:none!important}#print{display:block!important}.pg{page-break-after:always;padding:18mm 16mm;font-size:12pt;color:#000}.pg:last-child{page-break-after:auto}.pg h1{text-align:center;font-size:20pt;letter-spacing:.3em;margin:0 0 18px}.pg table{width:100%;border-collapse:collapse;margin-top:10px}.pg td,.pg th{border:1px solid #000;padding:8px 10px;text-align:left}.pg th{width:30%;background:#f2f2f2}.pg .r{text-align:right}.pg .sign{display:flex;justify-content:flex-end;gap:0;margin-top:24px}.pg .sign div{border:1px solid #000;width:80px;height:80px;text-align:center;font-size:10pt;padding-top:4px}}</style>
+@media print{body{position:static;overflow:visible;background:#fff;color:#000}header,nav,main,.toast,a[aria-label]{display:none!important}#print{display:block!important}.pg{page-break-after:always;padding:18mm 16mm;font-size:12pt;color:#000}.pg:last-child{page-break-after:auto}.pg h1{text-align:center;font-size:20pt;letter-spacing:.3em;margin:0 0 18px}.pg table{width:100%;border-collapse:collapse;margin-top:10px}.pg td,.pg th{border:1px solid #000;padding:8px 10px;text-align:left}.pg th{width:30%;background:#f2f2f2}.pg .r{text-align:right}.pg .sign{display:flex;justify-content:flex-end;gap:0;margin-top:24px}.pg .sign div{border:1px solid #000;width:80px;height:80px;text-align:center;font-size:10pt;padding-top:4px}}input[type=date]{-webkit-appearance:none;appearance:none;display:block;width:100%;max-width:100%;min-width:0;box-sizing:border-box;text-align:left}input[type=date]::-webkit-date-and-time-value{text-align:left}
+</style>
 </head>
 <body>
 <script>/* rekil-common */</script>
@@ -70,7 +71,7 @@ a{color:var(--accent)}
 
 </main>
 <script>
-const APP_VERSION = "2026-11-27-9";
+const APP_VERSION = "2026-11-27-11";
 
 const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
