@@ -89,6 +89,7 @@ button.sect{appearance:none;border:0;background:none;width:100%;font-family:inhe
 .add{aspect-ratio:1;border:1px dashed var(--muted);border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--muted);font-size:12px;cursor:pointer;gap:2px}
 .add b{font-size:26px;line-height:1;color:var(--ink)}
 .chips{display:flex;gap:6px;flex-wrap:wrap}
+.selbar{position:sticky;top:0;z-index:5;display:flex;gap:6px;flex-wrap:wrap;align-items:center;background:var(--bg,#14181d);padding:8px 0;margin-bottom:6px}.selbar .n{font-weight:800;margin-right:auto}.item.sel{border-color:var(--acc);box-shadow:0 0 0 2px var(--acc) inset}.item .ck{display:none}.selecting .item .ck{display:grid;place-items:center;position:absolute;left:6px;top:6px;width:22px;height:22px;border-radius:6px;border:2px solid var(--acc);background:#000a;color:var(--acc-ink);font-weight:900;font-size:14px}.selecting .item{position:relative}.selecting .item.sel .ck{background:var(--acc)}.chip.on{background:var(--acc);color:var(--acc-ink);border-color:var(--acc)}
 .chip{appearance:none;font:inherit;font-size:13px;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:5px 12px;cursor:pointer}
 .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .spacer{flex:1}
@@ -137,6 +138,7 @@ button.sect{appearance:none;border:0;background:none;width:100%;font-family:inhe
   <div class="bar"><input id="q" type="search" placeholder="商品名・仕入先・理由で検索" aria-label="検索"></div>
   <p class="hint" style="margin:-4px 0 10px">在庫/売上管理シートの商品リストで、販売先を「廃棄」にした商品が自動でここに出ます。タップして写真と理由を登録してください。</p>
 
+  <div class="selbar" id="selbar"></div>
   <div class="list" id="todo"></div>
   <button class="sect" id="done-toggle" aria-expanded="false" aria-controls="done"><span class="caret" aria-hidden="true">▶</span>登録済み <span class="count" id="done-count">0</span></button>
   <div class="list" id="done" hidden></div>
@@ -163,7 +165,7 @@ const $ = (s, r = document) => r.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 /* ▼ Apps Script をデプロイしたときの「ウェブアプリのURL」 */
 const API_URL = "https://script.google.com/macros/s/AKfycbxkxy7ZrqL9cnVaCq6ROX0OMRfYMeDVoYT7C_U-H1D2ENsS3nax-hfNFT7dDMOsItiHTQ/exec";
-const APP_VERSION = "2026-11-22-3ov";
+const APP_VERSION = "2026-11-27-1";
 const CACHE = "haiki-data";
 const REASONS = ["破損", "汚れ・シミ", "劣化（ベタつき・剥がれ）", "カビ・臭い", "偽物の疑い", "修理不可", "売れ残り"];
 let items = [], query = "";
@@ -190,7 +192,8 @@ function toast(msg){ const r=$("#toast-root"); r.innerHTML=`<div class="toast">$
 function setStatus(t){ $("#status").textContent=t; }
 
 const thumb = (id, w=400) => `https://drive.google.com/thumbnail?id=${encodeURIComponent(id)}&sz=w${w}`;
-const isDone = it => (it.photos||[]).length>0 && String(it.reason||"").trim()!=="";
+const NOPH = "（写真なし）"; /* 複数選択で「写真なしで登録済み」にしたもの（理由の最後に付く） */
+const isDone = it => String(it.reason||"").trim()!=="" && ((it.photos||[]).length>0 || String(it.reason).includes(NOPH));
 const yen = s => { const n = String(s||"").replace(/[^\d-]/g,""); return n ? "¥"+Number(n).toLocaleString("ja-JP") : ""; };
 /* ---------- 日付・期間 ---------- */
 function ymd(it){ const s=String(it.haikiDate||it.buyDate||""); const m=s.match(/(\d{4})\D+(\d{1,2})(?:\D+(\d{1,2}))?/); return m?{y:+m[1],m:+m[2],d:+(m[3]||0)}:null; }
@@ -249,10 +252,10 @@ function card(it){
   const ph = it.photos||[];
   const img = ph.length ? `<img src="${thumb(ph[0])}" alt="" loading="lazy"><span class="n">${ph.length}</span>` : "写真なし";
   const need = [];
-  if(!ph.length) need.push(`<span class="tag miss">写真なし</span>`);
+  if(!ph.length && !String(it.reason||"").includes(NOPH)) need.push(`<span class="tag miss">写真なし</span>`);
   if(!String(it.reason||"").trim()) need.push(`<span class="tag miss">理由なし</span>`);
   if(it.inSheet===false) need.push(`<span class="tag gone">シートから外れた</span>`);
-  return `<button class="item" data-key="${esc(it.key)}">
+  return `<button class="item${sel.has(it.key)?" sel":""}" data-key="${esc(it.key)}"><span class="ck" aria-hidden="true">${sel.has(it.key)?"✓":""}</span>
     <span class="thumb">${img}</span>
     <span class="body">
       <span class="name" style="display:block">${esc(it.name)}</span>
@@ -264,6 +267,7 @@ function card(it){
   </button>`;
 }
 function draw(){
+  drawSel();
   const q = query.trim().toLowerCase();
   const hit = it => !q || [it.name,it.supplier,it.reason,it.memo,it.no,it.haikiDate].join(" ").toLowerCase().includes(q);
   fillPeriod();
@@ -279,7 +283,44 @@ function draw(){
   $("#plabel").textContent = `${periodLabel()}：${t.length+d.length}件${q?"（検索中）":""}`;
   $("#pdf").disabled = !(t.length+d.length);
 }
-document.addEventListener("click", e=>{ const b=e.target.closest(".item"); if(!b) return; const it=items.find(x=>x.key===b.dataset.key); if(it) openEditor(it); });
+document.addEventListener("click", e=>{ const b=e.target.closest(".item"); if(!b) return; const it=items.find(x=>x.key===b.dataset.key); if(!it) return;
+  if(selecting){ if(isDone(it)) { toast("登録済みの商品は選べません"); return; } if(sel.has(it.key)) sel.delete(it.key); else sel.add(it.key); draw(); return; }
+  openEditor(it); });
+/* ---------- 複数選択して登録済みにする ---------- */
+let selecting = false; const sel = new Set();
+function drawSel(){
+  document.body.classList.toggle("selecting", selecting);
+  $("#selbar").innerHTML = !selecting ? `<span class="n"></span><button class="btn sm" id="selOn">選んで登録済みにする</button>`
+    : `<span class="n">${sel.size}件 選択中</span><button class="btn sm" id="selAll">${sel.size?"選択を外す":"未登録を全部選ぶ"}</button><button class="btn sm primary" id="selGo">登録済みにする</button><button class="btn sm" id="selOff">やめる</button>`;
+}
+$("#selbar").addEventListener("click", e=>{ const id=e.target.id;
+  if(id==="selOn"){ selecting=true; sel.clear(); draw(); return; }
+  if(id==="selOff"){ selecting=false; sel.clear(); draw(); return; }
+  if(id==="selAll"){ if(sel.size) sel.clear(); else document.querySelectorAll("#todo .item").forEach(b=>sel.add(b.dataset.key)); draw(); return; }
+  if(id==="selGo"){ if(!sel.size){ toast("先に商品をタップして選んでください"); return; } bulkSheet(); }
+});
+function bulkSheet(){
+  const list = items.filter(it=>sel.has(it.key)); const noR = list.filter(it=>!String(it.reason||"").trim()).length;
+  $("#sheet-root").innerHTML = `<div class="scrim" id="scrim"><div class="sheet" role="dialog" aria-modal="true">
+    <h2><span>${list.length}件を登録済みにする</span><button class="btn sm" id="close">閉じる</button></h2>
+    <p class="hint">${noR ? `理由が空の${noR}件に、ここで選んだ理由を入れます（理由が入っている商品はそのまま）。` : "全件に理由が入っているので、そのまま登録済みにします。"}写真がない商品は「${NOPH}」と付けて登録済みにします。</p>
+    ${noR ? `<div class="field"><label for="breason">廃棄の理由</label><div class="chips" id="bchips">${REASONS.map(r=>`<button type="button" class="chip" data-r="${esc(r)}">${esc(r)}</button>`).join("")}</div>
+      <textarea id="breason" rows="2" placeholder="例：売れ残り"></textarea></div>` : ""}
+    <div class="row"><span class="spacer"></span><button class="btn primary" id="bsave">登録済みにする</button></div></div></div>`;
+  $("#close").onclick = closeSheet; $("#scrim").addEventListener("click", e=>{ if(e.target.id==="scrim") closeSheet(); });
+  const bc=$("#bchips"); if(bc) bc.addEventListener("click", e=>{ const r=e.target.dataset.r; if(!r) return; const ta=$("#breason"); const v=ta.value.trim(); ta.value = v ? (v.split(/[、\n]/).includes(r)?v:v+"、"+r) : r; });
+  $("#bsave").onclick = async ()=>{
+    const r0 = noR ? $("#breason").value.trim() : ""; if(noR && !r0){ toast("理由を選ぶか入力してください"); return; }
+    const btn=$("#bsave"); btn.disabled=true; let ok=0, ng=0;
+    for(let k=0;k<list.length;k++){ const it=list[k]; btn.textContent=`保存中… ${k+1}/${list.length}`;
+      let reason = String(it.reason||"").trim() || r0; if(!(it.photos||[]).length && !reason.includes(NOPH)) reason += NOPH;
+      const rec = {key:it.key, no:it.no, name:it.name, cost:it.cost, supplier:it.supplier, buyDate:it.buyDate, haikiDate:it.haikiDate, memo:it.memo, reason, photos:(it.photos||[]).slice()};
+      try{ await api("save", {record: rec, removedPhotos: []}); ok++; sel.delete(it.key); }catch(_){ ng++; }
+    }
+    closeSheet(); if(!sel.size) selecting=false; draw();
+    toast(ng ? `${ok}件を登録済みにしました。${ng}件は保存できませんでした（選んだまま残しています）` : `${ok}件を登録済みにしました`);
+  };
+}
 $("#q").addEventListener("input", e=>{ query=e.target.value; draw(); });
 
 function setDoneOpen(open){ $("#done-toggle").setAttribute("aria-expanded", open); $("#done").hidden = !open; try{ localStorage.setItem("haiki-done-open", open?"1":"0"); }catch(_){} }
