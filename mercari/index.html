@@ -42,11 +42,11 @@ main{padding:12px 14px 110px;max-width:760px;margin:0 auto}
 .grp .gt{flex:1;font-weight:800;font-size:16px}
 .grp .gt small{font-weight:700;color:var(--sub);font-size:12px;margin-left:6px}
 .card{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--hikae);border-radius:12px;padding:12px;margin-bottom:8px}
-.card.s-shuppin{border-left-color:var(--shup)}.card.s-return{border-left-color:var(--ret)}.card.s-sold,.card.s-relisted{border-left-color:var(--done);opacity:.85}
+.card.s-shuppin{border-left-color:var(--shup)}.card.s-return{border-left-color:var(--ret)}.card.s-sold,.card.s-relisted,.card.s-closed{border-left-color:var(--done);opacity:.85}
 .row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .nm{font-weight:700;font-size:16px;flex:1;min-width:0}
 .pill{font-size:12px;padding:3px 10px;border-radius:99px;color:#111;font-weight:700;white-space:nowrap}
-.p-hikae{background:var(--hikae)}.p-shuppin{background:var(--shup)}.p-return{background:var(--ret)}.p-sold,.p-relisted{background:var(--done)}
+.p-hikae{background:var(--hikae)}.p-shuppin{background:var(--shup)}.p-return{background:var(--ret)}.p-sold,.p-relisted,.p-closed{background:var(--done)}
 .mid{display:flex;align-items:center;gap:8px;margin-top:8px}
 .mid code{font-size:17px;font-family:ui-monospace,Menlo,monospace;letter-spacing:.02em;background:var(--field);border:1px solid var(--line);border-radius:8px;padding:6px 10px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
 .cp{background:var(--acc);color:#fff;border:0;border-radius:8px;padding:8px 12px;font-weight:700;cursor:pointer;white-space:nowrap}
@@ -179,7 +179,7 @@ input[type=date]{-webkit-appearance:none;appearance:none;display:block;width:100
   <label>出品番号</label><input id="eLot" autocomplete="off">
   <label>状態</label>
   <div class="seg" id="eStat">
-    <button data-s="hikae">業者未登録</button><button data-s="shuppin">出品中</button><button data-s="sold">落札</button><button data-s="return">戻り</button><button data-s="relisted">再出品済</button>
+    <button data-s="hikae">業者未登録</button><button data-s="shuppin">出品中</button><button data-s="sold">落札</button><button data-s="return">戻り</button><button data-s="relisted">再出品済</button><button data-s="closed">完了</button>
   </div>
   <label>メモ</label><textarea id="eMemo" rows="2"></textarea>
   <div class="foot"><button class="btn del" id="eDel">削除</button><button class="btn" id="eCancel">キャンセル</button><button class="btn main" id="eSave">保存</button></div>
@@ -209,9 +209,9 @@ input[type=date]{-webkit-appearance:none;appearance:none;display:block;width:100
 <script>
 /* ▼ Apps Script をデプロイしたときの「ウェブアプリのURL」 */
 const API_URL = "https://script.google.com/macros/s/AKfycbzc7ND5p6X7nAyZ5AImSXScpj59BJQUo9Ht1SlBvO5Km6wNUIW7eG3iQfpghGJJq3Mk/exec";
-const APP_VERSION = "2026-11-27-11";
+const APP_VERSION = "2026-11-27-12";
 const DEF_AUC=["オークネット","エコオク","エコトレ[関東]","エコトレ[関西]","JDS","JBA","コメ兵","モノバンク","プライム","浜屋","大吉","JWA","トレファク","ペンギン","アプレ","リバオク"];
-const ST={hikae:"業者未登録",shuppin:"出品中",sold:"落札",return:"戻り・再出品待ち",relisted:"再出品済"};
+const ST={hikae:"業者未登録",shuppin:"出品中",sold:"落札",return:"戻り・再出品待ち",relisted:"再出品済",closed:"完了"};
 const ACTIVE=["hikae","shuppin","return"];
 const CATS=["バッグ","財布","ポーチ・小物","アウター","トップス","パンツ・スカート","靴","アクセサリー","その他"];
 const CAT_KW=[["財布",/財布|ウォレット|wallet/i],["ポーチ・小物",/ポーチ|キーケース|カードケース|名刺入れ|小物|コインケース/],["靴",/ブーツ|靴|スニーカー|シューズ|ローファー|パンプス|サンダル/],
@@ -271,7 +271,7 @@ function cardHtml(i,opt={}){
   if(!selMode){
     if(i.status==="return")acts=`<a class="btn sm" href="${murl(i.mid)}" target="_blank" rel="noopener">メルカリで開く</a><button class="btn okb sm" data-a="relist" data-id="${i.id}">再出品済にする</button>`;
     else acts=`<a class="btn sm ghost" href="${murl(i.mid)}" target="_blank" rel="noopener">メルカリで開く</a>`;
-    if(i.status==="hikae")acts+=`<button class="btn sm main" data-a="reg1" data-id="${i.id}">業者に出品登録</button>`;
+    if(i.status==="hikae")acts+=`<button class="btn sm main" data-a="reg1" data-id="${i.id}">業者に出品登録</button><button class="btn sm okb" data-a="close1" data-id="${i.id}">完了</button>`;
     acts+=`<button class="btn sm ghost" data-a="edit" data-id="${i.id}">編集</button>`;
   }
   const body=`<div class="cflex">${i.photo?`<img class="thumb" src="${i.photo}" data-zoom="1" alt="">`:""}<div class="cmain"><div class="row"><span class="nm">${esc(i.name||"（商品名なし）")}</span><span class="pill p-${i.status}">${ST[i.status]||""}</span></div>
@@ -285,15 +285,15 @@ let shownIds=[];
 function render(){
   const fa=$("fAuc"),cur=fa.value;
   fa.innerHTML='<option value="">全オークション</option>'+settings.auctions.map(a=>`<option>${esc(a)}</option>`).join("");fa.value=cur;
-  const inView=i=>view==="done"?["sold","relisted"].includes(i.status):i.status===view;
+  const inView=i=>view==="done"?["sold","relisted","closed"].includes(i.status):i.status===view;
   const fc=$("fCat"),cc=fc.value,cn={};items.filter(inView).forEach(i=>{const c=catOf(i);cn[c]=(cn[c]||0)+1});
   fc.innerHTML='<option value="">全アイテム</option>'+CATS.map(c=>`<option value="${c}">${c}（${cn[c]||0}）</option>`).join("");fc.value=cc;
   const cnt=s=>items.filter(i=>s.includes(i.status)).length;
-  $("cHikae").textContent=cnt(["hikae"]);$("cShup").textContent=cnt(["shuppin"]);$("cRet").textContent=cnt(["return"]);$("cDone").textContent=cnt(["sold","relisted"]);
+  $("cHikae").textContent=cnt(["hikae"]);$("cShup").textContent=cnt(["shuppin"]);$("cRet").textContent=cnt(["return"]);$("cDone").textContent=cnt(["sold","relisted","closed"]);
   document.querySelectorAll(".stat").forEach(s=>s.classList.toggle("on",s.dataset.f===view));
   const q=$("fQ").value.trim().toLowerCase();
   let list=items.filter(i=>{
-    if(view==="done"?!["sold","relisted"].includes(i.status):i.status!==view)return false;
+    if(view==="done"?!["sold","relisted","closed"].includes(i.status):i.status!==view)return false;
     if(cur&&i.auction!==cur)return false;
     if(cc&&catOf(i)!==cc)return false;
     if(q&&!((i.name||"")+" "+i.mid+" "+(i.lot||"")).toLowerCase().includes(q))return false;return true});
@@ -470,6 +470,7 @@ $("list").onclick=e=>{
   const b=e.target.closest("button[data-a]");if(!b)return;const id=b.dataset.id,a=b.dataset.a,it=items.find(x=>x.id===id);
   if(a==="edit")openEdit(it);
   else if(a==="reg1")openAdd([id]);
+  else if(a==="close1"){const now=Date.now();commit([{...it,status:"closed",updatedAt:now}],"完了に移しました（編集から戻せます）")}
   else if(a==="result")openResult(b.dataset.k);
   else if(a==="relist"){const now=Date.now();commit([{...it,status:"relisted",relistedAt:now,updatedAt:now}],"再出品済にしました");rrDoneCheck([gkey(it)])}
   else if(a==="cpall"){const ms=items.filter(i=>i.status==="return"&&gkey(i)===b.dataset.k).map(i=>i.mid);copyText(ms.join("\n"),null);toast(`${ms.length}件のメルカリ番号をまとめてコピーしました`)}
