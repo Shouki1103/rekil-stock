@@ -254,11 +254,11 @@ function render(tpl, it){
   });
   // 採寸の項目名と数値のあいだの空白は詰める（例：着丈　{着丈} → 着丈56.5cm）
   const mkeys = (it.measures||[]).map(r=>r.label).filter(Boolean).map(k=>k.replace(/[.*+?^${}()|[\]\\]/g,"\\$&"));
-  // ただし「上部」「下部」は見出しと数値のあいだに半角スペースを1つ空ける（例：横 上部 21cm 下部 21.5cm）
+  // 「上部」「下部」の行は、見出しと数値は詰めて、項目どうしのあいだは半角スペース1つにする（例：横 上部33cm 下部30cm）
   const SPACED = ["上部","下部"];
-  const tkeys = mkeys.filter(k=>!SPACED.includes(k));
-  const tight1 = tkeys.length ? lines.map(l=>l.replace(new RegExp("[ \\t　]+(?=『?約?\\{(?:"+tkeys.join("|")+")\\})","g"),"")) : lines;
-  const tight = tight1.map(l=>l.replace(new RegExp("([^\\s　])[ \\t　]*(?=『?約?\\{(?:"+SPACED.join("|")+")\\})","g"),"$1 "));
+  const tight1 = mkeys.length ? lines.map(l=>l.replace(new RegExp("[ \\t　]+(?=『?約?\\{(?:"+mkeys.join("|")+")\\})","g"),"")) : lines;
+  const spacedRe = new RegExp("\\{(?:"+SPACED.join("|")+")\\}");
+  const tight = tight1.map(l=> spacedRe.test(l) ? l.replace(/[ \t　]+/g," ").replace(/ +$/,"") : l);
   return tight.join("\n").replace(/\{([^{}]+)\}/g,(m,k)=> k in map ? map[k] : m);
 }
 const tplById = id => tpls.find(t=>t.id===id);
