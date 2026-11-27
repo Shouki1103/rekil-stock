@@ -83,6 +83,20 @@ label{display:block;font-size:12px;color:var(--sub);margin:10px 0 4px}
 .addrow{display:flex;gap:6px;margin-top:6px}
 .addrow input{flex:1}
 .toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:#f2f2f3;color:#111 !important;color:#fff;padding:8px 14px;border-radius:8px;font-size:13px;display:none;z-index:30}
+.tk{font-size:14px;font-weight:700;color:#ffd58a;margin-left:6px}
+.cands{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.cand{background:var(--field);border:1px solid var(--line);border-radius:10px;padding:6px 10px;font-size:13px;color:var(--ink);cursor:pointer;text-align:left}
+.cand.on{border-color:var(--acc);background:#3a3122}
+.cand small{display:block;color:var(--sub);font-size:11px}
+.sch{background:var(--field);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:8px}
+.sch .t{font-weight:700;font-size:15px}
+.sch .d{font-size:13px;color:var(--sub);margin-top:2px}
+.sch .d b{color:#ffd58a}
+.sch .r{display:flex;gap:8px;align-items:center;margin-top:8px}
+.sch .r .btn{padding:7px 12px;font-size:13px}
+.sch .ok{font-size:12px;color:var(--bid);font-weight:700}
+.sch .est{font-size:11px;color:var(--sub)}
+.shd{margin:14px 0 6px;font-size:14px;font-weight:800;color:var(--acc)}
 input[type=date]{-webkit-appearance:none;appearance:none;display:block;width:100%;max-width:100%;min-width:0;box-sizing:border-box;text-align:left}input[type=date]::-webkit-date-and-time-value{text-align:left}
 </style>
 </head>
@@ -91,7 +105,7 @@ input[type=date]{-webkit-appearance:none;appearance:none;display:block;width:100
 <script>/* rekil-common */try{const K="rekil-shitami-pass",P=localStorage.getItem("rekil-pass");if(P&&!localStorage.getItem(K))localStorage.setItem(K,P)}catch(_){}</script>
 
 <header>
-  <h1>下見・指値 進捗 <small><span class="sync" id="sync"></span><button class="btn ghost" id="selBtn" style="padding:4px 10px;margin-right:6px">選択</button><button class="btn ghost" id="setBtn" style="padding:4px 10px">設定</button></small></h1>
+  <h1>下見・指値 進捗 <small><span class="sync" id="sync"></span><button class="btn ghost" id="schBtn" style="padding:4px 10px;margin-right:6px">日程</button><button class="btn ghost" id="selBtn" style="padding:4px 10px;margin-right:6px">選択</button><button class="btn ghost" id="setBtn" style="padding:4px 10px">設定</button></small></h1>
   <div class="stats">
     <div class="stat" data-f="done"><b id="cDone">0</b><span>指値待ち（下見済）</span></div>
     <div class="stat" data-f="bid"><b id="cBid">0</b><span>指値登録済</span></div>
@@ -120,6 +134,8 @@ input[type=date]{-webkit-appearance:none;appearance:none;display:block;width:100
   <h2 id="eTitle">下見を追加</h2>
   <label>開催日（タップでカレンダー）</label><input type="date" id="eDate">
   <label>オークション</label><select id="eAuc"></select>
+  <label>大会</label><select id="eTk"></select>
+  <label id="eCandL">次の開催（タップで開催日・大会を入れます）</label><div class="cands" id="eCand"></div>
   <label>下見担当</label><select id="eWho"></select>
   <label>状態</label>
   <div class="seg" id="eStat">
@@ -127,6 +143,15 @@ input[type=date]{-webkit-appearance:none;appearance:none;display:block;width:100
   </div>
   <label>メモ（気になる件数・注意点など）</label><textarea id="eMemo" rows="3"></textarea>
   <div class="foot"><button class="btn" id="eCancel">キャンセル</button><button class="btn main" id="eSave">保存</button></div>
+</div></div>
+
+<div class="sheet" id="sched"><div class="panel">
+  <h2>開催日・下見開始日</h2>
+  <div class="seg" id="schSeg"><button data-v="now" class="on">下見できる大会</button><button data-v="soon">これから下見開始</button><button data-v="all">すべて</button></div>
+  <div class="tools" style="margin-top:8px"><select id="schAuc"><option value="">全オークション</option></select></div>
+  <div id="schList"></div>
+  <p class="meta">各サイト・案内（2026/11/27確認）の日程です。「推定」は公式の下見開始日が出ていないもの。日程の変更は各社の案内が優先です。</p>
+  <div class="foot"><button class="btn main" id="schClose">閉じる</button></div>
 </div></div>
 
 <div class="sheet" id="setting"><div class="panel">
@@ -155,10 +180,86 @@ input[type=date]{-webkit-appearance:none;appearance:none;display:block;width:100
 <script>
 /* ▼ Apps Script をデプロイしたときの「ウェブアプリのURL」 */
 const API_URL = "https://script.google.com/macros/s/AKfycbw7kz9QQt6CMQvwIC4IhtSekntc4xGCUAWuop6U7LO_3U6FMRo--X6wKI0F6hSx3n3Vng/exec";
-const APP_VERSION = "2026-11-27-11";
+const APP_VERSION = "2026-11-27-12";
 let selMode=false,selected=new Set(),shownIds=[];
 const DEF_AUC=["オークネット","エコオク","エコトレ[関東]","エコトレ[関西]","JDS","JBA","コメ兵","モノバンク","プライム","浜屋","大吉","JWA","トレファク","ペンギン","アプレ","リバオク"];
 const DEF_STAFF=["俊輔","祥貴"],DEF_WHO="俊輔";
+/* ▼ 大会（同じオークションでもジャンル・会場ごとに分ける）。保存は「オークション｜大会」 */
+const TAIKAI={"オークネット":["リアルタイム","バリュープライス"],"エコオク":["ブランド市"],"エコトレ[関東]":["道具市"],"エコトレ[関西]":["道具市"],
+ "JDS":["東京","大阪","道具市（埼玉）","道具市（門真）"],"JBA":["ライブ バッグ","ライブ 宝石","ライブ 時計","東京","金沢 宝石","金沢 時計","金沢 バッグ"],
+ "コメ兵":["Online（時計・バッグ）","宝石","アパレル"],"モノバンク":["ブランド","宝石","時計","ブランドジュエリー","カメラ&楽器&道具","Art&Antique","プロツール"],
+ "プライム":["ジュエリー","ブランド","時計"],"大吉":["新宿 時計・ジュエリー・ブランド","新横浜 ブランド・時計","新横浜 アパレル","カメラ（WEB）"],
+ "JWA":["ブランド","時計","宝石","カメラ"],"トレファク":["ブランド"],"ペンギン":["ブランド"],"アプレ":["ブランド","時計/宝石","宝石"],"リバオク":["時計","バッグ","ジュエリー"]};
+const SEP="｜";
+function aBase(a){return String(a||"").split(SEP)[0]}
+function aTk(a){const x=String(a||"").split(SEP);return x.length>1?x.slice(1).join(SEP):""}
+/* ▼ 開催日と下見開始日（2026/11/27 各サイト・会員ページで確認） */
+const SCHED_FIXED=[
+ // [開催日, オークション, 大会, 下見開始, 推定?]
+ ["2026-12-03","モノバンク","ブランド","2026-11-30"],["2026-12-03","モノバンク","宝石","2026-11-30"],["2026-12-03","モノバンク","カメラ&楽器&道具","2026-11-30"],
+ ["2026-12-17","モノバンク","ブランド","2026-12-14"],["2026-12-17","モノバンク","宝石","2026-12-14"],["2026-12-17","モノバンク","Art&Antique","2026-12-14"],["2026-12-17","モノバンク","プロツール","2026-12-14"],
+ ["2026-12-18","モノバンク","時計","2026-12-15"],["2026-12-18","モノバンク","ブランドジュエリー","2026-12-15"],
+ ["2026-12-14","JBA","ライブ 宝石","2026-12-11"],["2026-12-21","JBA","ライブ 宝石","2026-12-18"],["2026-12-21","JBA","ライブ 時計","2026-12-18"],
+ ["2027-01-11","JBA","ライブ 宝石","2027-01-08"],["2027-01-18","JBA","ライブ 時計","2027-01-15"],
+ ["2026-11-30","JBA","東京","2026-11-26"],["2026-12-17","JBA","東京","2026-12-13"],["2026-12-27","JBA","東京","2026-12-23"],["2027-01-17","JBA","東京","2027-01-13"],
+ ["2026-12-07","JBA","金沢 宝石","2026-12-03"],["2026-12-08","JBA","金沢 時計","2026-12-04"],["2026-12-09","JBA","金沢 バッグ","2026-12-04"],
+ ["2026-12-03","大吉","新横浜 ブランド・時計","2026-11-28"],["2026-12-03","大吉","新横浜 アパレル","2026-11-28"],["2026-12-04","大吉","新宿 時計・ジュエリー・ブランド","2026-11-29"],
+ ["2026-12-10","大吉","カメラ（WEB）","2026-12-05"],["2026-12-11","大吉","新宿 時計・ジュエリー・ブランド","2026-12-06"],["2026-12-17","大吉","新横浜 ブランド・時計","2026-12-12"],["2026-12-18","大吉","新宿 時計・ジュエリー・ブランド","2026-12-13"],
+ ["2026-12-03","リバオク","ジュエリー","2026-11-30"],["2026-12-12","リバオク","時計","2026-12-09"],["2026-12-13","リバオク","バッグ","2026-12-09"],
+ ["2026-12-23","リバオク","バッグ","2026-12-20"],["2026-12-24","リバオク","時計","2026-12-20"],["2027-01-12","リバオク","時計","2027-01-09"],["2027-01-13","リバオク","ジュエリー","2027-01-09"],["2027-01-14","リバオク","バッグ","2027-01-09"],
+ ["2026-12-03","ペンギン","ブランド","2026-11-28"],["2026-12-17","ペンギン","ブランド","2026-12-12"],["2027-01-21","ペンギン","ブランド","2027-01-16"],["2027-02-04","ペンギン","ブランド","2027-01-30"],
+ ["2026-11-29","JWA","時計","2026-11-25"],["2026-11-30","JWA","宝石","2026-11-25"],["2026-12-04","JWA","カメラ","2026-12-02"],
+ ["2026-12-03","JDS","大阪","2026-12-01",1],["2026-12-10","JDS","大阪","2026-12-08",1],["2026-12-17","JDS","大阪","2026-12-15",1],["2026-12-24","JDS","大阪","2026-12-22",1],
+ ["2026-12-07","JDS","東京","2026-12-05",1],["2026-12-21","JDS","東京","2026-12-19",1],["2026-12-09","JDS","道具市（埼玉）","2026-12-07",1],["2026-12-14","JDS","道具市（門真）","2026-12-12",1],
+ ["2026-12-22","コメ兵","宝石","2026-12-17"],["2026-12-22","コメ兵","Online（時計・バッグ）","2026-12-17"],["2027-01-07","コメ兵","Online（時計・バッグ）","2027-01-03"],["2027-01-07","コメ兵","アパレル","2027-01-03"],
+ ["2026-12-02","コメ兵","アパレル","2026-11-27"],["2026-12-09","コメ兵","アパレル","2026-12-04"],["2026-12-16","コメ兵","アパレル","2026-12-11"]
+];
+function ymd(d){return new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().slice(0,10)}
+function addD(s,n){const d=new Date(s+"T00:00:00");d.setDate(d.getDate()+n);return ymd(d)}
+function inR(s,a,b){return s>=a&&s<=b}
+let _sched=null,_schedDay="";
+function buildSched(){
+  const t=today(); if(_sched&&_schedDay===t)return _sched;
+  const out=SCHED_FIXED.map(r=>({date:r[0],auc:r[1],tk:r[2],prev:r[3],est:!!r[4]}));
+  const add=(date,auc,tk,prev,est)=>out.push({date,auc,tk,prev,est:!!est});
+  for(let i=-7;i<=60;i++){
+    const s=addD(t,i),d=new Date(s+"T00:00:00"),w=d.getDay(),dm=d.getDate(),nth=Math.ceil(dm/7);
+    // オークネット（年末年始は日程表待ち）
+    if(!inR(s,"2026-12-26","2027-01-04")){
+      if(w===2)add(s,"オークネット","リアルタイム",addD(s,-6),1);
+      if(w===1)add(s,"オークネット","バリュープライス",addD(s,-5),1);}
+    // エコオク ブランド市・エコトレ
+    if(!inR(s,"2026-12-26","2027-01-03")){
+      if(w===1)add(s,"エコオク","ブランド市",addD(s,-5));if(w===3)add(s,"エコオク","ブランド市",addD(s,-6));if(w===5)add(s,"エコオク","ブランド市",addD(s,-5));}
+    if(w===2&&!inR(s,"2026-12-23","2027-01-04"))add(s,"エコトレ[関西]","道具市",addD(s,-3));
+    if(w===4&&!inR(s,"2026-12-25","2027-01-06"))add(s,"エコトレ[関東]","道具市",addD(s,-3));
+    // コメ兵（毎週水曜。宝石は第2・第4水曜。年末年始は固定表）
+    if(w===3&&!inR(s,"2026-12-20","2027-01-08")){add(s,"コメ兵","Online（時計・バッグ）",addD(s,-5));if(nth===2||nth===4)add(s,"コメ兵","宝石",addD(s,-5));
+      if(s>"2027-01-08"&&(nth===1||nth===3))add(s,"コメ兵","アパレル",addD(s,-5));}
+    // JBA ライブ バッグ（毎週木曜、下見は月曜）
+    if(w===4&&s!=="2026-12-31")add(s,"JBA","ライブ バッグ",addD(s,-3));
+    // プライム
+    if(!["2026-12-28","2026-12-29"].includes(s)){
+      if(dm===10||dm===28)add(s,"プライム","ジュエリー",addD(s,-3));
+      if(dm===15||dm===29)add(s,"プライム","ブランド",addD(s,-3));
+      if(dm===20)add(s,"プライム","時計",addD(s,-3));}
+    // アプレ
+    if(w===5&&s!=="2027-01-01")add(s,"アプレ","ブランド",addD(s,-3));
+    if(dm===11)add(s,"アプレ","時計/宝石",addD(s,-4));
+    if(dm===25)add(s,"アプレ","宝石",addD(s,-4));
+    // リバオク（2027年2月以降は通常の日程）
+    if(s>="2027-02-01"){
+      if(dm===3)add(s,"リバオク","ジュエリー",addD(s,-3));
+      if(dm===12||dm===26)add(s,"リバオク","時計",addD(s,dm===12?-3:-3));
+      if(dm===13||dm===27)add(s,"リバオク","バッグ",addD(s,-4));}
+    // トレファク ブランド（第1月曜、全部そろうのは2日前）
+    if(w===1&&nth===1)add(s,"トレファク","ブランド",addD(s,-2),1);
+  }
+  out.sort((a,b)=>a.date.localeCompare(b.date)||a.auc.localeCompare(b.auc,"ja"));
+  _sched=out;_schedDay=t;return out;
+}
+function wd(s){const d=new Date(s+"T00:00:00");return `${d.getMonth()+1}/${d.getDate()}(${"日月火水木金土"[d.getDay()]})`}
+function tkList(base){const set=[...(TAIKAI[base]||[])];buildSched().forEach(x=>{if(x.auc===base&&!set.includes(x.tk))set.push(x.tk)});return set}
 const ST={plan:"下見済・指値待ち",done:"下見済・指値待ち",bid:"指値登録済"};
 const PCLS={plan:"p-done",done:"p-done",bid:"p-bid"};
 const $=id=>document.getElementById(id);
@@ -212,7 +313,7 @@ function render(){
   let list=items.filter(i=>{
     if(fs==="done"&&i.status==="bid")return false;
     if(fs==="bid"&&i.status!=="bid")return false;
-    if(fa&&i.auction!==fa)return false;
+    if(fa&&aBase(i.auction)!==fa)return false;
     if(fm&&!(i.date||"").startsWith(fm))return false;
     return true;});
   const asc=fs!=="bid"&&fs!=="all";
@@ -233,7 +334,7 @@ function render(){
       `<button class="btn ghost" data-a="edit" data-id="${i.id}">編集</button>`,
       `<button class="btn del" data-a="del" data-id="${i.id}">削除</button>`].join("");
     const meta=[i.staff?`下見：${esc(i.staff)}`:"下見担当 未設定", i.doneAt?`下見済 ${fmtTs(i.doneAt)}`:"", i.bidAt?`指値登録 ${fmtTs(i.bidAt)}`:""].filter(Boolean).join("　");
-    const inner=`<div class="cdate">📅 ${i.date?dayLabel(i.date)+" 開催分":"開催日なし"}</div><div class="row"><span class="auc">${esc(i.auction||"")}${nthTag}</span><span class="pill ${PCLS[i.status]||"p-plan"}">${ST[i.status]||""}</span></div>
+    const inner=`<div class="cdate">📅 ${i.date?dayLabel(i.date)+" 開催分":"開催日なし"}</div><div class="row"><span class="auc">${esc(aBase(i.auction))}${aTk(i.auction)?`<span class="tk">${esc(aTk(i.auction))}</span>`:""}${nthTag}</span><span class="pill ${PCLS[i.status]||"p-plan"}">${ST[i.status]||""}</span></div>
       <div class="meta">${meta}</div>${i.memo?`<div class="memo">${esc(i.memo)}</div>`:""}`;
     if(selMode){const on=selected.has(i.id);
       html+=`<div class="card sel-mode${i.status==="bid"?" is-bid":""}${on?" checked":""}" data-sel="${i.id}"><div class="cbox">${on?"✓":""}</div><div class="cbody">${inner}</div></div>`;}
@@ -246,9 +347,10 @@ function openEdit(item){
   editing=item||null;
   $("eTitle").textContent=item?"編集":"下見を追加";
   $("eDate").value=item?.date||today();
-  const auc=settings.auctions.slice(); if(item?.auction&&!auc.includes(item.auction))auc.push(item.auction);
+  const ib=aBase(item?.auction);const auc=settings.auctions.slice(); if(ib&&!auc.includes(ib))auc.push(ib);
   $("eAuc").innerHTML=auc.map(a=>`<option>${esc(a)}</option>`).join("");
-  $("eAuc").value=item?.auction||($("fAuc").value||auc[0]||"");
+  $("eAuc").value=ib||($("fAuc").value||auc[0]||"");
+  fillTk(aTk(item?.auction));
   const st=settings.staff.slice(); if(item?.staff&&!st.includes(item.staff))st.push(item.staff);
   $("eWho").innerHTML='<option value="">（未設定）</option>'+st.map(a=>`<option>${esc(a)}</option>`).join("");
   $("eWho").value=item?item.staff||"":(st.includes(DEF_WHO)?DEF_WHO:(st[0]||""));
@@ -256,12 +358,27 @@ function openEdit(item){
   $("eMemo").value=item?.memo||"";
   $("edit").classList.add("open");
 }
+function fillTk(v){
+  const base=$("eAuc").value,l=tkList(base);if(v&&!l.includes(v))l.push(v);
+  $("eTk").innerHTML='<option value="">（大会の指定なし）</option>'+l.map(a=>`<option>${esc(a)}</option>`).join("");
+  $("eTk").value=v||"";renderCands();
+}
+function renderCands(){
+  const base=$("eAuc").value,tk=$("eTk").value,t=today();
+  const c=buildSched().filter(x=>x.auc===base&&(!tk||x.tk===tk)&&x.date>=t).slice(0,8);
+  $("eCandL").hidden=!c.length;
+  $("eCand").innerHTML=c.map(x=>`<button type="button" class="cand${x.date===$("eDate").value&&x.tk===$("eTk").value?" on":""}" data-d="${x.date}" data-t="${esc(x.tk)}">${wd(x.date)} ${esc(x.tk)}<small>下見 ${wd(x.prev)}〜${x.est?"（推定）":""}</small></button>`).join("");
+}
+$("eAuc").onchange=()=>fillTk("");
+$("eTk").onchange=renderCands;
+$("eDate").addEventListener("change",renderCands);
+$("eCand").onclick=e=>{const b=e.target.closest(".cand");if(!b)return;$("eDate").value=b.dataset.d;$("eTk").value=b.dataset.t;renderCands()};
 function segSync(){document.querySelectorAll("#eStat button").forEach(b=>b.classList.toggle("on",b.dataset.s===eStatus))}
 document.querySelectorAll("#eStat button").forEach(b=>b.onclick=()=>{eStatus=b.dataset.s;segSync()});
 
 async function save(){
   const now=Date.now();
-  const body={date:$("eDate").value,auction:$("eAuc").value,staff:$("eWho").value,memo:$("eMemo").value.trim(),status:eStatus,updatedAt:now};
+  const body={date:$("eDate").value,auction:$("eAuc").value+($("eTk").value?SEP+$("eTk").value:""),staff:$("eWho").value,memo:$("eMemo").value.trim(),status:eStatus,updatedAt:now};
   if(editing){const p=editing;body.id=p.id;body.createdAt=p.createdAt||now;body.doneAt=p.doneAt||now;body.bidAt=eStatus==="bid"?(p.bidAt||now):"";}
   else{body.createdAt=now;body.doneAt=now;body.bidAt=eStatus==="bid"?now:"";}
   if(!body.id)body.id="tmp-"+now+"-"+Math.random().toString(36).slice(2,6);
@@ -280,7 +397,7 @@ async function setStatus(id,s){
   catch(e){if(pending.get(id)?.rec===r){pending.delete(id);items=items.map(x=>x.id===id?prev:x);cacheLocal();render()}handleErr(e)}
 }
 let delId=null;
-function askDel(id){const it=items.find(x=>x.id===id);delId=id;delMany=null;$("cMsg").textContent=`${dayLabel(it.date)} ${it.auction} を削除しますか？`;$("confirm").classList.add("open")}
+function askDel(id){const it=items.find(x=>x.id===id);delId=id;delMany=null;$("cMsg").textContent=`${dayLabel(it.date)} ${aBase(it.auction)} ${aTk(it.auction)} を削除しますか？`;$("confirm").classList.add("open")}
 $("cNo").onclick=()=>$("confirm").classList.remove("open");
 let delMany=null;
 $("cYes").onclick=async()=>{$("confirm").classList.remove("open");
@@ -319,6 +436,35 @@ $("eSave").onclick=save;
 $("eDate").addEventListener("click",()=>{try{$("eDate").showPicker()}catch(e){}});
 ["fStatus","fAuc","fMonth"].forEach(id=>$(id).onchange=render);
 document.querySelectorAll(".stat").forEach(s=>s.onclick=()=>{$("fStatus").value=s.dataset.f;render()});
+
+// 日程
+let schMode="now";
+function renderSched(){
+  const t=today(),fa=$("schAuc"),cur=fa.value;
+  const all=buildSched();
+  fa.innerHTML='<option value="">全オークション</option>'+[...new Set(all.map(x=>x.auc))].map(a=>`<option>${esc(a)}</option>`).join("");fa.value=cur;
+  let l=all.filter(x=>x.date>=t&&(!fa.value||x.auc===fa.value));
+  if(schMode==="now")l=l.filter(x=>x.prev<=t);
+  else if(schMode==="soon")l=l.filter(x=>x.prev>t&&x.prev<=addD(t,7)).sort((a,b)=>a.prev.localeCompare(b.prev));
+  else l=l.filter(x=>x.date<=addD(t,45));
+  const key=x=>schMode==="soon"?x.prev:x.date;
+  let html="",last=null;
+  for(const x of l){
+    const k=key(x);if(k!==last){html+=`<div class="shd">${schMode==="soon"?wd(k)+" 下見開始":wd(k)+" 開催"}${k===t?"（今日）":""}</div>`;last=k}
+    const full=x.auc+SEP+x.tk;const n=items.filter(i=>i.date===x.date&&(i.auction===full||(i.auction===x.auc))).length;
+    html+=`<div class="sch"><div class="t">${esc(x.auc)}<span class="tk">${esc(x.tk)}</span></div>
+      <div class="d">開催 <b>${wd(x.date)}</b>　下見 <b>${wd(x.prev)}</b>〜${x.est?' <span class="est">※推定</span>':""}</div>
+      <div class="r">${readOnly?"":`<button class="btn main" data-add="${x.date}" data-a="${esc(x.auc)}" data-t="${esc(x.tk)}">下見済で登録</button>`}${n?`<span class="ok">登録 ${n}件</span>`:""}</div></div>`;
+  }
+  $("schList").innerHTML=html||'<div class="empty">該当する大会はありません</div>';
+}
+$("schBtn").onclick=()=>{renderSched();$("sched").classList.add("open")};
+$("schClose").onclick=()=>$("sched").classList.remove("open");
+$("schAuc").onchange=renderSched;
+$("schSeg").onclick=e=>{const b=e.target.closest("button[data-v]");if(!b)return;schMode=b.dataset.v;document.querySelectorAll("#schSeg button").forEach(x=>x.classList.toggle("on",x===b));renderSched()};
+$("schList").onclick=e=>{const b=e.target.closest("button[data-add]");if(!b)return;$("sched").classList.remove("open");
+  openEdit(null);const auc=b.dataset.a;if(![...$("eAuc").options].some(o=>o.value===auc))$("eAuc").insertAdjacentHTML("beforeend",`<option>${esc(auc)}</option>`);
+  $("eAuc").value=auc;fillTk(b.dataset.t);$("eDate").value=b.dataset.add;renderCands()};
 
 // settings
 function renderSettings(){

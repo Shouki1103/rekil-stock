@@ -1,5 +1,5 @@
 {
- "at": "2026-11-27 10:42",
+ "at": "2026-11-27 15:13",
  "total": 44,
  "ng": 0,
  "apps": [
@@ -267,74 +267,5 @@
    "ok": true,
    "errors": []
   }
- ],
- "sheets": [
-  {
-   "name": "在庫/売上管理シート",
-   "ok": true,
-   "error": ""
-  },
-  {
-   "name": "電子書類 自動保存ルール",
-   "ok": true,
-   "error": ""
-  },
-  {
-   "name": "送り状控え",
-   "ok": true,
-   "error": ""
-  },
-  {
-   "name": "出品・返品・外注",
-   "ok": true,
-   "error": ""
-  },
-  {
-   "name": "下見",
-   "ok": true,
-   "error": ""
-  },
-  {
-   "name": "eBay出品依頼",
-   "ok": true,
-   "error": ""
-  },
-  {
-   "name": "売上入力",
-   "ok": true,
-   "error": ""
-  },
-  {
-   "name": "廃棄記録",
-   "ok": true,
-   "error": ""
-  },
-  {
-   "name": "メルカリ再出品",
-   "ok": true,
-   "error": ""
-  },
-  {
-   "name": "採寸",
-   "ok": true,
-   "error": ""
-  },
-  {
-   "name": "仕入ルート帳",
-   "ok": true,
-   "error": ""
-  },
-  {
-   "name": "アカウント一覧",
-   "ok": true,
-   "error": ""
-  },
-  {
-   "name": "ReKiL給与",
-   "ok": true,
-   "error": ""
-  }
- ],
- "pages_ok": true,
- "pages_note": "直接の取得はこの実行環境から不可。GitHub Pages の最新デプロイ（bfffd13）は成功"
+ ]
 }
