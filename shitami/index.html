@@ -97,6 +97,25 @@ label{display:block;font-size:12px;color:var(--sub);margin:10px 0 4px}
 .sch .ok{font-size:12px;color:var(--bid);font-weight:700}
 .sch .est{font-size:11px;color:var(--sub)}
 .shd{margin:14px 0 6px;font-size:14px;font-weight:800;color:var(--acc)}
+.jkbar{display:flex;gap:8px;margin-bottom:10px}
+.jkbar .btn{flex:1;padding:10px 8px;font-weight:700;position:relative}
+.jkbar .bdg{display:inline-block;min-width:20px;padding:1px 6px;border-radius:99px;background:var(--danger);color:#fff;font-size:12px;margin-left:6px}
+.panel.tall{min-height:70vh}
+.rcard{background:var(--field);border:1px solid var(--line);border-left:4px solid var(--bid);border-radius:12px;padding:11px 12px;margin-bottom:8px;cursor:pointer}
+.rcard.skip{border-left-color:var(--danger)}.rcard.common{border-left-color:var(--acc)}
+.rcard .t{font-weight:800;font-size:16px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.rcard dl{margin:6px 0 0;display:grid;grid-template-columns:auto 1fr;gap:3px 10px;font-size:13px}
+.rcard dt{color:var(--sub);white-space:nowrap}.rcard dd{margin:0;white-space:pre-wrap;word-break:break-word}
+.p-like{background:var(--bid);color:#fff}.p-skip{background:var(--danger);color:#fff}.p-common{background:var(--acc)}
+.tg{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.tg button{border:1px solid var(--line);background:var(--field);color:var(--ink);border-radius:99px;padding:5px 11px;font-size:13px;cursor:pointer}
+.tg button.on{background:var(--acc);color:#111;border-color:var(--acc);font-weight:700}
+.two{display:flex;gap:8px;align-items:center}.two input{flex:1}
+.hint{font-size:11px;color:var(--sub);margin-top:3px}
+.qcard{background:var(--field);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:8px}
+.qcard .t{font-weight:700}.qcard .r{display:flex;gap:6px;margin-top:6px}
+.p-wait{background:#7cc4ff}.p-doing{background:var(--done)}.p-fin{background:var(--bid);color:#fff}.p-cancel{background:var(--plan);color:#fff}
+.warn{background:#3a2a1a;border:1px solid #6b4a1f;color:#ffd58a;border-radius:10px;padding:10px;font-size:13px;margin-bottom:10px}
 input[type=date]{-webkit-appearance:none;appearance:none;display:block;width:100%;max-width:100%;min-width:0;box-sizing:border-box;text-align:left}input[type=date]::-webkit-date-and-time-value{text-align:left}
 </style>
 </head>
@@ -110,6 +129,7 @@ input[type=date]{-webkit-appearance:none;appearance:none;display:block;width:100
     <div class="stat" data-f="done"><b id="cDone">0</b><span>指値待ち（下見済）</span></div>
     <div class="stat" data-f="bid"><b id="cBid">0</b><span>指値登録済</span></div>
   </div>
+  <div class="jkbar"><button class="btn" id="jkBtn">📋 下見条件</button><button class="btn" id="reqBtn">🤖 下見を依頼<span class="bdg" id="reqBdg" hidden>0</span></button></div>
   <div class="tools">
     <select id="fStatus">
       <option value="done">指値待ち</option>
@@ -165,6 +185,57 @@ input[type=date]{-webkit-appearance:none;appearance:none;display:block;width:100
   <div class="foot"><button class="btn main" id="sClose">閉じる</button></div>
 </div></div>
 
+<div class="sheet" id="jk"><div class="panel tall">
+  <h2>下見条件</h2>
+  <div class="warn" id="jkWarn" hidden></div>
+  <label>オークション</label><select id="jkAuc"></select>
+  <div id="jkList" style="margin-top:12px"></div>
+  <div class="foot"><button class="btn" id="jkAdd">＋ 条件を追加</button><button class="btn" id="jkReq">この条件で依頼</button></div>
+  <div class="foot" style="margin-top:8px"><button class="btn main" id="jkClose">閉じる</button></div>
+</div></div>
+
+<div class="sheet" id="rule" style="z-index:22"><div class="panel">
+  <h2 id="rTitle">条件を追加</h2>
+  <label>カテゴリ（候補から選ぶか、自由に入力）</label><input id="rCat" list="catList" placeholder="例：バッグ"><datalist id="catList"></datalist>
+  <div class="tg" id="rCatTg"></div>
+  <div id="rNormal">
+    <label>種類</label><div class="seg" id="rKind"><button data-v="いいねする">いいねする</button><button data-v="いいねしない">いいねしない</button></div>
+    <label>ブランド（「、」区切り。空欄なら全ブランド）</label><textarea id="rBrands" rows="2" placeholder="例：HERMES、CHANEL"></textarea>
+    <div class="tg" id="rBrandTg"></div>
+    <label>除外ブランド（このブランドはいいねしない）</label><textarea id="rEx" rows="1" placeholder="例：フェラガモ"></textarea>
+    <label>状態ランク（押して選ぶ。何も選ばなければ指定なし）</label><div class="tg" id="rRank"></div>
+    <div class="addrow"><input id="rRankIn" placeholder="ほかのランク（例：新品、未使用品）"><button class="btn" id="rRankAdd">追加</button></div>
+    <label>開始価格（万円）</label><div class="two"><input id="rMin" type="number" inputmode="decimal" step="0.1" placeholder="下限なし"><span>〜</span><input id="rMax" type="number" inputmode="decimal" step="0.1" placeholder="上限なし"></div>
+    <div class="hint">例：7万円までなら「上限」に 7</div>
+    <label>NG色（この色はいいねしない）</label><textarea id="rNg" rows="1" placeholder="例：赤、蛍光色"></textarea>
+    <div class="tg" id="rNgTg"></div>
+    <label>点数</label><div class="seg" id="rLot"><button data-v="どちらも">どちらも</button><button data-v="1点もの">1点もの</button><button data-v="まとめ（2点以上）">まとめ</button></div>
+  </div>
+  <div id="rCommon">
+    <label>登録先（お気に入りの場所など）</label><input id="rDest" placeholder="例：下見お気に入りA">
+    <label>対象の開催・大会</label><input id="rEvents" placeholder="例：リアルタイム、バリュープライス（Buy It Nowはいいねしない）">
+  </div>
+  <label>絞り込み</label><div class="seg" id="rScope"><button data-v="全部">条件に合えば全部</button><button data-v="類似・売れ筋だけ">類似・売れ筋だけ</button></div>
+  <div class="hint">類似・売れ筋だけ＝在庫やeBay・メルカリ出品中の類似品と、売れ筋だけをいいね</div>
+  <label>メモ（細かい指示）</label><textarea id="rMemo" rows="3"></textarea>
+  <div class="foot"><button class="btn del" id="rDel">削除</button><button class="btn" id="rCancel">キャンセル</button><button class="btn main" id="rSave">保存</button></div>
+</div></div>
+
+<div class="sheet" id="req"><div class="panel tall">
+  <h2>下見を依頼（Claude）</h2>
+  <div class="warn" id="reqWarn" hidden></div>
+  <label>オークション</label><select id="qAuc"></select>
+  <label>大会</label><select id="qTk"></select>
+  <label id="qCandL">次の開催（タップで開催日・大会を入れます）</label><div class="cands" id="qCand"></div>
+  <label>開催日（分からなければ空欄で「次回開催」）</label><input type="date" id="qDate">
+  <label>メモ（今回だけの指示など）</label><textarea id="qMemo" rows="2" placeholder="例：今回はバッグだけ"></textarea>
+  <div class="foot"><button class="btn main" id="qSend">この条件で下見を依頼する</button></div>
+  <div class="shd">今の条件</div><div id="qCond"></div>
+  <div class="shd">依頼の状況</div><div id="qList"></div>
+  <p class="meta">依頼すると、毎日11時ごろ・19時ごろにClaudeが確認し、「○○にログインして『やって』と送ってください」とメールでお知らせします。下見が終わると、下見の欄に担当「AI」で登録されます。</p>
+  <div class="foot"><button class="btn" id="reqClose">閉じる</button></div>
+</div></div>
+
 <div class="sheet" id="confirm"><div class="panel">
   <h2 id="cMsg">削除しますか？</h2>
   <div class="foot"><button class="btn" id="cNo">やめる</button><button class="btn del" id="cYes">削除する</button></div>
@@ -180,7 +251,7 @@ input[type=date]{-webkit-appearance:none;appearance:none;display:block;width:100
 <script>
 /* ▼ Apps Script をデプロイしたときの「ウェブアプリのURL」 */
 const API_URL = "https://script.google.com/macros/s/AKfycbw7kz9QQt6CMQvwIC4IhtSekntc4xGCUAWuop6U7LO_3U6FMRo--X6wKI0F6hSx3n3Vng/exec";
-const APP_VERSION = "2026-11-27-12";
+const APP_VERSION = "2026-11-27-13";
 let selMode=false,selected=new Set(),shownIds=[];
 const DEF_AUC=["オークネット","エコオク","エコトレ[関東]","エコトレ[関西]","JDS","JBA","コメ兵","モノバンク","プライム","浜屋","大吉","JWA","トレファク","ペンギン","アプレ","リバオク"];
 const DEF_STAFF=["俊輔","祥貴"],DEF_WHO="俊輔";
@@ -479,6 +550,156 @@ async function addTo(k,inp){const v=$(inp).value.trim();if(!v||settings[k].inclu
 $("sAucAdd").onclick=()=>addTo("auctions","sAucIn");
 $("sWhoAdd").onclick=()=>addTo("staff","sWhoIn");
 
+
+/* ▼ 下見条件・下見依頼（別のApps Script「ReKiL 下見条件」のウェブアプリURL） */
+const JK_URL = "";
+const CATS=["共通","バッグ","時計","衣料","靴","小物","ジュエリー","カメラ","全カテゴリ"];
+const RANKS=["N","S","SA","A","AB","B","BC","C","D","E"];
+const BRAND_SUG=["HERMES","CHANEL","LOUIS VUITTON","GUCCI","PRADA","CELINE","Dior","FENDI","BOTTEGA VENETA","LOEWE","BALENCIAGA","Saint Laurent","MIUMIU","BURBERRY","COACH","ロレックス","オメガ","カルティエ"];
+const COLOR_SUG=["赤","蛍光色・ビビッド系など奇抜な色","ピンク","黄色","白","オレンジ","パープル"];
+let jk={rules:[],reqs:[]}, jkAuc="", ruleEd=null, rRanks=[];
+try{const c=JSON.parse(localStorage.getItem("shitami-jk")||"null");if(c&&c.rules)jk=c}catch(_){}
+/* データ側につながるまでの表示用（2026/11/27時点のオークネットの条件） */
+const JK_SEED=[{"id": "an-common", "auction": "オークネット", "cat": "共通", "kind": "", "brands": "", "exBrands": "", "ranks": "", "priceMin": "", "priceMax": "", "ngColors": "", "lot": "", "scope": "類似・売れ筋だけ", "dest": "下見お気に入りA", "events": "リアルタイム、バリュープライス（Buy It Nowはいいねしない）", "memo": "下見の対象は次回開催回（前回分ではない）。前回分からお気に入りAに残っているBuy It Nowのいいねは外す。条件だけだと多すぎるので、在庫やeBay・メルカリ出品中の商品の類似品と売れ筋だけをいいねする", "order": "0", "updated": "2026/11/27 21:40"}, {"id": "an-watch", "auction": "オークネット", "cat": "時計", "kind": "いいねする", "brands": "オメガ、エルメス、Christian Dior、FENDI、BVLGARI、カルティエ、ロンジン、ハミルトン、タグホイヤー、アザー、Tiffany、Yves Saint Laurent", "exBrands": "", "ranks": "B、C、D", "priceMin": "", "priceMax": "50000", "ngColors": "", "lot": "どちらも", "scope": "類似・売れ筋だけ", "dest": "", "events": "", "memo": "", "order": "10", "updated": "2026/11/27 21:40"}, {"id": "an-bag", "auction": "オークネット", "cat": "バッグ", "kind": "いいねする", "brands": "", "exBrands": "", "ranks": "B、C、D", "priceMin": "", "priceMax": "70000", "ngColors": "赤、蛍光色・ビビッド系など奇抜な色", "lot": "1点もの", "scope": "類似・売れ筋だけ", "dest": "", "events": "", "memo": "HERMES・CHANELは下の条件（15万円まで）", "order": "20", "updated": "2026/11/27 21:40"}, {"id": "an-bag-hc", "auction": "オークネット", "cat": "バッグ", "kind": "いいねする", "brands": "HERMES、CHANEL", "exBrands": "", "ranks": "B、C、D", "priceMin": "", "priceMax": "150000", "ngColors": "赤、蛍光色・ビビッド系など奇抜な色", "lot": "1点もの", "scope": "類似・売れ筋だけ", "dest": "", "events": "", "memo": "", "order": "21", "updated": "2026/11/27 21:40"}, {"id": "an-bag-lot", "auction": "オークネット", "cat": "バッグ", "kind": "いいねする", "brands": "", "exBrands": "", "ranks": "", "priceMin": "", "priceMax": "", "ngColors": "", "lot": "まとめ（2点以上）", "scope": "全部", "dest": "", "events": "", "memo": "2点以上のまとめは評価・価格・色に関係なく全部いいね", "order": "22", "updated": "2026/11/27 21:40"}, {"id": "an-cloth", "auction": "オークネット", "cat": "衣料", "kind": "いいねする", "brands": "MIUMIU、MONCLER、PRADA、TATRAS、ヴィヴィアンウエストウッド、Yves Saint Laurent", "exBrands": "アザー", "ranks": "", "priceMin": "", "priceMax": "", "ngColors": "", "lot": "どちらも", "scope": "全部", "dest": "", "events": "", "memo": "評価・価格の条件なし", "order": "30", "updated": "2026/11/27 21:40"}, {"id": "an-skip-camera", "auction": "オークネット", "cat": "カメラ", "kind": "いいねしない", "brands": "", "exBrands": "", "ranks": "", "priceMin": "", "priceMax": "", "ngColors": "", "lot": "どちらも", "scope": "全部", "dest": "", "events": "", "memo": "カメラ（お楽しみ）は2026/11/27からいいねしない", "order": "90", "updated": "2026/11/27 21:40"}, {"id": "an-skip-ferragamo", "auction": "オークネット", "cat": "全カテゴリ", "kind": "いいねしない", "brands": "フェラガモ", "exBrands": "", "ranks": "", "priceMin": "", "priceMax": "", "ngColors": "", "lot": "どちらも", "scope": "全部", "dest": "", "events": "", "memo": "", "order": "91", "updated": "2026/11/27 21:40"}];
+if(!jk.rules.length)jk.rules=JK_SEED.slice();
+const L=s=>String(s||"").split(/[、,，\n]+/).map(x=>x.trim()).filter(Boolean);
+const J=a=>a.join("、");
+function nowTs(){const d=new Date(Date.now()+9*3600e3).toISOString();return d.slice(0,10).replace(/-/g,"/")+" "+d.slice(11,16)}
+function saveJkLocal(){try{localStorage.setItem("shitami-jk",JSON.stringify(jk))}catch(_){}}
+async function jkApi(action,params={}){
+  if(!JK_URL)throw new ApiError("no_api");
+  let res;try{res=await fetch(JK_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({action,pass,...params})})}catch(e){throw new ApiError("network")}
+  let j;try{j=await res.json()}catch(e){throw new ApiError("bad_response")}
+  if(!j.ok){if(j.error==="passcode")showLock();throw new ApiError(j.error||"error")}
+  jk={rules:j.rules||[],reqs:j.reqs||[]};saveJkLocal();jkRedraw();return j.result;
+}
+function jkRedraw(){renderJkBtn();if($("jk").classList.contains("open"))renderJk();if($("req").classList.contains("open"))renderReq()}
+async function jkRefresh(){if(!JK_URL||!pass)return;try{await jkApi("list")}catch(_){}}
+const isOpenReq=q=>q.status==="依頼中"||q.status==="作業中";
+function renderJkBtn(){const n=jk.reqs.filter(isOpenReq).length;$("reqBdg").hidden=!n;$("reqBdg").textContent=n}
+function man(v){const n=Number(v);if(!v||!n)return"";return n>=10000?(Math.round(n/1000)/10)+"万円":n.toLocaleString()+"円"}
+function priceText(r){const a=man(r.priceMin),b=man(r.priceMax);if(!a&&!b)return"";return a&&b?`${a}〜${b}`:a?`${a}以上`:`〜${b}`}
+function ruleRows(r){
+  const o=[];
+  if(r.cat==="共通"){if(r.dest)o.push(["登録先",r.dest]);if(r.events)o.push(["対象",r.events]);if(r.scope)o.push(["絞り込み",r.scope]);if(r.memo)o.push(["メモ",r.memo]);return o}
+  o.push(["ブランド",r.brands||"全ブランド"]);
+  if(r.exBrands)o.push(["除外",r.exBrands]);
+  if(r.ranks)o.push(["状態",r.ranks]);
+  const p=priceText(r);if(p)o.push(["開始価格",p]);
+  if(r.ngColors)o.push(["NG色",r.ngColors]);
+  if(r.lot&&r.lot!=="どちらも")o.push(["点数",r.lot]);
+  if(r.scope)o.push(["絞り込み",r.scope]);
+  if(r.memo)o.push(["メモ",r.memo]);
+  return o;
+}
+function rulesOf(a){return jk.rules.filter(r=>r.auction===a).sort((x,y)=>(x.cat==="共通"?-1:0)-(y.cat==="共通"?-1:0)||(+x.order||0)-(+y.order||0))}
+function ruleCard(r){
+  const c=r.cat==="共通"?"common":r.kind==="いいねしない"?"skip":"";
+  const pill=r.cat==="共通"?'<span class="pill p-common">共通ルール</span>':r.kind==="いいねしない"?'<span class="pill p-skip">いいねしない</span>':'<span class="pill p-like">いいねする</span>';
+  return `<div class="rcard ${c}" data-rid="${esc(r.id)}"><div class="t">${esc(r.cat||"（カテゴリなし）")}${pill}</div><dl>${ruleRows(r).map(([k,v])=>`<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join("")}</dl></div>`;
+}
+function aucOpts(sel,cur){const a=settings.auctions.map(aBase).filter((x,i,arr)=>arr.indexOf(x)===i);jk.rules.forEach(r=>{if(r.auction&&!a.includes(r.auction))a.push(r.auction)});
+  $(sel).innerHTML=a.map(x=>{const n=rulesOf(x).length;return `<option value="${esc(x)}">${esc(x)}${n?`（条件${n}）`:""}</option>`}).join("");if(cur&&a.includes(cur))$(sel).value=cur;return $(sel).value}
+function setupWarn(id){const w=$(id);if(!JK_URL){w.hidden=false;w.innerHTML="データ側（Apps Script「ReKiL 下見条件」）の設定待ちです。設定が終わると保存・依頼ができるようになります（今は見るだけ）。"}else w.hidden=true}
+function renderJk(){
+  setupWarn("jkWarn");
+  jkAuc=aucOpts("jkAuc",jkAuc||"オークネット");
+  const rs=rulesOf(jkAuc);
+  $("jkList").innerHTML=rs.length?rs.map(ruleCard).join(""):`<div class="empty">${esc(jkAuc)}の条件はまだありません。<br>「＋ 条件を追加」から登録します。</div>`;
+}
+$("jkBtn").onclick=()=>{renderJk();$("jk").classList.add("open");jkRefresh()};
+$("jkClose").onclick=()=>$("jk").classList.remove("open");
+$("jkAuc").onchange=()=>{jkAuc=$("jkAuc").value;renderJk()};
+$("jkList").onclick=e=>{const c=e.target.closest("[data-rid]");if(!c)return;openRule(jk.rules.find(r=>r.id===c.dataset.rid))};
+$("jkAdd").onclick=()=>openRule(null);
+$("jkReq").onclick=()=>{$("jk").classList.remove("open");openReq(jkAuc)};
+
+/* 条件の編集 */
+function segSet(id,v){[...$(id).querySelectorAll("button")].forEach(b=>b.classList.toggle("on",b.dataset.v===v))}
+function segGet(id){const b=$(id).querySelector("button.on");return b?b.dataset.v:""}
+["rKind","rLot","rScope"].forEach(id=>$(id).onclick=e=>{const b=e.target.closest("button");if(b)segSet(id,b.dataset.v)});
+function sugTg(id,ta,list){const cur=L($(ta).value);$(id).innerHTML=list.map(x=>`<button type="button" data-v="${esc(x)}" class="${cur.includes(x)?"on":""}">${esc(x)}</button>`).join("")}
+function tgToggle(ta,v){const cur=L($(ta).value);const i=cur.indexOf(v);if(i>=0)cur.splice(i,1);else cur.push(v);$(ta).value=J(cur)}
+function drawRanks(){const all=RANKS.slice();rRanks.forEach(x=>{if(!all.includes(x))all.push(x)});$("rRank").innerHTML=all.map(x=>`<button type="button" data-v="${esc(x)}" class="${rRanks.includes(x)?"on":""}">${esc(x)}</button>`).join("")}
+function rMode(){const c=$("rCat").value.trim()==="共通";$("rNormal").hidden=c;$("rCommon").hidden=!c;
+  $("rCatTg").innerHTML=CATS.map(x=>`<button type="button" data-v="${esc(x)}" class="${$("rCat").value.trim()===x?"on":""}">${esc(x)}</button>`).join("")}
+function openRule(r){
+  ruleEd=r||null;
+  const d=r||{auction:jkAuc,cat:"バッグ",kind:"いいねする",lot:"どちらも",scope:(rulesOf(jkAuc).find(x=>x.cat==="共通")||{}).scope||"全部"};
+  $("rTitle").textContent=(r?"条件を編集":"条件を追加")+"："+(d.auction||jkAuc);
+  $("catList").innerHTML=[...new Set([...CATS,...jk.rules.map(x=>x.cat).filter(Boolean)])].map(x=>`<option value="${esc(x)}">`).join("");
+  $("rCat").value=d.cat||"";segSet("rKind",d.kind||"いいねする");
+  $("rBrands").value=d.brands||"";$("rEx").value=d.exBrands||"";rRanks=L(d.ranks);drawRanks();
+  $("rMin").value=d.priceMin?+d.priceMin/10000:"";$("rMax").value=d.priceMax?+d.priceMax/10000:"";
+  $("rNg").value=d.ngColors||"";segSet("rLot",d.lot||"どちらも");segSet("rScope",d.scope||"全部");
+  $("rDest").value=d.dest||"";$("rEvents").value=d.events||"";$("rMemo").value=d.memo||"";
+  sugTg("rBrandTg","rBrands",BRAND_SUG);sugTg("rNgTg","rNg",COLOR_SUG);rMode();
+  $("rDel").hidden=!r;$("rule").classList.add("open");
+}
+$("rCat").oninput=rMode;
+$("rCatTg").onclick=e=>{const b=e.target.closest("button");if(!b)return;$("rCat").value=b.dataset.v;rMode()};
+$("rBrandTg").onclick=e=>{const b=e.target.closest("button");if(!b)return;tgToggle("rBrands",b.dataset.v);sugTg("rBrandTg","rBrands",BRAND_SUG)};
+$("rNgTg").onclick=e=>{const b=e.target.closest("button");if(!b)return;tgToggle("rNg",b.dataset.v);sugTg("rNgTg","rNg",COLOR_SUG)};
+$("rBrands").oninput=()=>sugTg("rBrandTg","rBrands",BRAND_SUG);$("rNg").oninput=()=>sugTg("rNgTg","rNg",COLOR_SUG);
+$("rRank").onclick=e=>{const b=e.target.closest("button");if(!b)return;const v=b.dataset.v,i=rRanks.indexOf(v);if(i>=0)rRanks.splice(i,1);else rRanks.push(v);drawRanks()};
+$("rRankAdd").onclick=()=>{const v=$("rRankIn").value.trim();if(v&&!rRanks.includes(v))rRanks.push(v);$("rRankIn").value="";drawRanks()};
+$("rCancel").onclick=()=>$("rule").classList.remove("open");
+function yenOf(v){const n=parseFloat(String(v).replace(/[^\d.]/g,""));return n>0?String(Math.round(n*10000)):""}
+$("rSave").onclick=async()=>{
+  if(!JK_URL){toast("データ側の設定待ちのため、まだ保存できません");return}
+  const cat=$("rCat").value.trim();if(!cat){toast("カテゴリを入れてください");return}
+  const auc=ruleEd?.auction||jkAuc, com=cat==="共通";
+  const order=ruleEd?.order||String(Math.max(0,...rulesOf(auc).map(x=>+x.order||0))+10);
+  const order2=com?"0":order;
+  const r={id:ruleEd?.id||"",auction:auc,cat,kind:com?"":segGet("rKind"),brands:com?"":J(L($("rBrands").value)),exBrands:com?"":J(L($("rEx").value)),
+    ranks:com?"":J(RANKS.filter(x=>rRanks.includes(x)).concat(rRanks.filter(x=>!RANKS.includes(x)))),priceMin:com?"":yenOf($("rMin").value),priceMax:com?"":yenOf($("rMax").value),
+    ngColors:com?"":J(L($("rNg").value)),lot:com?"":segGet("rLot"),scope:segGet("rScope"),dest:com?$("rDest").value.trim():"",events:com?$("rEvents").value.trim():"",
+    memo:$("rMemo").value.trim(),order:order2,updated:nowTs()};
+  const prev=jk.rules.slice();
+  if(r.id){const k=jk.rules.findIndex(x=>x.id===r.id);if(k>=0)jk.rules[k]=r}else{r.id="r"+Date.now().toString(36);jk.rules.push(r)}
+  saveJkLocal();$("rule").classList.remove("open");renderJk();toast("保存しました");
+  try{await jkApi("saveRule",{rule:r})}catch(e){jk.rules=prev;saveJkLocal();renderJk();handleErr(e)}
+};
+$("rDel").onclick=async()=>{if(!ruleEd||!confirm("この条件を削除しますか？"))return;
+  if(!JK_URL){toast("データ側の設定待ちです");return}
+  const prev=jk.rules.slice();jk.rules=jk.rules.filter(x=>x.id!==ruleEd.id);saveJkLocal();$("rule").classList.remove("open");renderJk();
+  try{await jkApi("removeRule",{id:ruleEd.id})}catch(e){jk.rules=prev;saveJkLocal();renderJk();handleErr(e)}};
+
+/* 下見の依頼 */
+const QCLS={"依頼中":"p-wait","作業中":"p-doing","完了":"p-fin","取消":"p-cancel"};
+function qTkFill(cur){const b=$("qAuc").value;const t=tkList(b);$("qTk").innerHTML='<option value="">（指定なし）</option>'+t.map(x=>`<option>${esc(x)}</option>`).join("");if(cur&&t.includes(cur))$("qTk").value=cur}
+function qCands(){const b=$("qAuc").value,t=today();const c=buildSched().filter(x=>x.auc===b&&x.date>=t).slice(0,6);
+  $("qCandL").hidden=!c.length;$("qCand").innerHTML=c.map(x=>`<button type="button" class="cand${$("qDate").value===x.date&&$("qTk").value===x.tk?" on":""}" data-d="${x.date}" data-t="${esc(x.tk)}">${wd(x.date)} ${esc(x.tk)}<small>下見 ${x.prev<=t?"開始済み":wd(x.prev)+"から"}${x.est?"（推定）":""}</small></button>`).join("")}
+function renderReq(){
+  setupWarn("reqWarn");
+  const a=$("qAuc").value;const rs=rulesOf(a);
+  $("qCond").innerHTML=rs.length?rs.map(ruleCard).join("")+'<p class="meta">条件を変えるときは「📋 下見条件」から。</p>':`<div class="warn">${esc(a)}の下見条件がまだありません。先に「📋 下見条件」で登録してください（メモだけでも依頼できます）。</div>`;
+  const open=jk.reqs.filter(isOpenReq),past=jk.reqs.filter(q=>!isOpenReq(q)).slice(-15).reverse();
+  const card=q=>`<div class="qcard"><div class="row"><span class="t">${esc(q.auction)}${q.tk?`｜${esc(q.tk)}`:""}</span><span class="pill ${QCLS[q.status]||"p-wait"}">${esc(q.status||"依頼中")}</span></div>
+    <div class="meta">開催 ${q.date?wd(q.date):"次回"}・依頼 ${esc(q.reqAt)}${q.notifiedAt?`・お知らせ ${esc(q.notifiedAt)}`:""}${q.doneAt?`・完了 ${esc(q.doneAt)}`:""}</div>
+    ${q.memo?`<div class="memo">${esc(q.memo)}</div>`:""}${q.result?`<div class="memo">結果：${esc(q.result)}</div>`:""}
+    ${isOpenReq(q)?`<div class="r"><button class="btn del" data-qdel="${esc(q.id)}">取り消す</button></div>`:""}</div>`;
+  $("qList").innerHTML=(open.length?open.map(card).join(""):'<div class="meta">待っている依頼はありません。</div>')+(past.length?'<div class="shd" style="color:var(--sub)">これまでの依頼</div>'+past.map(card).join(""):"");
+  qCands();
+}
+function openReq(a){aucOpts("qAuc",a||jkAuc||"オークネット");qTkFill("");$("qDate").value="";$("qMemo").value="";renderReq();$("req").classList.add("open");jkRefresh()}
+$("reqBtn").onclick=()=>openReq();
+$("reqClose").onclick=()=>$("req").classList.remove("open");
+$("qAuc").onchange=()=>{qTkFill("");$("qDate").value="";renderReq()};
+$("qTk").onchange=qCands;$("qDate").onchange=qCands;
+$("qCand").onclick=e=>{const b=e.target.closest("button[data-d]");if(!b)return;$("qDate").value=b.dataset.d;qTkFill(b.dataset.t);qCands()};
+$("qSend").onclick=async()=>{
+  if(!JK_URL){toast("データ側の設定待ちのため、まだ依頼できません");return}
+  const q={id:"q"+Date.now().toString(36),auction:$("qAuc").value,date:$("qDate").value,tk:$("qTk").value,memo:$("qMemo").value.trim(),status:"依頼中",reqAt:nowTs(),notifiedAt:"",doneAt:"",result:"",who:""};
+  if(jk.reqs.some(x=>isOpenReq(x)&&x.auction===q.auction&&x.date===q.date&&x.tk===q.tk)){toast("同じ依頼がもう入っています");return}
+  jk.reqs.push(q);saveJkLocal();$("qMemo").value="";renderReq();renderJkBtn();toast("依頼しました");
+  try{await jkApi("saveReq",{req:q})}catch(e){jk.reqs=jk.reqs.filter(x=>x.id!==q.id);saveJkLocal();renderReq();renderJkBtn();handleErr(e)}
+};
+$("qList").onclick=async e=>{const b=e.target.closest("button[data-qdel]");if(!b||!confirm("この依頼を取り消しますか？"))return;
+  const q=jk.reqs.find(x=>x.id===b.dataset.qdel);if(!q)return;const prev=jk.reqs.slice();
+  const nq={...q,status:"取消",doneAt:nowTs()};jk.reqs=jk.reqs.map(x=>x.id===q.id?nq:x);saveJkLocal();renderReq();renderJkBtn();
+  try{await jkApi("saveReq",{req:nq})}catch(e){jk.reqs=prev;saveJkLocal();renderReq();renderJkBtn();handleErr(e)}};
+renderJkBtn();
 function showLock(){online=false;$("lock").hidden=false;
   $("lockMsg").textContent=pass?"暗証番号が違います。もう一度入力してください。":"社内の暗証番号を入力してください（ReKiL Stockと同じ番号）。一度入力すると、このスマホでは次から入力不要です。";
   setTimeout(()=>$("passIn").focus(),100)}
@@ -486,13 +707,13 @@ $("lockForm").addEventListener("submit",async e=>{
   e.preventDefault();pass=$("passIn").value.trim();if(!pass)return;
   $("lockGo").disabled=true;$("lockGo").textContent="確認中…";
   try{await api("list");try{localStorage.setItem("rekil-shitami-pass",pass)}catch(_){}
-    $("lock").hidden=true;$("passIn").value="";toast("接続しました")}
+    $("lock").hidden=true;$("passIn").value="";toast("接続しました");jkRefresh()}
   catch(err){if(err.code==="network")$("lockMsg").textContent="データ側に接続できませんでした。電波を確認してください。";
     else if(err.code==="no_api")$("lockMsg").textContent="データ側（Apps Script）がまだ設定されていません。";
     else if(err.code!=="passcode")$("lockMsg").textContent=`データ側でエラーが起きました（${err.code}）`;}
   $("lockGo").disabled=false;$("lockGo").textContent="開く";
 });
-async function refresh(){if(!pass||busy||!API_URL)return;try{await api("list")}catch(err){if(err.code==="network"){online=false;setSync()}}}
+async function refresh(){jkRefresh();if(!pass||busy||!API_URL)return;try{await api("list")}catch(err){if(err.code==="network"){online=false;setSync()}}}
 async function checkUpdate(){try{const r=await fetch(location.pathname+"?v="+Date.now(),{cache:"no-store"});const t=await r.text();const m=t.match(/const APP_VERSION = "([^"]+)"/);
   if(m&&m[1]!==APP_VERSION&&busy){setTimeout(checkUpdate,2000);return}if(m&&m[1]!==APP_VERSION)location.replace(location.pathname+"?v="+encodeURIComponent(m[1]))}catch(_){}}
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"){checkUpdate();refresh()}});
