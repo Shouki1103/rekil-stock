@@ -1,271 +1,340 @@
 {
- "at": "2026-11-27 15:13",
- "total": 44,
- "ng": 0,
- "apps": [
-  {
-   "app": "(在庫 ReKiL Stock)",
-   "title": "ReKiL Stock",
-   "ok": true,
-   "errors": []
-  },
-  {
-   "app": "account",
-   "title": "ReKiL アカウント一覧",
-   "ok": true,
-   "errors": []
-  },
-  {
-   "app": "auction",
-   "title": "業者オークション",
-   "ok": true,
-   "errors": []
-  },
-  {
-   "app": "campaign",
-   "title": "ReKiL eBay販促管理",
-   "ok": true,
-   "errors": []
-  },
-  {
-   "app": "care",
-   "title": "お手入れ・リペア",
-   "ok": true,
-   "errors": []
-  },
-  {
-   "app": "check",
-   "title": "アプリの動作チェック",
-   "ok": true,
-   "errors": []
-  },
-  {
-   "app": "daicho",
-   "title": "電子帳簿 検索台帳",
-   "ok": true,
-   "errors": []
-  },
-  {
-   "app": "dash",
-   "title": "ReKiL 月次ダッシュボード",
-   "ok": true,
-   "errors": []
-  },
-  {
-   "app": "ebay",
-   "title": "ReKiL 翻訳",
-   "ok": true,
-   "errors": []
-  },
-  {
-   "app": "haiki",
-   "title": "ReKiL 廃棄記録",
-   "ok": true,
-   "errors": []
-  },
-  {
-   "app": "hassou",
-   "title": "発送待ちリスト",
-   "ok": true,
-   "errors": []
-  },
-  {
-   "app": "henpin",
-   "title": "ReKiL 出品・返品・外注管理",
-   "ok": true,
-   "errors": []
-  },
-  {
-   "app": "home",
-   "title": "ReKiL ホーム",
-   "ok": true,
-   "errors": []
-  },
-  {
-   "app": "irai",
-   "title": "eBay出品依頼",
-   "ok": true,
-   "errors": []
-  },
-  {
-   "app": "kantei",
-   "title": "真贋・査定ノート",
-   "ok": true,
-   "errors": []
-  },
-  {
-   "app": "keihi",
-   "title": "経費レシート",
-   "ok": true,
-   "errors": []
-  },
-  {
-   "app": "kitei",
-   "title": "社内規程",
-   "ok": true,
-   "errors": []
-  },
-  {
-   "app": "koushin",
-   "title": "アプリの更新履歴",
-   "ok": true,
-   "errors": []
-  },
-  {
-   "app": "kyuyo",
-   "title": "ReKiL 給与",
-   "ok": true,
-   "errors": []
-  },
-  {
-   "app": "lounge",
-   "title": "ReKiL ラウンジ",
-   "ok": true,
-   "errors": []
-  },
-  {
-   "app": "manual",
-   "title": "ReKiL アプリ説明書",
-   "ok": true,
-   "errors": []
-  },
-  {
-   "app": "mercari",
-   "title": "ReKiL メルカリ再出品",
-   "ok": true,
-   "errors": []
-  },
-  {
-   "app": "nittou",
-   "title": "出張日当",
-   "ok": true,
-   "errors": []
-  },
-  {
-   "app": "okurijo",
-   "title": "ReKiL Shipping Label",
-   "ok": true,
-   "errors": []
-  },
-  {
-   "app": "portal",
-   "title": "ReKiL ポータルサイト",
-   "ok": true,
-   "errors": []
-  },
-  {
-   "app": "renraku",
-   "title": "ReKiL 連絡",
-   "ok": true,
-   "errors": []
-  },
-  {
-   "app": "route",
-   "title": "ReKiL 仕入ルート",
-   "ok": true,
-   "errors": []
-  },
-  {
-   "app": "saisun",
-   "title": "ReKiL 採寸帳",
-   "ok": true,
-   "errors": []
-  },
-  {
-   "app": "seal",
-   "title": "ReKiL 管理番号シール",
-   "ok": true,
-   "errors": []
-  },
-  {
-   "app": "search",
-   "title": "横断検索",
-   "ok": true,
-   "errors": []
-  },
-  {
-   "app": "shiire",
-   "title": "ReKiL 仕入記帳",
-   "ok": true,
-   "errors": []
-  },
-  {
-   "app": "shikin",
-   "title": "ReKiL 資金繰り",
-   "ok": true,
-   "errors": []
-  },
-  {
-   "app": "shime",
-   "title": "月末の締めチェック",
-   "ok": true,
-   "errors": []
-  },
-  {
-   "app": "shitami",
-   "title": "ReKiL 下見・指値 進捗",
-   "ok": true,
-   "errors": []
-  },
-  {
-   "app": "shohizei",
-   "title": "消費税の見込み",
-   "ok": true,
-   "errors": []
-  },
-  {
-   "app": "shorui",
-   "title": "書類保存チェック表",
-   "ok": true,
-   "errors": []
-  },
-  {
-   "app": "shuppin",
-   "title": "ReKiL 出品データ",
-   "ok": true,
-   "errors": []
-  },
-  {
-   "app": "teiki",
-   "title": "定期作業カレンダー",
-   "ok": true,
-   "errors": []
-  },
-  {
-   "app": "tenki",
-   "title": "仕入日の天気・交通",
-   "ok": true,
-   "errors": []
-  },
-  {
-   "app": "uriage",
-   "title": "ReKiL 売上入力",
-   "ok": true,
-   "errors": []
-  },
-  {
-   "app": "yomitori",
-   "title": "写真から読み取り",
-   "ok": true,
-   "errors": []
-  },
-  {
-   "app": "yushi",
-   "title": "融資・補助金メモ",
-   "ok": true,
-   "errors": []
-  },
-  {
-   "app": "yushutsu",
-   "title": "輸出許可書の進捗",
-   "ok": true,
-   "errors": []
-  },
-  {
-   "app": "zaiko",
-   "title": "ReKiL 在庫",
-   "ok": true,
-   "errors": []
-  }
- ]
+  "at": "2026-11-28 10:42",
+  "total": 44,
+  "ng": 0,
+  "apps": [
+    {
+      "app": "(在庫 ReKiL Stock)",
+      "title": "ReKiL Stock",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "app": "account",
+      "title": "ReKiL アカウント一覧",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "app": "auction",
+      "title": "業者オークション",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "app": "campaign",
+      "title": "ReKiL eBay販促管理",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "app": "care",
+      "title": "お手入れ・リペア",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "app": "check",
+      "title": "アプリの動作チェック",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "app": "daicho",
+      "title": "電子帳簿 検索台帳",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "app": "dash",
+      "title": "ReKiL 月次ダッシュボード",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "app": "ebay",
+      "title": "ReKiL 翻訳",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "app": "haiki",
+      "title": "ReKiL 廃棄記録",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "app": "hassou",
+      "title": "発送待ちリスト",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "app": "henpin",
+      "title": "ReKiL 出品・返品・外注管理",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "app": "home",
+      "title": "ReKiL ホーム",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "app": "irai",
+      "title": "eBay出品依頼",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "app": "kantei",
+      "title": "真贋・査定ノート",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "app": "keihi",
+      "title": "経費レシート",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "app": "kitei",
+      "title": "社内規程",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "app": "koushin",
+      "title": "アプリの更新履歴",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "app": "kyuyo",
+      "title": "ReKiL 給与",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "app": "lounge",
+      "title": "ReKiL ラウンジ",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "app": "manual",
+      "title": "ReKiL アプリ説明書",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "app": "mercari",
+      "title": "ReKiL メルカリ再出品",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "app": "nittou",
+      "title": "出張日当",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "app": "okurijo",
+      "title": "ReKiL Shipping Label",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "app": "portal",
+      "title": "ReKiL ポータルサイト",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "app": "renraku",
+      "title": "ReKiL 連絡",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "app": "route",
+      "title": "ReKiL 仕入ルート",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "app": "saisun",
+      "title": "ReKiL 採寸帳",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "app": "seal",
+      "title": "ReKiL 管理番号シール",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "app": "search",
+      "title": "横断検索",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "app": "shiire",
+      "title": "ReKiL 仕入記帳",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "app": "shikin",
+      "title": "ReKiL 資金繰り",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "app": "shime",
+      "title": "月末の締めチェック",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "app": "shitami",
+      "title": "ReKiL 下見・指値 進捗",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "app": "shohizei",
+      "title": "消費税の見込み",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "app": "shorui",
+      "title": "書類保存チェック表",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "app": "shuppin",
+      "title": "ReKiL 出品データ",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "app": "teiki",
+      "title": "定期作業カレンダー",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "app": "tenki",
+      "title": "仕入日の天気・交通",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "app": "uriage",
+      "title": "ReKiL 売上入力",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "app": "yomitori",
+      "title": "写真から読み取り",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "app": "yushi",
+      "title": "融資・補助金メモ",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "app": "yushutsu",
+      "title": "輸出許可書の進捗",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "app": "zaiko",
+      "title": "ReKiL 在庫",
+      "ok": true,
+      "errors": []
+    }
+  ],
+  "sheets": [
+    {
+      "name": "在庫/売上管理シート",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "name": "電子書類 自動保存ルール",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "name": "送り状控え",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "name": "出品・返品・外注",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "name": "下見",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "name": "eBay出品依頼",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "name": "売上入力",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "name": "廃棄記録",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "name": "メルカリ再出品",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "name": "採寸",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "name": "仕入ルート帳",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "name": "アカウント一覧",
+      "ok": true,
+      "error": ""
+    },
+    {
+      "name": "ReKiL給与",
+      "ok": true,
+      "error": ""
+    }
+  ],
+  "pages_ok": true,
+  "pages_note": "直接の読み込みは権限確認で未実施。GitHub Pagesの最新デプロイ（dc54998）は成功"
 }
